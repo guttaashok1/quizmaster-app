@@ -17,7 +17,6 @@ import { Card } from '../src/components/ui/Card';
 import { TopicChip } from '../src/components/topic/TopicChip';
 import { VoiceInputButton } from '../src/components/topic/VoiceInputButton';
 import { useQuizStore } from '../src/stores/useQuizStore';
-import { useUserStore } from '../src/stores/useUserStore';
 import { useReviewStore } from '../src/stores/useReviewStore';
 import { apiClient } from '../src/services/api';
 import { Difficulty, QuestionType } from '../src/types/quiz';
@@ -44,7 +43,6 @@ export default function TopicInputScreen() {
   const router = useRouter();
   const { colors, spacing, borderRadius } = useTheme();
   const startQuiz = useQuizStore((s) => s.startQuiz);
-  const recentTopics = useUserStore((s) => s.recentTopics);
   const reviewCards = useReviewStore((s) => s.cards);
   const today = new Date().toISOString().split('T')[0];
   const dueCount = reviewCards.filter((c) => c.nextReviewDate <= today).length;
@@ -253,118 +251,65 @@ export default function TopicInputScreen() {
           )}
         </View>
 
-        {/* Question types */}
+        {/* Options */}
         <View>
-          <Text style={[styles.sectionTitle, { color: colors.text }]}>Question Types</Text>
-          <View style={styles.typesRow}>
-            {QUESTION_TYPES.map((qt) => {
-              const selected = selectedTypes.includes(qt.value);
-              return (
-                <TouchableOpacity
-                  key={qt.value}
-                  onPress={() => toggleType(qt.value)}
-                  style={[
-                    styles.typeChip,
-                    {
-                      backgroundColor: selected ? colors.primary : colors.surface,
-                      borderColor: selected ? colors.primary : colors.border,
-                      borderRadius: borderRadius.full,
-                    },
-                  ]}
-                >
-                  <Text style={{ color: selected ? colors.textOnPrimary : colors.text, fontSize: 13, fontWeight: '600' }}>
-                    {qt.icon} {qt.label}
-                  </Text>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>Options</Text>
+
+          {/* Difficulty - inline row */}
+          <View style={styles.optionRow}>
+            <Text style={[styles.optionLabel, { color: colors.textSecondary }]}>Difficulty</Text>
+            <View style={styles.optionChips}>
+              {DIFFICULTIES.map((d) => (
+                <TouchableOpacity key={d.value} onPress={() => { haptics.selection(); setDifficulty(d.value); }}
+                  style={[styles.miniChip, { backgroundColor: difficulty === d.value ? colors.primary : colors.surface, borderColor: difficulty === d.value ? colors.primary : colors.border, borderRadius: borderRadius.full }]}>
+                  <Text style={{ color: difficulty === d.value ? colors.textOnPrimary : colors.text, fontSize: 12, fontWeight: '600' }}>{d.icon} {d.label}</Text>
                 </TouchableOpacity>
-              );
-            })}
-          </View>
-        </View>
-
-        {/* Difficulty */}
-        <View>
-          <Text style={[styles.sectionTitle, { color: colors.text }]}>Difficulty</Text>
-          <View style={styles.difficultyRow}>
-            {DIFFICULTIES.map((d) => {
-              const selected = difficulty === d.value;
-              return (
-                <TouchableOpacity
-                  key={d.value}
-                  onPress={() => { haptics.selection(); setDifficulty(d.value); }}
-                  activeOpacity={0.7}
-                  style={[
-                    styles.difficultyBtn,
-                    { backgroundColor: selected ? colors.primary : colors.surface, borderColor: selected ? colors.primary : colors.border, borderRadius: borderRadius.md },
-                  ]}
-                >
-                  <Text style={styles.difficultyIcon}>{d.icon}</Text>
-                  <Text style={[styles.difficultyLabel, { color: selected ? colors.textOnPrimary : colors.text }]}>{d.label}</Text>
-                </TouchableOpacity>
-              );
-            })}
-          </View>
-        </View>
-
-        {/* Number of Questions */}
-        <View>
-          <Text style={[styles.sectionTitle, { color: colors.text }]}>Number of Questions</Text>
-          <View style={styles.countRow}>
-            {[10, 15, 20, 25].map((count) => (
-              <TouchableOpacity
-                key={count}
-                onPress={() => { haptics.selection(); setQuestionCount(count); }}
-                style={[
-                  styles.countBtn,
-                  {
-                    backgroundColor: questionCount === count ? colors.primary : colors.surface,
-                    borderColor: questionCount === count ? colors.primary : colors.border,
-                    borderRadius: borderRadius.md,
-                  },
-                ]}
-              >
-                <Text style={[styles.countText, { color: questionCount === count ? colors.textOnPrimary : colors.text }]}>
-                  {count}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-        </View>
-
-        {/* Time per Question */}
-        <View>
-          <Text style={[styles.sectionTitle, { color: colors.text }]}>Seconds per Question</Text>
-          <View style={styles.countRow}>
-            {[15, 20, 30, 45, 60].map((secs) => (
-              <TouchableOpacity
-                key={secs}
-                onPress={() => { haptics.selection(); setTimePerQuestion(secs); }}
-                style={[
-                  styles.countBtn,
-                  {
-                    backgroundColor: timePerQuestion === secs ? colors.primary : colors.surface,
-                    borderColor: timePerQuestion === secs ? colors.primary : colors.border,
-                    borderRadius: borderRadius.md,
-                  },
-                ]}
-              >
-                <Text style={[styles.countText, { color: timePerQuestion === secs ? colors.textOnPrimary : colors.text }]}>
-                  {secs}s
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-        </View>
-
-        {recentTopics.length > 0 && (
-          <View>
-            <Text style={[styles.sectionTitle, { color: colors.text }]}>Recent Topics</Text>
-            <View style={styles.chipsContainer}>
-              {recentTopics.map((t) => (
-                <TopicChip key={t} label={t} onPress={() => setTopic(t)} selected={topic === t} />
               ))}
             </View>
           </View>
-        )}
+
+          {/* Questions count - inline row */}
+          <View style={styles.optionRow}>
+            <Text style={[styles.optionLabel, { color: colors.textSecondary }]}>Questions</Text>
+            <View style={styles.optionChips}>
+              {[5, 10, 15, 20].map((count) => (
+                <TouchableOpacity key={count} onPress={() => { haptics.selection(); setQuestionCount(count); }}
+                  style={[styles.miniChip, { backgroundColor: questionCount === count ? colors.primary : colors.surface, borderColor: questionCount === count ? colors.primary : colors.border, borderRadius: borderRadius.full }]}>
+                  <Text style={{ color: questionCount === count ? colors.textOnPrimary : colors.text, fontSize: 12, fontWeight: '600' }}>{count}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+
+          {/* Time per question - inline row */}
+          <View style={styles.optionRow}>
+            <Text style={[styles.optionLabel, { color: colors.textSecondary }]}>Timer</Text>
+            <View style={styles.optionChips}>
+              {[15, 30, 45, 60].map((secs) => (
+                <TouchableOpacity key={secs} onPress={() => { haptics.selection(); setTimePerQuestion(secs); }}
+                  style={[styles.miniChip, { backgroundColor: timePerQuestion === secs ? colors.primary : colors.surface, borderColor: timePerQuestion === secs ? colors.primary : colors.border, borderRadius: borderRadius.full }]}>
+                  <Text style={{ color: timePerQuestion === secs ? colors.textOnPrimary : colors.text, fontSize: 12, fontWeight: '600' }}>{secs}s</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+
+          {/* Question types - inline row */}
+          <View style={styles.optionRow}>
+            <Text style={[styles.optionLabel, { color: colors.textSecondary }]}>Types</Text>
+            <View style={styles.optionChips}>
+              {QUESTION_TYPES.map((qt) => {
+                const selected = selectedTypes.includes(qt.value);
+                return (
+                  <TouchableOpacity key={qt.value} onPress={() => toggleType(qt.value)}
+                    style={[styles.miniChip, { backgroundColor: selected ? colors.primary : colors.surface, borderColor: selected ? colors.primary : colors.border, borderRadius: borderRadius.full }]}>
+                    <Text style={{ color: selected ? colors.textOnPrimary : colors.text, fontSize: 12, fontWeight: '600' }}>{qt.icon} {qt.label}</Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          </View>
+        </View>
 
         <View>
           <Text style={[styles.sectionTitle, { color: colors.text }]}>Suggested Topics</Text>
@@ -404,16 +349,10 @@ const styles = StyleSheet.create({
   input: { flex: 1, fontSize: 16, padding: 16, borderWidth: 2 },
   textArea: { fontSize: 16, padding: 16, borderWidth: 2, minHeight: 140, marginBottom: 24 },
   sectionTitle: { fontSize: 18, fontWeight: '700', marginBottom: 12 },
-  typesRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 24 },
-  typeChip: { paddingHorizontal: 14, paddingVertical: 8, borderWidth: 1 },
-  difficultyRow: { flexDirection: 'row', gap: 12, marginBottom: 8 },
-  difficultyBtn: { flex: 1, paddingVertical: 16, alignItems: 'center', borderWidth: 2 },
-  difficultyIcon: { fontSize: 24, marginBottom: 4 },
-  difficultyLabel: { fontSize: 14, fontWeight: '700' },
-  unlockHint: { fontSize: 12, textAlign: 'center', marginBottom: 24 },
-  countRow: { flexDirection: 'row', gap: 12, marginBottom: 24 },
-  countBtn: { flex: 1, paddingVertical: 14, alignItems: 'center', borderWidth: 2 },
-  countText: { fontSize: 18, fontWeight: '800' },
+  optionRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 12 },
+  optionLabel: { fontSize: 13, fontWeight: '600', width: 70 },
+  optionChips: { flexDirection: 'row', flexWrap: 'wrap', flex: 1, gap: 6 },
+  miniChip: { paddingHorizontal: 10, paddingVertical: 6, borderWidth: 1 },
   errorBannerTop: { flexDirection: 'row', alignItems: 'center', padding: 14, borderWidth: 1, marginBottom: 16, gap: 10 },
   errorBanner: { flexDirection: 'row', alignItems: 'center', padding: 14, borderWidth: 1, marginBottom: 8, gap: 10 },
   errorIcon: { fontSize: 20 },

@@ -83,6 +83,18 @@ class ApiClient {
     return this.request(`/challenge/${id}/result`, { method: 'POST', body: JSON.stringify(data) });
   }
 
+  async register(data: { username: string; password: string; avatarEmoji: string }): Promise<any> {
+    return this.request('/auth/register', { method: 'POST', body: JSON.stringify(data) });
+  }
+
+  async login(data: { username: string; password: string }): Promise<any> {
+    return this.request('/auth/login', { method: 'POST', body: JSON.stringify(data) });
+  }
+
+  async updateScore(data: { username: string; score: number }): Promise<any> {
+    return this.request('/auth/score', { method: 'POST', body: JSON.stringify(data) });
+  }
+
   async healthCheck(): Promise<{ status: string }> {
     return this.request('/health');
   }

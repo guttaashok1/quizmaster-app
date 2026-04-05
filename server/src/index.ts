@@ -6,6 +6,7 @@ import cors from 'cors';
 import rateLimit from 'express-rate-limit';
 import quizRouter from './routes/quiz';
 import challengeRouter from './routes/challenge';
+import authRouter from './routes/auth';
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -26,6 +27,7 @@ app.get('/api/health', (_req, res) => {
 
 app.use('/api/quiz', quizRouter);
 app.use('/api/challenge', challengeRouter);
+app.use('/api/auth', authRouter);
 
 app.listen(Number(PORT), '0.0.0.0', () => {
   console.log(`Quiz API server running on http://0.0.0.0:${PORT}`);

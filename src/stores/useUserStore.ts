@@ -14,11 +14,13 @@ import {
 } from '../constants/game';
 
 interface UserState extends UserProfile {
+  password: string;
   recentTopics: string[];
   hasCompletedOnboarding: boolean;
   hasReached100Points: boolean;
   updateAfterQuiz: (result: QuizResult, topic: string) => void;
   setUsername: (name: string) => void;
+  setPassword: (password: string) => void;
   setAvatar: (emoji: string) => void;
   addAchievement: (achievement: Achievement) => void;
   buyStreakFreeze: () => boolean;
@@ -49,6 +51,7 @@ export const useUserStore = create<UserState>()(
   persist(
     (set, get) => ({
       username: 'Player',
+      password: '',
       avatarEmoji: '\uD83E\uDDE0',
       totalScore: 0,
       gamesPlayed: 0,
@@ -132,6 +135,7 @@ export const useUserStore = create<UserState>()(
       },
 
       setUsername: (name) => set({ username: name }),
+      setPassword: (password) => set({ password }),
       setAvatar: (emoji) => set({ avatarEmoji: emoji }),
       completeOnboarding: () => set({ hasCompletedOnboarding: true }),
 

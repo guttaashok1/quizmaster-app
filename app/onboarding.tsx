@@ -7,6 +7,7 @@ import {
   SafeAreaView,
   ScrollView,
   TouchableOpacity,
+  ActivityIndicator,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import Animated, { FadeInDown } from 'react-native-reanimated';
@@ -14,39 +15,89 @@ import { useTheme } from '../src/theme/ThemeContext';
 import { Button } from '../src/components/ui/Button';
 import { useUserStore } from '../src/stores/useUserStore';
 import { AVATAR_OPTIONS } from '../src/types/user';
+import { apiClient } from '../src/services/api';
 
 export default function OnboardingScreen() {
   const router = useRouter();
   const { colors, spacing, borderRadius } = useTheme();
-  const { setUsername, setAvatar, completeOnboarding } = useUserStore();
+  const { setUsername, setPassword: setStorePassword, setAvatar, completeOnboarding } = useUserStore();
 
   const [name, setName] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [selectedAvatar, setSelectedAvatar] = useState(AVATAR_OPTIONS[0]);
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [isLoginMode, setIsLoginMode] = useState(false);
 
-  const canSubmit = name.trim().length >= 2;
+  const canSubmitRegister = name.trim().length >= 2 && password.length >= 4 && password === confirmPassword;
+  const canSubmitLogin = name.trim().length >= 2 && password.length >= 4;
+  const canSubmit = isLoginMode ? canSubmitLogin : canSubmitRegister;
 
-  const handleGetStarted = () => {
+  const handleGetStarted = async () => {
     if (!canSubmit) return;
-    setUsername(name.trim());
-    setAvatar(selectedAvatar);
-    completeOnboarding();
-    router.replace('/');
+    setError('');
+    setLoading(true);
+
+    try {
+      if (isLoginMode) {
+        const userData = await apiClient.login({ username: name.trim(), password });
+        setUsername(userData.username);
+        setStorePassword(password);
+        setAvatar(userData.avatarEmoji);
+        completeOnboarding();
+        router.replace('/');
+      } else {
+        const userData = await apiClient.register({
+          username: name.trim(),
+          password,
+          avatarEmoji: selectedAvatar,
+        });
+        setUsername(userData.username);
+        setStorePassword(password);
+        setAvatar(userData.avatarEmoji);
+        completeOnboarding();
+        router.replace('/');
+      }
+    } catch (err: any) {
+      const message = err?.message || '';
+      if (message === 'Username already taken') {
+        setError('Username already taken, please choose another');
+      } else if (message === 'Invalid username or password') {
+        setError('Invalid username or password');
+      } else {
+        setError(message || 'Something went wrong. Please try again.');
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
         <Animated.View entering={FadeInDown.duration(400)} style={styles.header}>
-          <Text style={[styles.title, { color: colors.text }]}>Welcome to QuizMaster!</Text>
+          <Text style={[styles.title, { color: colors.text }]}>
+            {isLoginMode ? 'Welcome Back!' : 'Welcome to QuizMaster!'}
+          </Text>
         </Animated.View>
 
+        {error !== '' && (
+          <Animated.View entering={FadeInDown.duration(300)}>
+            <View style={[styles.errorBanner, { backgroundColor: colors.wrong + '20', borderColor: colors.wrong, borderRadius: borderRadius.sm }]}>
+              <Text style={[styles.errorText, { color: colors.wrong }]}>{error}</Text>
+            </View>
+          </Animated.View>
+        )}
+
         <Animated.View entering={FadeInDown.duration(400).delay(100)}>
-          <Text style={[styles.label, { color: colors.textSecondary }]}>Your Name</Text>
+          <Text style={[styles.label, { color: colors.textSecondary }]}>Username</Text>
           <TextInput
             value={name}
-            onChangeText={setName}
+            onChangeText={(text) => { setName(text); setError(''); }}
             placeholder="Enter a username"
             placeholderTextColor={colors.textMuted}
+            autoCapitalize="none"
             style={[
               styles.nameInput,
               {
@@ -63,40 +114,101 @@ export default function OnboardingScreen() {
           )}
         </Animated.View>
 
-        <Animated.View entering={FadeInDown.duration(400).delay(200)}>
-          <Text style={[styles.label, { color: colors.textSecondary, marginTop: spacing.lg }]}>
-            Choose an Avatar
-          </Text>
-          <View style={styles.avatarGrid}>
-            {AVATAR_OPTIONS.map((emoji) => (
-              <TouchableOpacity
-                key={emoji}
-                onPress={() => setSelectedAvatar(emoji)}
-                style={[
-                  styles.avatarOption,
-                  {
-                    backgroundColor:
-                      selectedAvatar === emoji ? colors.primary + '30' : 'transparent',
-                    borderColor: selectedAvatar === emoji ? colors.primary : 'transparent',
-                    borderRadius: borderRadius.md,
-                  },
-                ]}
-              >
-                <Text style={styles.avatarOptionEmoji}>{emoji}</Text>
-              </TouchableOpacity>
-            ))}
-          </View>
+        <Animated.View entering={FadeInDown.duration(400).delay(150)}>
+          <Text style={[styles.label, { color: colors.textSecondary, marginTop: spacing.md }]}>Password</Text>
+          <TextInput
+            value={password}
+            onChangeText={(text) => { setPassword(text); setError(''); }}
+            placeholder="Enter a password"
+            placeholderTextColor={colors.textMuted}
+            secureTextEntry
+            style={[
+              styles.nameInput,
+              {
+                color: colors.text,
+                borderColor: password.length >= 4 ? colors.primary : colors.border,
+                borderRadius: borderRadius.sm,
+                backgroundColor: colors.surface,
+              },
+            ]}
+          />
+          {password.length > 0 && password.length < 4 && (
+            <Text style={[styles.hint, { color: colors.wrong }]}>Minimum 4 characters</Text>
+          )}
         </Animated.View>
+
+        {!isLoginMode && (
+          <Animated.View entering={FadeInDown.duration(400).delay(175)}>
+            <Text style={[styles.label, { color: colors.textSecondary, marginTop: spacing.md }]}>Confirm Password</Text>
+            <TextInput
+              value={confirmPassword}
+              onChangeText={(text) => { setConfirmPassword(text); setError(''); }}
+              placeholder="Confirm your password"
+              placeholderTextColor={colors.textMuted}
+              secureTextEntry
+              style={[
+                styles.nameInput,
+                {
+                  color: colors.text,
+                  borderColor: confirmPassword.length > 0 && confirmPassword === password ? colors.primary : colors.border,
+                  borderRadius: borderRadius.sm,
+                  backgroundColor: colors.surface,
+                },
+              ]}
+            />
+            {confirmPassword.length > 0 && confirmPassword !== password && (
+              <Text style={[styles.hint, { color: colors.wrong }]}>Passwords do not match</Text>
+            )}
+          </Animated.View>
+        )}
+
+        {!isLoginMode && (
+          <Animated.View entering={FadeInDown.duration(400).delay(200)}>
+            <Text style={[styles.label, { color: colors.textSecondary, marginTop: spacing.lg }]}>
+              Choose an Avatar
+            </Text>
+            <View style={styles.avatarGrid}>
+              {AVATAR_OPTIONS.map((emoji) => (
+                <TouchableOpacity
+                  key={emoji}
+                  onPress={() => setSelectedAvatar(emoji)}
+                  style={[
+                    styles.avatarOption,
+                    {
+                      backgroundColor:
+                        selectedAvatar === emoji ? colors.primary + '30' : 'transparent',
+                      borderColor: selectedAvatar === emoji ? colors.primary : 'transparent',
+                      borderRadius: borderRadius.md,
+                    },
+                  ]}
+                >
+                  <Text style={styles.avatarOptionEmoji}>{emoji}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </Animated.View>
+        )}
 
         <Animated.View entering={FadeInDown.duration(400).delay(300)} style={{ marginTop: spacing.xl }}>
           <Button
-            title="Get Started"
+            title={loading ? (isLoginMode ? 'Logging in...' : 'Creating account...') : (isLoginMode ? 'Log In' : 'Get Started')}
             onPress={handleGetStarted}
             variant="primary"
             size="lg"
-            disabled={!canSubmit}
+            disabled={!canSubmit || loading}
             style={{ width: '100%' }}
           />
+          {loading && (
+            <ActivityIndicator size="small" color={colors.primary} style={{ marginTop: spacing.sm }} />
+          )}
+        </Animated.View>
+
+        <Animated.View entering={FadeInDown.duration(400).delay(350)} style={styles.switchMode}>
+          <TouchableOpacity onPress={() => { setIsLoginMode(!isLoginMode); setError(''); }}>
+            <Text style={[styles.switchText, { color: colors.primary }]}>
+              {isLoginMode ? "Don't have an account? Register" : 'Already have an account? Log in'}
+            </Text>
+          </TouchableOpacity>
         </Animated.View>
       </ScrollView>
     </SafeAreaView>
@@ -125,4 +237,12 @@ const styles = StyleSheet.create({
   },
   avatarOption: { padding: 8, borderWidth: 2 },
   avatarOptionEmoji: { fontSize: 32 },
+  errorBanner: {
+    padding: 12,
+    borderWidth: 1,
+    marginBottom: 16,
+  },
+  errorText: { fontSize: 14, fontWeight: '600', textAlign: 'center' },
+  switchMode: { alignItems: 'center', marginTop: 20 },
+  switchText: { fontSize: 15, fontWeight: '600' },
 });
