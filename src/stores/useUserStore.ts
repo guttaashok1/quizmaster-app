@@ -5,7 +5,6 @@ import { Difficulty } from '../types/quiz';
 import { UserProfile, Achievement, XP_PER_LEVEL } from '../types/user';
 import { QuizResult } from '../types/quiz';
 import { getToday, calculateStreak } from '../utils/dateUtils';
-import { getUnlockedDifficulties } from '../utils/difficulty';
 import {
   XP_PER_CORRECT,
   XP_PER_QUIZ_COMPLETE,
@@ -84,8 +83,7 @@ export const useUserStore = create<UserState>()(
           set({ streakFreezes: state.streakFreezes - 1, streakFreezeUsedToday: true });
         }
 
-        const newTotalScore = state.totalScore + result.score;
-        const newUnlocked = getUnlockedDifficulties(newTotalScore);
+        const newTotalScore = Math.max(0, state.totalScore + result.score);
 
         const recentTopics = [
           topic,
@@ -121,7 +119,7 @@ export const useUserStore = create<UserState>()(
           currentStreak: finalStreak,
           longestStreak: Math.max(state.longestStreak, finalStreak),
           lastPlayedDate: getToday(),
-          unlockedDifficulties: newUnlocked,
+          unlockedDifficulties: ['easy', 'medium', 'hard'] as Difficulty[],
           recentTopics,
           xpCurrent: newXP,
           xpLevel: newLevel,
