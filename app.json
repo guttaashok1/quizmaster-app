@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "KnowledgeGameTemp",
-    "slug": "KnowledgeGameTemp",
+    "name": "QuizMaster",
+    "slug": "quizmaster",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -9,13 +9,16 @@
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.ashokkumargutta.quizmaster",
+      "buildNumber": "1"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
-      }
+      },
+      "package": "com.ashokkumargutta.quizmaster"
     },
     "web": {
       "bundler": "metro",
@@ -30,7 +33,14 @@
           "image": "./assets/images/splash-icon.png",
           "imageWidth": 200,
           "resizeMode": "contain",
-          "backgroundColor": "#ffffff"
+          "backgroundColor": "#6C63FF"
+        }
+      ],
+      [
+        "expo-speech-recognition",
+        {
+          "microphonePermission": "QuizMaster needs access to your microphone for voice input.",
+          "speechRecognitionPermission": "QuizMaster needs speech recognition to convert your voice to text."
         }
       ]
     ],

@@ -36,3 +36,12 @@ yarn-error.*
 *.tsbuildinfo
 
 app-example
+
+# Server
+server/node_modules/
+server/dist/
+server/.env
+
+# Env
+.env
+.env.local
