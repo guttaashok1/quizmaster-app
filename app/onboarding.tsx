@@ -9,7 +9,7 @@ import {
   TouchableOpacity,
   ActivityIndicator,
 } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useTheme } from '../src/theme/ThemeContext';
 import { Button } from '../src/components/ui/Button';
@@ -19,6 +19,7 @@ import { apiClient } from '../src/services/api';
 
 export default function OnboardingScreen() {
   const router = useRouter();
+  const { mode } = useLocalSearchParams<{ mode?: string }>();
   const { colors, spacing, borderRadius } = useTheme();
   const { setUsername, setPassword: setStorePassword, setAvatar, completeOnboarding } = useUserStore();
 
@@ -28,7 +29,7 @@ export default function OnboardingScreen() {
   const [selectedAvatar, setSelectedAvatar] = useState(AVATAR_OPTIONS[0]);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const [isLoginMode, setIsLoginMode] = useState(false);
+  const [isLoginMode, setIsLoginMode] = useState(mode === 'login');
 
   const canSubmitRegister = name.trim().length >= 2 && password.length >= 4 && password === confirmPassword;
   const canSubmitLogin = name.trim().length >= 2 && password.length >= 4;
@@ -76,6 +77,10 @@ export default function OnboardingScreen() {
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+          <Text style={[styles.backText, { color: colors.primary }]}>{'\u2190'} Back</Text>
+        </TouchableOpacity>
+
         <Animated.View entering={FadeInDown.duration(400)} style={styles.header}>
           <Text style={[styles.title, { color: colors.text }]}>
             {isLoginMode ? 'Welcome Back!' : 'Welcome to QuizMaster!'}
@@ -218,7 +223,9 @@ export default function OnboardingScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   scroll: { padding: 24, paddingBottom: 48 },
-  header: { alignItems: 'center', marginBottom: 32, paddingTop: 48 },
+  backBtn: { marginBottom: 8 },
+  backText: { fontSize: 16, fontWeight: '600' },
+  header: { alignItems: 'center', marginBottom: 32, paddingTop: 16 },
   title: { fontSize: 28, fontWeight: '800', textAlign: 'center' },
   label: { fontSize: 16, fontWeight: '600', marginBottom: 8 },
   nameInput: {

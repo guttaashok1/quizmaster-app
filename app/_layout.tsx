@@ -16,7 +16,7 @@ function RootLayoutNav() {
 
   useEffect(() => {
     if (!hasCompletedOnboarding) {
-      router.replace('/onboarding');
+      router.replace('/welcome');
     }
   }, [hasCompletedOnboarding]);
 
@@ -31,6 +31,7 @@ function RootLayoutNav() {
         }}
       >
         <Stack.Screen name="index" />
+        <Stack.Screen name="welcome" options={{ headerShown: false }} />
         <Stack.Screen name="onboarding" options={{ headerShown: false }} />
         <Stack.Screen name="topic-input" />
         <Stack.Screen name="quiz" />
