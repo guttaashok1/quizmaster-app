@@ -19,8 +19,7 @@ import { Button } from '../src/components/ui/Button';
 import { ProgressBar } from '../src/components/ui/ProgressBar';
 import { useUserStore, ACHIEVEMENT_DEFS } from '../src/stores/useUserStore';
 import { useSettingsStore } from '../src/stores/useSettingsStore';
-import { getNextUnlockThreshold } from '../src/utils/difficulty';
-import { UNLOCK_MEDIUM_THRESHOLD, UNLOCK_HARD_THRESHOLD, STREAK_FREEZE_COST, MAX_STREAK_FREEZES } from '../src/constants/game';
+import { STREAK_FREEZE_COST, MAX_STREAK_FREEZES } from '../src/constants/game';
 import { AVATAR_OPTIONS } from '../src/types/user';
 import { haptics } from '../src/services/hapticService';
 
@@ -34,13 +33,6 @@ export default function ProfileScreen() {
   const [showAvatarPicker, setShowAvatarPicker] = useState(false);
 
   const accuracy = user.totalAnswers > 0 ? Math.round((user.correctAnswers / user.totalAnswers) * 100) : 0;
-
-  const nextUnlock = getNextUnlockThreshold(user.totalScore);
-  const progressToNext = nextUnlock
-    ? nextUnlock.difficulty === 'medium'
-      ? user.totalScore / UNLOCK_MEDIUM_THRESHOLD
-      : (user.totalScore - UNLOCK_MEDIUM_THRESHOLD) / (UNLOCK_HARD_THRESHOLD - UNLOCK_MEDIUM_THRESHOLD)
-    : 1;
 
   const stats = [
     { icon: '\uD83C\uDFAE', label: 'Games Played', value: user.gamesPlayed },
@@ -123,17 +115,6 @@ export default function ProfileScreen() {
             </View>
           </Card>
         </Animated.View>
-
-        {/* Difficulty progress */}
-        {nextUnlock && (
-          <Animated.View entering={FadeInDown.duration(400).delay(200)}>
-            <Card elevated style={{ marginBottom: spacing.lg }}>
-              <Text style={[styles.progressLabel, { color: colors.textSecondary }]}>Progress to {nextUnlock.difficulty}</Text>
-              <ProgressBar progress={Math.min(1, progressToNext)} height={8} />
-              <Text style={[styles.progressHint, { color: colors.textMuted }]}>{nextUnlock.pointsNeeded} points to go</Text>
-            </Card>
-          </Animated.View>
-        )}
 
         {/* Achievements */}
         <Animated.View entering={FadeInDown.duration(400).delay(300)}>

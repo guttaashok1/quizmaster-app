@@ -10,10 +10,10 @@ import { TrueFalseCard } from '../../src/components/quiz/TrueFalseCard';
 import { FillBlankCard } from '../../src/components/quiz/FillBlankCard';
 import { MatchingCard } from '../../src/components/quiz/MatchingCard';
 import { CountdownTimer } from '../../src/components/quiz/CountdownTimer';
-import { LivesIndicator } from '../../src/components/quiz/LivesIndicator';
 import { ScoreDisplay } from '../../src/components/quiz/ScoreDisplay';
 import { ExplanationModal } from '../../src/components/quiz/ExplanationModal';
 import { Confetti } from '../../src/components/feedback/Confetti';
+import { AnswerFlash } from '../../src/components/feedback/AnswerFlash';
 import { ProgressBar } from '../../src/components/ui/ProgressBar';
 import { haptics } from '../../src/services/hapticService';
 import {
@@ -30,6 +30,7 @@ export default function QuizPlayScreen() {
   const [selectedBool, setSelectedBool] = useState<boolean | null>(null);
   const [textAnswer, setTextAnswer] = useState('');
   const [showConfetti, setShowConfetti] = useState(false);
+  const [flashColor, setFlashColor] = useState<string | null>(null);
   const prevAdaptiveDiff = useRef<string | null>(null);
   const [diffChange, setDiffChange] = useState<string | null>(null);
 
@@ -37,7 +38,6 @@ export default function QuizPlayScreen() {
     questions,
     currentIndex,
     score,
-    lives,
     timeRemaining,
     difficulty,
     status,
@@ -84,11 +84,17 @@ export default function QuizPlayScreen() {
     prevAdaptiveDiff.current = currentAdaptiveDifficulty;
   }, [currentAdaptiveDifficulty]);
 
-  // Show confetti on correct answer
+  // Show confetti on correct answer + flash
   useEffect(() => {
     if (lastAnswerCorrect === true) {
       setShowConfetti(true);
+      setFlashColor('#22c55e');
       setTimeout(() => setShowConfetti(false), 2500);
+    } else if (lastAnswerCorrect === false) {
+      setFlashColor('#ef4444');
+    }
+    if (lastAnswerCorrect !== null) {
+      setTimeout(() => setFlashColor(null), 700);
     }
   }, [lastAnswerCorrect, answers.length]);
 
@@ -152,7 +158,7 @@ export default function QuizPlayScreen() {
     } else {
       nextQuestion();
     }
-  }, [status, lives, isLastQuestion, dismissExplanation, nextQuestion, router]);
+  }, [status, isLastQuestion, dismissExplanation, nextQuestion, router]);
 
   if (!currentQuestion) return null;
 
@@ -198,9 +204,10 @@ export default function QuizPlayScreen() {
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
       <Confetti active={showConfetti} />
+      <AnswerFlash color={flashColor} />
 
       <View style={[styles.topBar, { paddingHorizontal: spacing.md }]}>
-        <LivesIndicator lives={lives} />
+        <Text style={[styles.questionCounter, { color: colors.textSecondary }]}>Q {currentIndex + 1}/{questions.length}</Text>
         <View style={styles.diffBadge}>
           <Text style={[styles.diffText, { color: colors.textMuted }]}>
             {currentAdaptiveDifficulty.toUpperCase()}
@@ -295,4 +302,5 @@ const styles = StyleSheet.create({
   diffBadge: { paddingHorizontal: 8, paddingVertical: 2 },
   diffText: { fontSize: 11, fontWeight: '800', letterSpacing: 1 },
   content: { flex: 1 },
+  questionCounter: { fontSize: 14, fontWeight: '700' },
 });

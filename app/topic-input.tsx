@@ -23,7 +23,6 @@ import { apiClient } from '../src/services/api';
 import { Difficulty, QuestionType } from '../src/types/quiz';
 import { SUGGESTED_TOPICS } from '../src/constants/topics';
 import { QUESTIONS_PER_QUIZ } from '../src/constants/game';
-import { isDifficultyUnlocked, getNextUnlockThreshold } from '../src/utils/difficulty';
 import { haptics } from '../src/services/hapticService';
 
 const DIFFICULTIES: { label: string; value: Difficulty; icon: string }[] = [
@@ -45,7 +44,6 @@ export default function TopicInputScreen() {
   const router = useRouter();
   const { colors, spacing, borderRadius } = useTheme();
   const startQuiz = useQuizStore((s) => s.startQuiz);
-  const totalScore = useUserStore((s) => s.totalScore);
   const recentTopics = useUserStore((s) => s.recentTopics);
   const reviewCards = useReviewStore((s) => s.cards);
   const today = new Date().toISOString().split('T')[0];
@@ -143,8 +141,6 @@ export default function TopicInputScreen() {
       setIsRecording(false);
     }
   };
-
-  const nextUnlock = getNextUnlockThreshold(totalScore);
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
@@ -290,29 +286,23 @@ export default function TopicInputScreen() {
           <Text style={[styles.sectionTitle, { color: colors.text }]}>Difficulty</Text>
           <View style={styles.difficultyRow}>
             {DIFFICULTIES.map((d) => {
-              const unlocked = isDifficultyUnlocked(d.value, totalScore);
               const selected = difficulty === d.value;
               return (
                 <TouchableOpacity
                   key={d.value}
-                  onPress={() => { if (unlocked) { haptics.selection(); setDifficulty(d.value); } else { haptics.warning(); } }}
-                  activeOpacity={unlocked ? 0.7 : 1}
+                  onPress={() => { haptics.selection(); setDifficulty(d.value); }}
+                  activeOpacity={0.7}
                   style={[
                     styles.difficultyBtn,
-                    { backgroundColor: selected ? colors.primary : colors.surface, borderColor: selected ? colors.primary : colors.border, borderRadius: borderRadius.md, opacity: unlocked ? 1 : 0.4 },
+                    { backgroundColor: selected ? colors.primary : colors.surface, borderColor: selected ? colors.primary : colors.border, borderRadius: borderRadius.md },
                   ]}
                 >
-                  <Text style={styles.difficultyIcon}>{unlocked ? d.icon : '\uD83D\uDD12'}</Text>
+                  <Text style={styles.difficultyIcon}>{d.icon}</Text>
                   <Text style={[styles.difficultyLabel, { color: selected ? colors.textOnPrimary : colors.text }]}>{d.label}</Text>
                 </TouchableOpacity>
               );
             })}
           </View>
-          {nextUnlock && (
-            <Text style={[styles.unlockHint, { color: colors.textMuted }]}>
-              {nextUnlock.pointsNeeded} more points to unlock {nextUnlock.difficulty}
-            </Text>
-          )}
         </View>
 
         {/* Number of Questions */}

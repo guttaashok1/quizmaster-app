@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -6,6 +6,8 @@ import {
   SafeAreaView,
   ScrollView,
   TouchableOpacity,
+  TextInput,
+  ActivityIndicator,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -16,6 +18,8 @@ import { ProgressBar } from '../src/components/ui/ProgressBar';
 import { useUserStore } from '../src/stores/useUserStore';
 import { useReviewStore } from '../src/stores/useReviewStore';
 import { useChallengeStore } from '../src/stores/useChallengeStore';
+import { useQuizStore } from '../src/stores/useQuizStore';
+import { apiClient } from '../src/services/api';
 
 export default function HomeScreen() {
   const router = useRouter();
@@ -23,6 +27,28 @@ export default function HomeScreen() {
   const user = useUserStore();
   const reviewCards = useReviewStore((s) => s.cards);
   const dailyChallenge = useChallengeStore((s) => s.dailyChallenge);
+  const startQuiz = useQuizStore((s) => s.startQuiz);
+
+  const [challengeCode, setChallengeCode] = useState('');
+  const [challengeError, setChallengeError] = useState('');
+  const [challengeLoading, setChallengeLoading] = useState(false);
+
+  const handleJoinChallenge = async () => {
+    const code = challengeCode.trim();
+    if (!code) return;
+    setChallengeError('');
+    setChallengeLoading(true);
+    try {
+      const challenge = await apiClient.getChallenge(code);
+      startQuiz(challenge.questions, challenge.topic, challenge.difficulty, false, null, challenge.id);
+      setChallengeCode('');
+      router.push('/quiz/play');
+    } catch {
+      setChallengeError('Challenge not found. Check the code and try again.');
+    } finally {
+      setChallengeLoading(false);
+    }
+  };
 
   const today = new Date().toISOString().split('T')[0];
   const dueCount = reviewCards.filter((c) => c.nextReviewDate <= today).length;
@@ -77,6 +103,36 @@ export default function HomeScreen() {
             style={styles.startButton}
             icon={<Text style={{ fontSize: 20 }}>{'\uD83D\uDE80'}</Text>}
           />
+        </View>
+
+        <View>
+          <Card elevated style={styles.challengeCard}>
+            <Text style={[styles.challengeTitle, { color: colors.text }]}>
+              {'\uD83C\uDFAE'} Join a Challenge
+            </Text>
+            <View style={styles.challengeRow}>
+              <TextInput
+                style={[styles.challengeInput, { color: colors.text, borderColor: colors.border, backgroundColor: colors.surface }]}
+                placeholder="Enter challenge code"
+                placeholderTextColor={colors.textMuted}
+                value={challengeCode}
+                onChangeText={(t) => { setChallengeCode(t); setChallengeError(''); }}
+                autoCapitalize="none"
+              />
+              <Button
+                title={challengeLoading ? '' : 'Join'}
+                onPress={handleJoinChallenge}
+                variant="primary"
+                size="md"
+                style={styles.joinButton}
+                disabled={challengeLoading || !challengeCode.trim()}
+              />
+              {challengeLoading && <ActivityIndicator style={{ position: 'absolute', right: 24 }} />}
+            </View>
+            {challengeError ? (
+              <Text style={[styles.challengeErrorText, { color: colors.incorrect }]}>{challengeError}</Text>
+            ) : null}
+          </Card>
         </View>
 
         <View>
@@ -164,5 +220,11 @@ const styles = StyleSheet.create({
   statIcon: { fontSize: 28, marginBottom: 8 },
   statValue: { fontSize: 22, fontWeight: '800', marginBottom: 4 },
   statLabel: { fontSize: 13, fontWeight: '500' },
+  challengeCard: { marginBottom: 16 },
+  challengeTitle: { fontSize: 16, fontWeight: '700', marginBottom: 10 },
+  challengeRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  challengeInput: { flex: 1, height: 44, borderWidth: 1, borderRadius: 10, paddingHorizontal: 12, fontSize: 15 },
+  joinButton: { minWidth: 70 },
+  challengeErrorText: { fontSize: 13, marginTop: 6 },
   bottomButtons: { flexDirection: 'row', gap: 12 },
 });

@@ -1,6 +1,5 @@
 import { Difficulty } from '../types/quiz';
 
-export const INITIAL_LIVES = 3;
 export const QUESTIONS_PER_QUIZ = 10;
 
 export const TIME_PER_QUESTION: Record<Difficulty, number> = {
@@ -9,15 +8,8 @@ export const TIME_PER_QUESTION: Record<Difficulty, number> = {
   hard: 15,
 };
 
-export const POINTS_CORRECT = 100;
-export const SPEED_BONUS_MAX = 50;
-export const SPEED_BONUS_THRESHOLD = 0.5;
-
-export const STREAK_MULTIPLIER = 1.5;
-export const STREAK_MULTIPLIER_THRESHOLD = 3;
-
-export const UNLOCK_MEDIUM_THRESHOLD = 500;
-export const UNLOCK_HARD_THRESHOLD = 2000;
+export const POINTS_CORRECT = 5;
+export const POINTS_WRONG = -5;
 
 export const STARS_THRESHOLDS = {
   three: 0.9,

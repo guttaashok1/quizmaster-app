@@ -13,12 +13,14 @@ import { useTheme } from '../../src/theme/ThemeContext';
 import { Button } from '../../src/components/ui/Button';
 import { Card } from '../../src/components/ui/Card';
 import { Confetti } from '../../src/components/feedback/Confetti';
+import { RewardModal } from '../../src/components/feedback/RewardModal';
 import { useQuizStore } from '../../src/stores/useQuizStore';
 import { useUserStore } from '../../src/stores/useUserStore';
 import { useLeaderboardStore } from '../../src/stores/useLeaderboardStore';
 import { useChallengeStore } from '../../src/stores/useChallengeStore';
 import { useQuizHistoryStore } from '../../src/stores/useQuizHistoryStore';
 import { haptics } from '../../src/services/hapticService';
+import { apiClient } from '../../src/services/api';
 
 function AnimatedScore({ targetScore }: { targetScore: number }) {
   const { colors } = useTheme();
@@ -63,19 +65,28 @@ export default function ResultsScreen() {
   const createChallenge = useChallengeStore((s) => s.createChallenge);
   const saveDeck = useChallengeStore((s) => s.saveDeck);
   const saveQuiz = useQuizHistoryStore((s) => s.saveQuiz);
+  const challengeId = useQuizStore((s) => s.challengeId);
   const hasUpdated = useRef(false);
   const [showConfetti, setShowConfetti] = useState(false);
+  const [showReward, setShowReward] = useState(false);
   const [newAchievements, setNewAchievements] = useState<string[]>([]);
   const [historyId, setHistoryId] = useState<string | null>(null);
+  const [challengeData, setChallengeData] = useState<any>(null);
 
   const result = getResult();
 
   useEffect(() => {
     if (!hasUpdated.current) {
       hasUpdated.current = true;
+      const prevTotal = useUserStore.getState().totalScore;
       updateAfterQuiz(result, topic);
       updateLeaderboard(username, totalScore + result.score, currentStreak);
       haptics.heavy();
+
+      // Check 100-point milestone
+      if (prevTotal < 100 && useUserStore.getState().totalScore >= 100) {
+        setShowReward(true);
+      }
 
       // Save to history
       const id = saveQuiz({ topic, difficulty, questions, answers, result });
@@ -90,6 +101,15 @@ export default function ResultsScreen() {
       if (achievements.length > 0) {
         setNewAchievements(achievements.map((a) => `${a.icon} ${a.title}`));
       }
+
+      // Submit result to server if this is a challenge
+      if (challengeId) {
+        apiClient.submitChallengeResult(challengeId, { name: username, score: result.score })
+          .then((data) => setChallengeData(data))
+          .catch(() => {
+            // Silently fail - challenge comparison just won't show
+          });
+      }
     }
   }, []);
 
@@ -101,12 +121,29 @@ export default function ResultsScreen() {
     } catch {}
   };
 
-  const handleCreateChallenge = () => {
-    const challenge = createChallenge(topic, result.difficulty, questions, username, result.score);
-    Alert.alert(
-      'Challenge Created!',
-      `Share code: ${challenge.id}\nYour friends can use this to play the same quiz and try to beat your score of ${result.score}!`
-    );
+  const handleCreateChallenge = async () => {
+    try {
+      const serverChallenge = await apiClient.createChallenge({
+        topic,
+        difficulty: result.difficulty,
+        questions,
+        creatorName: username,
+        creatorScore: result.score,
+      });
+      // Also save locally
+      createChallenge(topic, result.difficulty, questions, username, result.score);
+      Alert.alert(
+        'Challenge Created!',
+        `Share code: ${serverChallenge.id}\nYour friends can use this to play the same quiz and try to beat your score of ${result.score}!`
+      );
+    } catch {
+      // Fallback to local-only challenge
+      const challenge = createChallenge(topic, result.difficulty, questions, username, result.score);
+      Alert.alert(
+        'Challenge Created (Offline)',
+        `Share code: ${challenge.id}\nNote: This challenge is only available on this device.`
+      );
+    }
   };
 
   const handleSaveDeck = () => {
@@ -135,6 +172,7 @@ export default function ResultsScreen() {
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
       <Confetti active={showConfetti} />
+      <RewardModal visible={showReward} milestone={100} onDismiss={() => setShowReward(false)} />
 
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
@@ -166,6 +204,38 @@ export default function ResultsScreen() {
             <AnimatedScore targetScore={result.score} />
           </Card>
         </View>
+
+        {challengeData && (
+          <View>
+            <Card elevated style={[styles.challengeCompareCard, { borderColor: colors.primary }]}>
+              <Text style={[styles.challengeCompareTitle, { color: colors.text }]}>
+                {'\u2694\uFE0F'} Challenge Results
+              </Text>
+              <View style={styles.challengeCompareRow}>
+                <View style={[styles.challengeComparePlayer, result.score > challengeData.creatorScore && styles.challengeWinner]}>
+                  <Text style={[styles.challengePlayerName, { color: colors.textSecondary }]}>You</Text>
+                  <Text style={[styles.challengePlayerScore, { color: result.score >= challengeData.creatorScore ? colors.correct : colors.incorrect }]}>
+                    {result.score} pts
+                  </Text>
+                </View>
+                <Text style={[styles.challengeVs, { color: colors.textMuted }]}>vs</Text>
+                <View style={[styles.challengeComparePlayer, challengeData.creatorScore > result.score && styles.challengeWinner]}>
+                  <Text style={[styles.challengePlayerName, { color: colors.textSecondary }]}>{challengeData.creatorName}</Text>
+                  <Text style={[styles.challengePlayerScore, { color: challengeData.creatorScore >= result.score ? colors.correct : colors.incorrect }]}>
+                    {challengeData.creatorScore} pts
+                  </Text>
+                </View>
+              </View>
+              <Text style={[styles.challengeOutcome, { color: colors.xp }]}>
+                {result.score > challengeData.creatorScore
+                  ? 'You win!'
+                  : result.score === challengeData.creatorScore
+                  ? "It's a tie!"
+                  : `${challengeData.creatorName} wins!`}
+              </Text>
+            </Card>
+          </View>
+        )}
 
         <View>
           <View style={styles.statsGrid}>
@@ -230,4 +300,13 @@ const styles = StyleSheet.create({
   statLabel: { fontSize: 13, fontWeight: '500' },
   buttons: { gap: 0 },
   actionRow: { flexDirection: 'row', gap: 12, marginBottom: 12 },
+  challengeCompareCard: { marginBottom: 24, borderWidth: 1, alignItems: 'center', paddingVertical: 20 },
+  challengeCompareTitle: { fontSize: 18, fontWeight: '800', marginBottom: 16 },
+  challengeCompareRow: { flexDirection: 'row', alignItems: 'center', gap: 16, marginBottom: 12 },
+  challengeComparePlayer: { alignItems: 'center', flex: 1, padding: 8, borderRadius: 12 },
+  challengeWinner: { backgroundColor: 'rgba(76, 175, 80, 0.1)' },
+  challengePlayerName: { fontSize: 14, fontWeight: '600', marginBottom: 4 },
+  challengePlayerScore: { fontSize: 24, fontWeight: '800' },
+  challengeVs: { fontSize: 16, fontWeight: '700' },
+  challengeOutcome: { fontSize: 18, fontWeight: '800' },
 });

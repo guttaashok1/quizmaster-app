@@ -71,6 +71,18 @@ class ApiClient {
     });
   }
 
+  async createChallenge(data: { topic: string; difficulty: string; questions: any[]; creatorName: string; creatorScore: number }): Promise<{ id: string }> {
+    return this.request('/challenge', { method: 'POST', body: JSON.stringify(data) });
+  }
+
+  async getChallenge(id: string): Promise<any> {
+    return this.request(`/challenge/${id}`);
+  }
+
+  async submitChallengeResult(id: string, data: { name: string; score: number }): Promise<any> {
+    return this.request(`/challenge/${id}/result`, { method: 'POST', body: JSON.stringify(data) });
+  }
+
   async healthCheck(): Promise<{ status: string }> {
     return this.request('/health');
   }

@@ -11,10 +11,10 @@ import {
   MatchingQuestion,
 } from '../types/quiz';
 import {
-  INITIAL_LIVES,
   TIME_PER_QUESTION,
   ADAPTIVE_UPGRADE_THRESHOLD,
   ADAPTIVE_DOWNGRADE_THRESHOLD,
+  POINTS_WRONG,
 } from '../constants/game';
 import { calculatePoints, calculateStars } from '../utils/scoring';
 
@@ -22,7 +22,6 @@ interface QuizState {
   questions: Question[];
   currentIndex: number;
   score: number;
-  lives: number;
   timeRemaining: number;
   answers: Answer[];
   status: QuizStatus;
@@ -36,8 +35,9 @@ interface QuizState {
   adaptiveDifficulty: boolean;
   currentAdaptiveDifficulty: Difficulty;
   customTimePerQuestion: number | null;
+  challengeId: string | null;
 
-  startQuiz: (questions: Question[], topic: string, difficulty: Difficulty, adaptive?: boolean, customTime?: number | null) => void;
+  startQuiz: (questions: Question[], topic: string, difficulty: Difficulty, adaptive?: boolean, customTime?: number | null, challengeId?: string | null) => void;
   answerQuestion: (answer: Partial<Answer>) => void;
   nextQuestion: () => void;
   tickTimer: () => boolean;
@@ -92,7 +92,6 @@ export const useQuizStore = create<QuizState>()((set, get) => ({
   questions: [],
   currentIndex: 0,
   score: 0,
-  lives: INITIAL_LIVES,
   timeRemaining: 0,
   answers: [],
   status: 'idle',
@@ -105,9 +104,10 @@ export const useQuizStore = create<QuizState>()((set, get) => ({
   lastAnswerCorrect: null,
   adaptiveDifficulty: false,
   currentAdaptiveDifficulty: 'easy',
+  challengeId: null,
   customTimePerQuestion: null,
 
-  startQuiz: (questions, topic, difficulty, adaptive = true, customTime = null) => {
+  startQuiz: (questions, topic, difficulty, adaptive = true, customTime = null, challengeId = null) => {
     const timeForQuestion = customTime ?? TIME_PER_QUESTION[difficulty];
     set({
       questions,
@@ -115,7 +115,6 @@ export const useQuizStore = create<QuizState>()((set, get) => ({
       difficulty,
       currentIndex: 0,
       score: 0,
-      lives: INITIAL_LIVES,
       timeRemaining: timeForQuestion,
       answers: [],
       status: 'playing',
@@ -127,6 +126,7 @@ export const useQuizStore = create<QuizState>()((set, get) => ({
       adaptiveDifficulty: adaptive,
       currentAdaptiveDifficulty: difficulty,
       customTimePerQuestion: customTime,
+      challengeId: challengeId,
     });
   },
 
@@ -140,7 +140,6 @@ export const useQuizStore = create<QuizState>()((set, get) => ({
     const timeSpent = effectiveTime - state.timeRemaining;
 
     let pointsEarned = 0;
-    let newLives = state.lives;
     let newConsecutiveCorrect = state.consecutiveCorrect;
     let newConsecutiveWrong = state.consecutiveWrong;
 
@@ -153,7 +152,7 @@ export const useQuizStore = create<QuizState>()((set, get) => ({
       newConsecutiveCorrect += 1;
       newConsecutiveWrong = 0;
     } else {
-      if (newLives > 0) newLives -= 1;
+      pointsEarned = POINTS_WRONG;
       newConsecutiveCorrect = 0;
       newConsecutiveWrong += 1;
     }
@@ -184,7 +183,6 @@ export const useQuizStore = create<QuizState>()((set, get) => ({
 
     set({
       score: state.score + pointsEarned,
-      lives: newLives,
       consecutiveCorrect: newConsecutiveCorrect,
       consecutiveWrong: newConsecutiveWrong,
       currentAdaptiveDifficulty: newAdaptiveDifficulty,
@@ -229,7 +227,6 @@ export const useQuizStore = create<QuizState>()((set, get) => ({
   timeUp: () => {
     const state = get();
     const question = state.questions[state.currentIndex];
-    const newLives = state.lives > 0 ? state.lives - 1 : 0;
     const isFinished = state.currentIndex >= state.questions.length - 1;
     const effectiveTime = state.customTimePerQuestion ?? TIME_PER_QUESTION[state.currentAdaptiveDifficulty];
 
@@ -239,11 +236,10 @@ export const useQuizStore = create<QuizState>()((set, get) => ({
       selectedIndex: -1,
       correct: false,
       timeSpent: effectiveTime,
-      pointsEarned: 0,
+      pointsEarned: POINTS_WRONG,
     };
 
     set({
-      lives: newLives,
       consecutiveCorrect: 0,
       consecutiveWrong: state.consecutiveWrong + 1,
       answers: [...state.answers, answer],
@@ -260,9 +256,7 @@ export const useQuizStore = create<QuizState>()((set, get) => ({
     const state = get();
     const correctCount = state.answers.filter((a) => a.correct).length;
     const totalTime = state.answers.reduce((sum, a) => sum + a.timeSpent, 0);
-    const streakBonus = state.answers
-      .filter((a) => a.pointsEarned > 100)
-      .reduce((sum, a) => sum + (a.pointsEarned - 100), 0);
+    const streakBonus = 0;
 
     return {
       sessionId: state.sessionId,
@@ -282,7 +276,6 @@ export const useQuizStore = create<QuizState>()((set, get) => ({
       questions: [],
       currentIndex: 0,
       score: 0,
-      lives: INITIAL_LIVES,
       timeRemaining: 0,
       answers: [],
       status: 'idle',
@@ -295,5 +288,6 @@ export const useQuizStore = create<QuizState>()((set, get) => ({
       adaptiveDifficulty: false,
       currentAdaptiveDifficulty: 'easy',
       customTimePerQuestion: null,
+      challengeId: null,
     }),
 }));

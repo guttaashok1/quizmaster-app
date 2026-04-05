@@ -1,15 +1,24 @@
 import { useEffect } from 'react';
 import { StatusBar } from 'react-native';
-import { Stack } from 'expo-router';
+import { Stack, useRouter } from 'expo-router';
 import { useFonts } from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
 import 'react-native-reanimated';
 import { ThemeProvider, useTheme } from '../src/theme/ThemeContext';
+import { useUserStore } from '../src/stores/useUserStore';
 
 SplashScreen.preventAutoHideAsync();
 
 function RootLayoutNav() {
   const { colors, isDark } = useTheme();
+  const router = useRouter();
+  const hasCompletedOnboarding = useUserStore((s) => s.hasCompletedOnboarding);
+
+  useEffect(() => {
+    if (!hasCompletedOnboarding) {
+      router.replace('/onboarding');
+    }
+  }, [hasCompletedOnboarding]);
 
   return (
     <>
@@ -22,6 +31,7 @@ function RootLayoutNav() {
         }}
       >
         <Stack.Screen name="index" />
+        <Stack.Screen name="onboarding" options={{ headerShown: false }} />
         <Stack.Screen name="topic-input" />
         <Stack.Screen name="quiz" />
         <Stack.Screen name="leaderboard" />

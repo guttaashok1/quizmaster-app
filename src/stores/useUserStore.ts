@@ -16,6 +16,8 @@ import {
 
 interface UserState extends UserProfile {
   recentTopics: string[];
+  hasCompletedOnboarding: boolean;
+  hasReached100Points: boolean;
   updateAfterQuiz: (result: QuizResult, topic: string) => void;
   setUsername: (name: string) => void;
   setAvatar: (emoji: string) => void;
@@ -25,6 +27,7 @@ interface UserState extends UserProfile {
   completeDailyChallenge: (score: number) => void;
   addXP: (amount: number) => void;
   checkAchievements: () => Achievement[];
+  completeOnboarding: () => void;
 }
 
 const ACHIEVEMENT_DEFS = [
@@ -55,9 +58,11 @@ export const useUserStore = create<UserState>()(
       currentStreak: 0,
       longestStreak: 0,
       lastPlayedDate: null,
-      unlockedDifficulties: ['easy'] as Difficulty[],
+      unlockedDifficulties: ['easy', 'medium', 'hard'] as Difficulty[],
       achievements: [],
       recentTopics: [],
+      hasCompletedOnboarding: false,
+      hasReached100Points: false,
       streakFreezes: 1, // start with 1 free freeze
       streakFreezeUsedToday: false,
       dailyChallengeCompleted: null,
@@ -103,6 +108,11 @@ export const useUserStore = create<UserState>()(
           newXPToNext = XP_PER_LEVEL + (newLevel - 1) * 100; // escalating
         }
 
+        const rewardUpdate: Partial<UserState> = {};
+        if (!state.hasReached100Points && newTotalScore >= 100) {
+          rewardUpdate.hasReached100Points = true;
+        }
+
         set({
           totalScore: newTotalScore,
           gamesPlayed: state.gamesPlayed + 1,
@@ -116,6 +126,7 @@ export const useUserStore = create<UserState>()(
           xpCurrent: newXP,
           xpLevel: newLevel,
           xpToNextLevel: newXPToNext,
+          ...rewardUpdate,
         });
 
         // Check achievements after update
@@ -124,6 +135,7 @@ export const useUserStore = create<UserState>()(
 
       setUsername: (name) => set({ username: name }),
       setAvatar: (emoji) => set({ avatarEmoji: emoji }),
+      completeOnboarding: () => set({ hasCompletedOnboarding: true }),
 
       addAchievement: (achievement) =>
         set((state) => ({

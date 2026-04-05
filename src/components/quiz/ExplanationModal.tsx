@@ -64,9 +64,9 @@ export function ExplanationModal({
               {correct ? 'Correct!' : 'Wrong!'}
             </Text>
 
-            {correct && pointsEarned > 0 && (
-              <Text style={[styles.points, { color: colors.xp }]}>
-                +{pointsEarned} points
+            {pointsEarned !== 0 && (
+              <Text style={[styles.points, { color: correct ? colors.xp : colors.wrong }]}>
+                {pointsEarned > 0 ? `+${pointsEarned}` : `${pointsEarned}`} points
               </Text>
             )}
 
