@@ -166,7 +166,7 @@ export default function ResultsScreen() {
     { label: 'Correct', value: `${result.correctAnswers}/${result.totalQuestions}`, icon: '\u2705' },
     { label: 'Accuracy', value: `${percentage}%`, icon: '\uD83C\uDFAF' },
     { label: 'Time', value: `${result.timeTaken}s`, icon: '\u23F1\uFE0F' },
-    { label: 'Streak Bonus', value: `+${result.streakBonus}`, icon: '\uD83D\uDD25' },
+    { label: 'Difficulty', value: result.difficulty.charAt(0).toUpperCase() + result.difficulty.slice(1), icon: '\uD83D\uDD25' },
   ];
 
   return (

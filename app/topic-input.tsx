@@ -51,7 +51,7 @@ export default function TopicInputScreen() {
   const [difficulty, setDifficulty] = useState<Difficulty>('easy');
   const [loading, setLoading] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
-  const [selectedTypes, setSelectedTypes] = useState<QuestionType[]>(['mcq', 'true_false', 'fill_blank', 'matching']);
+  const [selectedTypes, setSelectedTypes] = useState<QuestionType[]>(['mcq']);
   const [inputMode, setInputMode] = useState<InputMode>('topic');
   const [pasteContent, setPasteContent] = useState('');
   const [urlInput, setUrlInput] = useState('');

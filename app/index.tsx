@@ -108,12 +108,15 @@ export default function HomeScreen() {
         <View>
           <Card elevated style={styles.challengeCard}>
             <Text style={[styles.challengeTitle, { color: colors.text }]}>
-              {'\uD83C\uDFAE'} Join a Challenge
+              {'\u2694\uFE0F'} Play with Friends
+            </Text>
+            <Text style={[styles.challengeHint, { color: colors.textMuted }]}>
+              To create a challenge: finish a quiz, then tap "Challenge" on the results screen. Share the code with friends!
             </Text>
             <View style={styles.challengeRow}>
               <TextInput
                 style={[styles.challengeInput, { color: colors.text, borderColor: colors.border, backgroundColor: colors.surface }]}
-                placeholder="Enter challenge code"
+                placeholder="Enter challenge code (e.g. ch_abc123)"
                 placeholderTextColor={colors.textMuted}
                 value={challengeCode}
                 onChangeText={(t) => { setChallengeCode(t); setChallengeError(''); }}
@@ -221,7 +224,8 @@ const styles = StyleSheet.create({
   statValue: { fontSize: 22, fontWeight: '800', marginBottom: 4 },
   statLabel: { fontSize: 13, fontWeight: '500' },
   challengeCard: { marginBottom: 16 },
-  challengeTitle: { fontSize: 16, fontWeight: '700', marginBottom: 10 },
+  challengeTitle: { fontSize: 16, fontWeight: '700', marginBottom: 4 },
+  challengeHint: { fontSize: 12, lineHeight: 17, marginBottom: 12 },
   challengeRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   challengeInput: { flex: 1, height: 44, borderWidth: 1, borderRadius: 10, paddingHorizontal: 12, fontSize: 15 },
   joinButton: { minWidth: 70 },
