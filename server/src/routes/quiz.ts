@@ -50,10 +50,12 @@ router.post('/generate', async (req: Request, res: Response) => {
       return;
     }
 
-    console.error('Quiz generation error:', error);
+    const errMsg = error instanceof Error ? error.message : String(error);
+    console.error('Quiz generation error:', errMsg);
     res.status(500).json({
       message: 'Failed to generate quiz questions',
       code: 'GENERATION_ERROR',
+      error: errMsg,
     });
   }
 });
