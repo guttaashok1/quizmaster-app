@@ -99,10 +99,11 @@ function DashboardView() {
     setChallengeError('');
     setChallengeLoading(true);
     try {
-      const challenge = await apiClient.getChallenge(code);
-      startQuiz(challenge.questions, challenge.topic, challenge.difficulty, false, null, challenge.id);
+      // Join the challenge on the server
+      await apiClient.joinChallenge(code, { name: user.username });
       setChallengeCode('');
-      router.push('/quiz/play');
+      // Navigate to lobby
+      router.push(`/lobby?id=${code}`);
     } catch {
       setChallengeError('Challenge not found. Check the code and try again.');
     } finally {

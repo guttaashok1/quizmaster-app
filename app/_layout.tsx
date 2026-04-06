@@ -24,6 +24,7 @@ function RootLayoutNav() {
         <Stack.Screen name="index" />
         <Stack.Screen name="onboarding" options={{ headerShown: false }} />
         <Stack.Screen name="topic-input" />
+        <Stack.Screen name="lobby" options={{ headerShown: false }} />
         <Stack.Screen name="quiz" />
         <Stack.Screen name="leaderboard" />
         <Stack.Screen name="profile" />

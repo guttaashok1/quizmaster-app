@@ -88,6 +88,18 @@ class ApiClient {
     return this.request(`/challenge/${id}/result`, { method: 'POST', body: JSON.stringify(data) });
   }
 
+  async joinChallenge(id: string, data: { name: string }): Promise<any> {
+    return this.request(`/challenge/${id}/join`, { method: 'POST', body: JSON.stringify(data) });
+  }
+
+  async startChallenge(id: string): Promise<any> {
+    return this.request(`/challenge/${id}/start`, { method: 'POST' });
+  }
+
+  async getChallengeStatus(id: string): Promise<{ status: string; participants: string[] }> {
+    return this.request(`/challenge/${id}/status`);
+  }
+
   async register(data: { username: string; password: string; avatarEmoji: string }): Promise<any> {
     return this.request('/auth/register', { method: 'POST', body: JSON.stringify(data) });
   }

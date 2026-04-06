@@ -3,6 +3,9 @@ import {
   createChallenge as dbCreateChallenge,
   getChallenge as dbGetChallenge,
   addChallengerResult,
+  joinChallenge as dbJoinChallenge,
+  startChallenge as dbStartChallenge,
+  getChallengeStatus as dbGetChallengeStatus,
 } from '../services/database';
 
 function generateId(): string {
@@ -82,6 +85,59 @@ router.post('/:id/result', async (req: Request, res: Response) => {
     const errMsg = error instanceof Error ? error.message : String(error);
     console.error('Challenge result error:', errMsg);
     res.status(500).json({ message: 'Failed to add result', code: 'SERVER_ERROR' });
+  }
+});
+
+// Join a challenge lobby
+router.post('/:id/join', async (req: Request, res: Response) => {
+  try {
+    const { name } = req.body;
+    if (!name) {
+      res.status(400).json({ message: 'Name is required', code: 'VALIDATION_ERROR' });
+      return;
+    }
+    const challenge = await dbJoinChallenge(req.params.id, name);
+    if (!challenge) {
+      res.status(404).json({ message: 'Challenge not found', code: 'NOT_FOUND' });
+      return;
+    }
+    res.json(challenge);
+  } catch (error) {
+    const errMsg = error instanceof Error ? error.message : String(error);
+    console.error('Join challenge error:', errMsg);
+    res.status(500).json({ message: 'Failed to join challenge', code: 'SERVER_ERROR' });
+  }
+});
+
+// Start a challenge (host only)
+router.post('/:id/start', async (req: Request, res: Response) => {
+  try {
+    const challenge = await dbStartChallenge(req.params.id);
+    if (!challenge) {
+      res.status(404).json({ message: 'Challenge not found', code: 'NOT_FOUND' });
+      return;
+    }
+    res.json(challenge);
+  } catch (error) {
+    const errMsg = error instanceof Error ? error.message : String(error);
+    console.error('Start challenge error:', errMsg);
+    res.status(500).json({ message: 'Failed to start challenge', code: 'SERVER_ERROR' });
+  }
+});
+
+// Get challenge status (lightweight, for polling)
+router.get('/:id/status', async (req: Request, res: Response) => {
+  try {
+    const status = await dbGetChallengeStatus(req.params.id);
+    if (!status) {
+      res.status(404).json({ message: 'Challenge not found', code: 'NOT_FOUND' });
+      return;
+    }
+    res.json(status);
+  } catch (error) {
+    const errMsg = error instanceof Error ? error.message : String(error);
+    console.error('Challenge status error:', errMsg);
+    res.status(500).json({ message: 'Failed to get status', code: 'SERVER_ERROR' });
   }
 });
 

@@ -117,14 +117,8 @@ export default function TopicInputScreen() {
             creatorName: username,
             creatorScore: 0,
           });
-          startQuiz(response.questions, topicText, difficulty, true, timePerQuestion, challenge.id);
-          const msg = `Challenge Created!\n\nShare this code with friends: ${challenge.id}\n\nThey can enter it on the home screen to play the same quiz!`;
-          if (Platform.OS === 'web' && typeof window !== 'undefined') {
-            window.alert(msg);
-          } else {
-            Alert.alert('Challenge Created!', `Share this code with friends: ${challenge.id}\n\nThey can enter it on their home screen to play the same quiz!`);
-          }
-          router.push('/quiz/play');
+          // Navigate to lobby instead of starting quiz directly
+          router.push(`/lobby?id=${challenge.id}&host=true`);
           return;
         } catch {
           // Fall through to normal quiz if challenge creation fails

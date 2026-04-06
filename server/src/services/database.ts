@@ -35,6 +35,9 @@ export async function initDatabase(): Promise<void> {
       )
     `);
 
+    await pool.query(`ALTER TABLE challenges ADD COLUMN IF NOT EXISTS status VARCHAR(20) DEFAULT 'waiting'`);
+    await pool.query(`ALTER TABLE challenges ADD COLUMN IF NOT EXISTS participants JSONB DEFAULT '[]'`);
+
     console.log('Database tables ready');
   } catch (err) {
     console.error('Database init error:', err);
@@ -118,11 +121,13 @@ interface Challenge {
   creatorScore: number;
   challengers: Challenger[];
   createdAt: string;
+  status?: string;
+  participants?: string[];
 }
 
 export async function createChallenge(challenge: Challenge): Promise<Challenge> {
   await pool.query(
-    'INSERT INTO challenges (id, topic, difficulty, questions, creator_name, creator_score, challengers) VALUES ($1, $2, $3, $4, $5, $6, $7)',
+    'INSERT INTO challenges (id, topic, difficulty, questions, creator_name, creator_score, challengers, status, participants) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)',
     [
       challenge.id,
       challenge.topic,
@@ -131,9 +136,11 @@ export async function createChallenge(challenge: Challenge): Promise<Challenge> 
       challenge.creatorName,
       challenge.creatorScore,
       JSON.stringify(challenge.challengers),
+      'waiting',
+      JSON.stringify([challenge.creatorName]),
     ]
   );
-  return challenge;
+  return { ...challenge, status: 'waiting', participants: [challenge.creatorName] };
 }
 
 export async function getChallenge(id: string): Promise<Challenge | null> {
@@ -149,6 +156,8 @@ export async function getChallenge(id: string): Promise<Challenge | null> {
     creatorScore: row.creator_score,
     challengers: row.challengers,
     createdAt: row.created_at,
+    status: row.status || 'waiting',
+    participants: row.participants || [],
   };
 }
 
@@ -167,4 +176,52 @@ export async function addChallengerResult(
     [id, JSON.stringify(challenge.challengers)]
   );
   return challenge;
+}
+
+export async function joinChallenge(id: string, name: string): Promise<Challenge | null> {
+  const challenge = await getChallenge(id);
+  if (!challenge) return null;
+
+  if (!challenge.participants) challenge.participants = [];
+  if (!(challenge.participants as string[]).includes(name)) {
+    (challenge.participants as string[]).push(name);
+    await pool.query(
+      'UPDATE challenges SET participants = $2 WHERE id = $1',
+      [id, JSON.stringify(challenge.participants)]
+    );
+  }
+  return { ...challenge, participants: challenge.participants };
+}
+
+export async function startChallenge(id: string): Promise<Challenge | null> {
+  const result = await pool.query(
+    "UPDATE challenges SET status = 'started' WHERE id = $1 RETURNING *",
+    [id]
+  );
+  if (result.rows.length === 0) return null;
+  const row = result.rows[0];
+  return {
+    id: row.id,
+    topic: row.topic,
+    difficulty: row.difficulty,
+    questions: row.questions,
+    creatorName: row.creator_name,
+    creatorScore: row.creator_score,
+    challengers: row.challengers,
+    createdAt: row.created_at,
+    status: row.status,
+    participants: row.participants,
+  };
+}
+
+export async function getChallengeStatus(id: string): Promise<{ status: string; participants: string[] } | null> {
+  const result = await pool.query(
+    'SELECT status, participants FROM challenges WHERE id = $1',
+    [id]
+  );
+  if (result.rows.length === 0) return null;
+  return {
+    status: result.rows[0].status || 'waiting',
+    participants: result.rows[0].participants || [],
+  };
 }
