@@ -14,8 +14,13 @@ function getApiBaseUrl(): string {
     return process.env.EXPO_PUBLIC_API_URL;
   }
 
-  // On web, localhost works fine
-  if (Platform.OS === 'web') {
+  // On web: detect if we're on the deployed site or localhost
+  if (Platform.OS === 'web' && typeof window !== 'undefined') {
+    const hostname = window.location.hostname;
+    if (hostname.includes('onrender.com')) {
+      // Deployed on Render — use the production API
+      return 'https://quizmaster-api-2os8.onrender.com/api';
+    }
     return 'http://localhost:3001/api';
   }
 
