@@ -54,6 +54,7 @@ export default function ResultsScreen() {
   const { colors, spacing } = useTheme();
   const getResult = useQuizStore((s) => s.getResult);
   const resetQuiz = useQuizStore((s) => s.resetQuiz);
+  const startQuiz = useQuizStore((s) => s.startQuiz);
   const topic = useQuizStore((s) => s.topic);
   const difficulty = useQuizStore((s) => s.difficulty);
   const questions = useQuizStore((s) => s.questions);
@@ -122,38 +123,34 @@ export default function ResultsScreen() {
     } catch {}
   };
 
-  const handleCreateChallenge = async () => {
+  const [challengeLoading, setChallengeLoading] = useState(false);
+
+  const handleChallenge = async () => {
+    // Same topic, same number of questions, but harder difficulty
+    const difficulties: ('easy' | 'medium' | 'hard')[] = ['easy', 'medium', 'hard'];
+    const currentIdx = difficulties.indexOf(result.difficulty as any);
+    const nextDifficulty = difficulties[Math.min(currentIdx + 1, 2)]; // go up one level, max hard
+
+    setChallengeLoading(true);
     try {
-      const serverChallenge = await apiClient.createChallenge({
-        topic,
-        difficulty: result.difficulty,
-        questions,
-        creatorName: username,
-        creatorScore: result.score,
+      const response = await apiClient.generateQuiz({
+        topic: result.topic,
+        count: result.totalQuestions,
+        difficulty: nextDifficulty,
+        questionTypes: ['mcq'],
       });
-      const msg = `Share this code with friends: ${serverChallenge.id}\n\nThey can enter it on the home screen to play the same quiz and try to beat your score of ${result.score}!`;
+      resetQuiz();
+      startQuiz(response.questions, result.topic, nextDifficulty, true, null);
+      router.replace('/quiz/play');
+    } catch {
+      const msg = 'Could not generate challenge questions. Please try again.';
       if (typeof window !== 'undefined' && window.alert) {
-        window.alert(`Challenge Created!\n\n${msg}`);
+        window.alert(msg);
       } else {
-        Alert.alert('Challenge Created!', msg);
+        Alert.alert('Error', msg);
       }
-    } catch (err) {
-      // Fallback to local-only challenge
-      try {
-        const challenge = createChallenge(topic, result.difficulty, questions, username, result.score);
-        const msg = `Share code: ${challenge.id}\nNote: This challenge is only available on this device.`;
-        if (typeof window !== 'undefined' && window.alert) {
-          window.alert(`Challenge Created (Offline)\n\n${msg}`);
-        } else {
-          Alert.alert('Challenge Created (Offline)', msg);
-        }
-      } catch {
-        if (typeof window !== 'undefined' && window.alert) {
-          window.alert('Could not create challenge. Please try again.');
-        } else {
-          Alert.alert('Error', 'Could not create challenge. Please try again.');
-        }
-      }
+    } finally {
+      setChallengeLoading(false);
     }
   };
 
@@ -286,7 +283,15 @@ export default function ResultsScreen() {
           />
           <View style={styles.actionRow}>
             <Button title="Share" onPress={handleShare} variant="outline" size="md" style={{ flex: 1 }} icon={<Text>{'\uD83D\uDCE4'}</Text>} />
-            <Button title="Challenge" onPress={handleCreateChallenge} variant="outline" size="md" style={{ flex: 1 }} icon={<Text>{'\u2694\uFE0F'}</Text>} />
+            <Button
+              title={challengeLoading ? 'Loading...' : result.difficulty === 'hard' ? 'Challenge (Hard)' : 'Challenge Harder'}
+              onPress={handleChallenge}
+              variant="outline"
+              size="md"
+              style={{ flex: 1 }}
+              disabled={challengeLoading}
+              icon={<Text>{'\uD83D\uDD25'}</Text>}
+            />
           </View>
           <View style={styles.actionRow}>
             <Button title="Save Deck" onPress={handleSaveDeck} variant="ghost" size="md" style={{ flex: 1 }} icon={<Text>{'\uD83D\uDCBE'}</Text>} />
