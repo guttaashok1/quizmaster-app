@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react';
-import { Platform, StatusBar } from 'react-native';
-import { Stack, useRouter } from 'expo-router';
+import { useEffect, useState, useCallback } from 'react';
+import { StatusBar, View, Text, StyleSheet, Platform } from 'react-native';
+import { Stack, useRouter, useSegments } from 'expo-router';
 import { useFonts } from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
 import 'react-native-reanimated';
@@ -9,58 +9,69 @@ import { useUserStore } from '../src/stores/useUserStore';
 
 SplashScreen.preventAutoHideAsync();
 
+function useStoreHydration(): boolean {
+  const [hydrated, setHydrated] = useState(false);
+
+  useEffect(() => {
+    // Check if already hydrated
+    if (useUserStore.persist.hasHydrated()) {
+      setHydrated(true);
+      return;
+    }
+
+    // Listen for hydration to finish
+    const unsub = useUserStore.persist.onFinishHydration(() => {
+      setHydrated(true);
+    });
+
+    // Fallback for web: manually check localStorage
+    if (Platform.OS === 'web' && typeof window !== 'undefined') {
+      // Give AsyncStorage a moment to load, then check
+      const timer = setTimeout(() => {
+        if (!useUserStore.persist.hasHydrated()) {
+          // Force re-check — AsyncStorage on web is synchronous via localStorage
+          setHydrated(true);
+        }
+      }, 500);
+      return () => { unsub(); clearTimeout(timer); };
+    }
+
+    return unsub;
+  }, []);
+
+  return hydrated;
+}
+
 function RootLayoutNav() {
   const { colors, isDark } = useTheme();
   const router = useRouter();
+  const segments = useSegments();
+  const hydrated = useStoreHydration();
   const hasCompletedOnboarding = useUserStore((s) => s.hasCompletedOnboarding);
-  const [ready, setReady] = useState(false);
 
-  // Wait for store to rehydrate before making any routing decisions
   useEffect(() => {
-    let timeout: ReturnType<typeof setTimeout>;
+    if (!hydrated) return;
 
-    const checkHydration = () => {
-      try {
-        if (useUserStore.persist.hasHydrated()) {
-          setReady(true);
-          return;
-        }
-      } catch {}
+    const onAuthScreen = segments[0] === 'welcome' || segments[0] === 'onboarding';
 
-      // Fallback: check localStorage directly on web
-      if (Platform.OS === 'web' && typeof window !== 'undefined') {
-        try {
-          const stored = localStorage.getItem('user-storage');
-          if (stored) {
-            const parsed = JSON.parse(stored);
-            if (parsed?.state?.hasCompletedOnboarding === true) {
-              setReady(true);
-              return;
-            }
-          }
-        } catch {}
-      }
-
-      // Also listen for hydration event
-      const unsub = useUserStore.persist.onFinishHydration(() => {
-        setReady(true);
-        unsub();
-      });
-
-      // Safety timeout — if hydration takes too long, proceed anyway
-      timeout = setTimeout(() => setReady(true), 1500);
-    };
-
-    checkHydration();
-    return () => clearTimeout(timeout);
-  }, []);
-
-  // Only redirect to welcome if store is hydrated AND user hasn't onboarded
-  useEffect(() => {
-    if (ready && !hasCompletedOnboarding) {
+    if (!hasCompletedOnboarding && !onAuthScreen) {
+      // Not logged in and not on auth screen -> go to welcome
       router.replace('/welcome');
+    } else if (hasCompletedOnboarding && onAuthScreen) {
+      // Already logged in but on auth screen -> go to home
+      router.replace('/');
     }
-  }, [ready, hasCompletedOnboarding]);
+  }, [hydrated, hasCompletedOnboarding, segments]);
+
+  // Show loading screen while store hydrates
+  if (!hydrated) {
+    return (
+      <View style={[styles.loading, { backgroundColor: colors.background }]}>
+        <Text style={{ fontSize: 48 }}>{'\uD83E\uDDE0'}</Text>
+        <Text style={[styles.loadingText, { color: colors.textMuted }]}>Loading...</Text>
+      </View>
+    );
+  }
 
   return (
     <>
@@ -107,3 +118,16 @@ export default function RootLayout() {
     </ThemeProvider>
   );
 }
+
+const styles = StyleSheet.create({
+  loading: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 12,
+  },
+  loadingText: {
+    fontSize: 16,
+    fontWeight: '600',
+  },
+});

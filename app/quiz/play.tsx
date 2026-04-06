@@ -62,7 +62,7 @@ export default function QuizPlayScreen() {
 
   useEffect(() => {
     if (status === 'idle' || questions.length === 0) {
-      router.replace('/topic-input');
+      router.replace('/');
     }
   }, [status, questions.length]);
 
