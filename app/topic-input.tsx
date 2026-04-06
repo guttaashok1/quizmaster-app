@@ -63,6 +63,7 @@ export default function TopicInputScreen() {
   const [errorMessage, setErrorMessage] = useState('');
   const { challenge } = useLocalSearchParams<{ challenge?: string }>();
   const [challengeMode, setChallengeMode] = useState(challenge === 'true');
+  const [challengeVisibility, setChallengeVisibility] = useState<'public' | 'private'>('public');
   const scrollRef = useRef<ScrollView>(null);
 
   const toggleType = (type: QuestionType) => {
@@ -116,6 +117,7 @@ export default function TopicInputScreen() {
             questions: response.questions,
             creatorName: username,
             creatorScore: 0,
+            visibility: challengeVisibility,
           });
           // Navigate to lobby instead of starting quiz directly
           router.push(`/lobby?id=${challenge.id}&host=true`);
@@ -132,7 +134,7 @@ export default function TopicInputScreen() {
     } finally {
       setLoading(false);
     }
-  }, [topic, difficulty, startQuiz, router, selectedTypes, inputMode, pasteContent, urlInput, challengeMode, username]);
+  }, [topic, difficulty, startQuiz, router, selectedTypes, inputMode, pasteContent, urlInput, challengeMode, username, challengeVisibility]);
 
   const handleVoicePress = async () => {
     if (Platform.OS === 'web') {
@@ -354,6 +356,31 @@ export default function TopicInputScreen() {
           />
         </View>
 
+        {challengeMode && (
+          <View style={[styles.visibilityRow, { marginBottom: 16 }]}>
+            <TouchableOpacity
+              onPress={() => setChallengeVisibility('public')}
+              style={[styles.visibilityBtn, {
+                backgroundColor: challengeVisibility === 'public' ? colors.correct + '20' : colors.surface,
+                borderColor: challengeVisibility === 'public' ? colors.correct : colors.border,
+                borderRadius: borderRadius.sm,
+              }]}
+            >
+              <Text style={{ color: challengeVisibility === 'public' ? colors.correct : colors.text, fontSize: 13, fontWeight: '600' }}>{'\uD83C\uDF0D'} Public</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => setChallengeVisibility('private')}
+              style={[styles.visibilityBtn, {
+                backgroundColor: challengeVisibility === 'private' ? colors.primary + '20' : colors.surface,
+                borderColor: challengeVisibility === 'private' ? colors.primary : colors.border,
+                borderRadius: borderRadius.sm,
+              }]}
+            >
+              <Text style={{ color: challengeVisibility === 'private' ? colors.primary : colors.text, fontSize: 13, fontWeight: '600' }}>{'\uD83D\uDD12'} Private</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+
         <View>
           <Button
             title={loading ? 'Generating Questions...' : challengeMode ? 'Create Challenge' : 'Generate Quiz'}
@@ -395,6 +422,8 @@ const styles = StyleSheet.create({
   challengeToggle: { flexDirection: 'row', alignItems: 'center', padding: 16, borderWidth: 1, marginBottom: 16 },
   challengeToggleTitle: { fontSize: 15, fontWeight: '700' },
   challengeToggleHint: { fontSize: 12, marginTop: 2 },
+  visibilityRow: { flexDirection: 'row', gap: 8 },
+  visibilityBtn: { flex: 1, paddingVertical: 10, alignItems: 'center', borderWidth: 1 },
   chipsContainer: { flexDirection: 'row', flexWrap: 'wrap', marginBottom: 24 },
   reviewBanner: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 20, borderWidth: 1 },
   reviewIcon: { fontSize: 28 },

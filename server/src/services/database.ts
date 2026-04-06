@@ -37,6 +37,7 @@ export async function initDatabase(): Promise<void> {
 
     await pool.query(`ALTER TABLE challenges ADD COLUMN IF NOT EXISTS status VARCHAR(20) DEFAULT 'waiting'`);
     await pool.query(`ALTER TABLE challenges ADD COLUMN IF NOT EXISTS participants JSONB DEFAULT '[]'`);
+    await pool.query(`ALTER TABLE challenges ADD COLUMN IF NOT EXISTS visibility VARCHAR(10) DEFAULT 'private'`);
 
     console.log('Database tables ready');
   } catch (err) {
@@ -123,11 +124,12 @@ interface Challenge {
   createdAt: string;
   status?: string;
   participants?: string[];
+  visibility?: string;
 }
 
 export async function createChallenge(challenge: Challenge): Promise<Challenge> {
   await pool.query(
-    'INSERT INTO challenges (id, topic, difficulty, questions, creator_name, creator_score, challengers, status, participants) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)',
+    'INSERT INTO challenges (id, topic, difficulty, questions, creator_name, creator_score, challengers, status, participants, visibility) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)',
     [
       challenge.id,
       challenge.topic,
@@ -138,9 +140,10 @@ export async function createChallenge(challenge: Challenge): Promise<Challenge> 
       JSON.stringify(challenge.challengers),
       'waiting',
       JSON.stringify([challenge.creatorName]),
+      challenge.visibility || 'private',
     ]
   );
-  return { ...challenge, status: 'waiting', participants: [challenge.creatorName] };
+  return { ...challenge, status: 'waiting', participants: [challenge.creatorName], visibility: challenge.visibility || 'private' };
 }
 
 export async function getChallenge(id: string): Promise<Challenge | null> {
@@ -158,7 +161,47 @@ export async function getChallenge(id: string): Promise<Challenge | null> {
     createdAt: row.created_at,
     status: row.status || 'waiting',
     participants: row.participants || [],
+    visibility: row.visibility || 'private',
   };
+}
+
+export async function getPublicChallenges(): Promise<Omit<Challenge, 'questions'>[]> {
+  const result = await pool.query(
+    "SELECT id, topic, difficulty, creator_name, creator_score, challengers, created_at, status, participants, visibility FROM challenges WHERE visibility = 'public' AND status = 'waiting' ORDER BY created_at DESC LIMIT 20"
+  );
+  return result.rows.map(row => ({
+    id: row.id,
+    topic: row.topic,
+    difficulty: row.difficulty,
+    questions: [],
+    creatorName: row.creator_name,
+    creatorScore: row.creator_score,
+    challengers: row.challengers || [],
+    createdAt: row.created_at,
+    status: row.status || 'waiting',
+    participants: row.participants || [],
+    visibility: row.visibility || 'private',
+  }));
+}
+
+export async function getMyChallenges(username: string): Promise<Omit<Challenge, 'questions'>[]> {
+  const result = await pool.query(
+    "SELECT id, topic, difficulty, creator_name, creator_score, challengers, created_at, status, participants, visibility FROM challenges WHERE LOWER(creator_name) = LOWER($1) ORDER BY created_at DESC LIMIT 20",
+    [username]
+  );
+  return result.rows.map(row => ({
+    id: row.id,
+    topic: row.topic,
+    difficulty: row.difficulty,
+    questions: [],
+    creatorName: row.creator_name,
+    creatorScore: row.creator_score,
+    challengers: row.challengers || [],
+    createdAt: row.created_at,
+    status: row.status || 'waiting',
+    participants: row.participants || [],
+    visibility: row.visibility || 'private',
+  }));
 }
 
 export async function addChallengerResult(

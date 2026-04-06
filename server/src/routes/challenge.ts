@@ -6,6 +6,8 @@ import {
   joinChallenge as dbJoinChallenge,
   startChallenge as dbStartChallenge,
   getChallengeStatus as dbGetChallengeStatus,
+  getPublicChallenges as dbGetPublicChallenges,
+  getMyChallenges as dbGetMyChallenges,
 } from '../services/database';
 
 function generateId(): string {
@@ -22,7 +24,7 @@ const router = Router();
 // Create a new challenge
 router.post('/', async (req: Request, res: Response) => {
   try {
-    const { topic, difficulty, questions, creatorName, creatorScore } = req.body;
+    const { topic, difficulty, questions, creatorName, creatorScore, visibility } = req.body;
 
     if (!topic || !difficulty || !questions || !creatorName || creatorScore == null) {
       res.status(400).json({ message: 'Missing required fields', code: 'VALIDATION_ERROR' });
@@ -39,6 +41,7 @@ router.post('/', async (req: Request, res: Response) => {
       creatorScore,
       challengers: [],
       createdAt: new Date().toISOString(),
+      visibility: visibility || 'private',
     });
 
     res.json(challenge);
@@ -46,6 +49,30 @@ router.post('/', async (req: Request, res: Response) => {
     const errMsg = error instanceof Error ? error.message : String(error);
     console.error('Challenge creation error:', errMsg);
     res.status(500).json({ message: 'Failed to create challenge', code: 'CHALLENGE_ERROR' });
+  }
+});
+
+// List public waiting challenges
+router.get('/public', async (_req: Request, res: Response) => {
+  try {
+    const challenges = await dbGetPublicChallenges();
+    res.json(challenges);
+  } catch (error) {
+    const errMsg = error instanceof Error ? error.message : String(error);
+    console.error('Public challenges error:', errMsg);
+    res.status(500).json({ message: 'Failed to get public challenges', code: 'SERVER_ERROR' });
+  }
+});
+
+// List my challenges
+router.get('/mine/:username', async (req: Request, res: Response) => {
+  try {
+    const challenges = await dbGetMyChallenges(req.params.username);
+    res.json(challenges);
+  } catch (error) {
+    const errMsg = error instanceof Error ? error.message : String(error);
+    console.error('My challenges error:', errMsg);
+    res.status(500).json({ message: 'Failed to get challenges', code: 'SERVER_ERROR' });
   }
 });
 

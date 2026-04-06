@@ -153,6 +153,16 @@ export default function LobbyScreen() {
           <Text style={[styles.topicText, { color: colors.textSecondary }]}>
             {challenge?.topic} - {challenge?.difficulty}
           </Text>
+          {challenge?.visibility && (
+            <View style={[styles.visibilityBadge, {
+              backgroundColor: challenge.visibility === 'public' ? colors.correct + '20' : colors.primary + '20',
+              borderRadius: borderRadius.full
+            }]}>
+              <Text style={{ fontSize: 12, fontWeight: '600', color: challenge.visibility === 'public' ? colors.correct : colors.primary }}>
+                {challenge.visibility === 'public' ? '\uD83C\uDF0D Public' : '\uD83D\uDD12 Private'}
+              </Text>
+            </View>
+          )}
         </Animated.View>
 
         {/* Challenge Code */}
@@ -255,4 +265,5 @@ const styles = StyleSheet.create({
   actions: { paddingBottom: 8 },
   waitingBanner: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, padding: 16, marginBottom: 12 },
   waitingBannerText: { fontSize: 15, fontWeight: '600' },
+  visibilityBadge: { paddingHorizontal: 12, paddingVertical: 4, marginTop: 8 },
 });

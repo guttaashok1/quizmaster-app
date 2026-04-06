@@ -92,6 +92,35 @@ function DashboardView() {
   const [challengeCode, setChallengeCode] = useState('');
   const [challengeError, setChallengeError] = useState('');
   const [challengeLoading, setChallengeLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState<'live' | 'mine' | 'code'>('live');
+  const [publicChallenges, setPublicChallenges] = useState<any[]>([]);
+  const [myChallenges, setMyChallenges] = useState<any[]>([]);
+  const [loadingChallenges, setLoadingChallenges] = useState(false);
+
+  useEffect(() => {
+    const loadChallenges = async () => {
+      setLoadingChallenges(true);
+      try {
+        const [pub, mine] = await Promise.all([
+          apiClient.getPublicChallenges().catch(() => []),
+          apiClient.getMyChallenges(user.username).catch(() => []),
+        ]);
+        setPublicChallenges(pub);
+        setMyChallenges(mine);
+      } catch {}
+      setLoadingChallenges(false);
+    };
+    loadChallenges();
+  }, []);
+
+  const handleJoinPublic = async (challengeId: string) => {
+    try {
+      await apiClient.joinChallenge(challengeId, { name: user.username });
+      router.push(`/lobby?id=${challengeId}`);
+    } catch {
+      // silently fail
+    }
+  };
 
   const handleJoinChallenge = async () => {
     const code = challengeCode.trim();
@@ -147,42 +176,118 @@ function DashboardView() {
           icon={<Text style={{ fontSize: 20 }}>{'\uD83D\uDE80'}</Text>}
         />
 
-        {/* Play with Friends */}
-        <Card elevated style={styles.challengeCard}>
-          <Text style={[styles.challengeTitle, { color: colors.text }]}>
-            {'\u2694\uFE0F'} Play with Friends
-          </Text>
-          <View style={styles.challengeBtns}>
+        {/* Challenges Section */}
+        <Text style={[styles.sectionTitle, { color: colors.text }]}>{'\u2694\uFE0F'} Challenges</Text>
+
+        {/* Tabs */}
+        <View style={styles.tabRow}>
+          {[
+            { key: 'live', label: 'Live', icon: '\uD83C\uDF0D' },
+            { key: 'mine', label: 'Mine', icon: '\uD83D\uDC51' },
+            { key: 'code', label: 'Join Code', icon: '\uD83D\uDD11' },
+          ].map(tab => (
             <TouchableOpacity
-              onPress={() => router.push('/topic-input?challenge=true')}
-              style={[styles.createBtn, { backgroundColor: colors.primary + '15', borderColor: colors.primary, borderRadius: borderRadius.sm }]}
+              key={tab.key}
+              onPress={() => setActiveTab(tab.key as any)}
+              style={[styles.tab, {
+                backgroundColor: activeTab === tab.key ? colors.primary : colors.surface,
+                borderColor: activeTab === tab.key ? colors.primary : colors.border,
+                borderRadius: borderRadius.full,
+              }]}
             >
-              <Text style={[styles.createBtnText, { color: colors.primary }]}>{'\u2795'} Create Challenge</Text>
+              <Text style={{ fontSize: 12, fontWeight: '600', color: activeTab === tab.key ? colors.textOnPrimary : colors.text }}>
+                {tab.icon} {tab.label}
+              </Text>
             </TouchableOpacity>
+          ))}
+        </View>
+
+        {/* Live public challenges */}
+        {activeTab === 'live' && (
+          <View style={styles.challengeList}>
+            {loadingChallenges ? (
+              <ActivityIndicator size="small" color={colors.primary} style={{ padding: 20 }} />
+            ) : publicChallenges.length === 0 ? (
+              <Text style={[styles.emptyText, { color: colors.textMuted }]}>No live challenges right now. Create one!</Text>
+            ) : (
+              publicChallenges.map(ch => (
+                <View key={ch.id} style={[styles.challengeItem, { backgroundColor: colors.surface, borderColor: colors.border, borderRadius: borderRadius.sm }]}>
+                  <View style={{ flex: 1 }}>
+                    <Text style={[styles.challengeItemTopic, { color: colors.text }]}>{ch.topic}</Text>
+                    <Text style={[styles.challengeItemMeta, { color: colors.textMuted }]}>
+                      {ch.difficulty} · {(ch.participants || []).length} player{(ch.participants || []).length !== 1 ? 's' : ''} · by {ch.creatorName}
+                    </Text>
+                  </View>
+                  <TouchableOpacity
+                    onPress={() => handleJoinPublic(ch.id)}
+                    style={[styles.joinSmallBtn, { backgroundColor: colors.primary, borderRadius: borderRadius.sm }]}
+                  >
+                    <Text style={{ color: '#fff', fontSize: 12, fontWeight: '700' }}>Join</Text>
+                  </TouchableOpacity>
+                </View>
+              ))
+            )}
           </View>
-          <Text style={[styles.orText, { color: colors.textMuted }]}>or join with a code</Text>
-          <View style={styles.challengeRow}>
-            <TextInput
-              style={[styles.challengeInput, { color: colors.text, borderColor: colors.border, backgroundColor: colors.surface, borderRadius: borderRadius.sm }]}
-              placeholder="e.g. ch_abc123"
-              placeholderTextColor={colors.textMuted}
-              value={challengeCode}
-              onChangeText={(t) => { setChallengeCode(t); setChallengeError(''); }}
-              autoCapitalize="none"
-            />
-            <Button
-              title={challengeLoading ? '' : 'Join'}
-              onPress={handleJoinChallenge}
-              variant="primary"
-              size="md"
-              style={styles.joinButton}
-              disabled={challengeLoading || !challengeCode.trim()}
-            />
+        )}
+
+        {/* My challenges */}
+        {activeTab === 'mine' && (
+          <View style={styles.challengeList}>
+            {myChallenges.length === 0 ? (
+              <Text style={[styles.emptyText, { color: colors.textMuted }]}>You haven't created any challenges yet.</Text>
+            ) : (
+              myChallenges.map(ch => (
+                <TouchableOpacity
+                  key={ch.id}
+                  onPress={() => router.push(`/lobby?id=${ch.id}&host=true`)}
+                  style={[styles.challengeItem, { backgroundColor: colors.surface, borderColor: colors.border, borderRadius: borderRadius.sm }]}
+                >
+                  <View style={{ flex: 1 }}>
+                    <Text style={[styles.challengeItemTopic, { color: colors.text }]}>{ch.topic}</Text>
+                    <Text style={[styles.challengeItemMeta, { color: colors.textMuted }]}>
+                      {ch.difficulty} · {(ch.participants || []).length} players · {ch.id}
+                    </Text>
+                  </View>
+                  <View style={[styles.statusBadge, {
+                    backgroundColor: ch.status === 'waiting' ? colors.warning + '20' : ch.status === 'started' ? colors.correct + '20' : colors.textMuted + '20',
+                    borderRadius: borderRadius.full,
+                  }]}>
+                    <Text style={{ fontSize: 10, fontWeight: '700', color: ch.status === 'waiting' ? colors.warning : ch.status === 'started' ? colors.correct : colors.textMuted }}>
+                      {ch.status === 'waiting' ? 'OPEN' : ch.status === 'started' ? 'LIVE' : 'DONE'}
+                    </Text>
+                  </View>
+                </TouchableOpacity>
+              ))
+            )}
           </View>
-          {challengeError ? (
-            <Text style={[styles.challengeErrorText, { color: colors.wrong }]}>{challengeError}</Text>
-          ) : null}
-        </Card>
+        )}
+
+        {/* Join by code */}
+        {activeTab === 'code' && (
+          <View style={styles.codeSection}>
+            <View style={styles.challengeRow}>
+              <TextInput
+                style={[styles.challengeInput, { color: colors.text, borderColor: colors.border, backgroundColor: colors.surface, borderRadius: borderRadius.sm }]}
+                placeholder="e.g. ch_abc123"
+                placeholderTextColor={colors.textMuted}
+                value={challengeCode}
+                onChangeText={(t) => { setChallengeCode(t); setChallengeError(''); }}
+                autoCapitalize="none"
+              />
+              <Button
+                title={challengeLoading ? '' : 'Join'}
+                onPress={handleJoinChallenge}
+                variant="primary"
+                size="md"
+                style={styles.joinButton}
+                disabled={challengeLoading || !challengeCode.trim()}
+              />
+            </View>
+            {challengeError ? (
+              <Text style={[styles.challengeErrorText, { color: colors.wrong }]}>{challengeError}</Text>
+            ) : null}
+          </View>
+        )}
 
         {/* Compact Stats */}
         <Text style={[styles.sectionTitle, { color: colors.text }]}>Stats</Text>
@@ -316,12 +421,16 @@ const styles = StyleSheet.create({
   bannerLevel: { fontSize: 13, fontWeight: '600', marginTop: 2 },
   profileLink: { fontSize: 14, fontWeight: '600' },
   startButton: { marginBottom: 16 },
-  challengeCard: { marginBottom: 16 },
-  challengeTitle: { fontSize: 16, fontWeight: '700', marginBottom: 10 },
-  challengeBtns: { marginBottom: 10 },
-  createBtn: { paddingVertical: 10, paddingHorizontal: 16, borderWidth: 1, alignItems: 'center' },
-  createBtnText: { fontSize: 14, fontWeight: '700' },
-  orText: { fontSize: 12, textAlign: 'center', marginBottom: 8 },
+  tabRow: { flexDirection: 'row', gap: 6, marginBottom: 12 },
+  tab: { flex: 1, paddingVertical: 8, alignItems: 'center', borderWidth: 1 },
+  challengeList: { marginBottom: 16 },
+  challengeItem: { flexDirection: 'row', alignItems: 'center', padding: 12, borderWidth: 1, marginBottom: 8 },
+  challengeItemTopic: { fontSize: 14, fontWeight: '700' },
+  challengeItemMeta: { fontSize: 11, marginTop: 2 },
+  joinSmallBtn: { paddingHorizontal: 14, paddingVertical: 6 },
+  statusBadge: { paddingHorizontal: 8, paddingVertical: 3 },
+  emptyText: { fontSize: 13, textAlign: 'center', padding: 20 },
+  codeSection: { marginBottom: 16 },
   challengeRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   challengeInput: { flex: 1, height: 40, borderWidth: 1, paddingHorizontal: 10, fontSize: 14 },
   joinButton: { minWidth: 60 },
