@@ -131,25 +131,40 @@ export default function ResultsScreen() {
         creatorName: username,
         creatorScore: result.score,
       });
-      // Also save locally
-      createChallenge(topic, result.difficulty, questions, username, result.score);
-      Alert.alert(
-        'Challenge Created!',
-        `Share code: ${serverChallenge.id}\nYour friends can use this to play the same quiz and try to beat your score of ${result.score}!`
-      );
-    } catch {
+      const msg = `Share this code with friends: ${serverChallenge.id}\n\nThey can enter it on the home screen to play the same quiz and try to beat your score of ${result.score}!`;
+      if (typeof window !== 'undefined' && window.alert) {
+        window.alert(`Challenge Created!\n\n${msg}`);
+      } else {
+        Alert.alert('Challenge Created!', msg);
+      }
+    } catch (err) {
       // Fallback to local-only challenge
-      const challenge = createChallenge(topic, result.difficulty, questions, username, result.score);
-      Alert.alert(
-        'Challenge Created (Offline)',
-        `Share code: ${challenge.id}\nNote: This challenge is only available on this device.`
-      );
+      try {
+        const challenge = createChallenge(topic, result.difficulty, questions, username, result.score);
+        const msg = `Share code: ${challenge.id}\nNote: This challenge is only available on this device.`;
+        if (typeof window !== 'undefined' && window.alert) {
+          window.alert(`Challenge Created (Offline)\n\n${msg}`);
+        } else {
+          Alert.alert('Challenge Created (Offline)', msg);
+        }
+      } catch {
+        if (typeof window !== 'undefined' && window.alert) {
+          window.alert('Could not create challenge. Please try again.');
+        } else {
+          Alert.alert('Error', 'Could not create challenge. Please try again.');
+        }
+      }
     }
   };
 
   const handleSaveDeck = () => {
     saveDeck(topic, questions);
-    Alert.alert('Deck Saved!', 'You can replay this quiz anytime from your saved decks.');
+    const msg = 'You can replay this quiz anytime from your saved decks.';
+    if (typeof window !== 'undefined' && window.alert) {
+      window.alert(`Deck Saved!\n\n${msg}`);
+    } else {
+      Alert.alert('Deck Saved!', msg);
+    }
   };
 
   const handleReviewQuiz = () => {
