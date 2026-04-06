@@ -81,20 +81,30 @@ export default function LobbyScreen() {
     };
   }, [id, status, isHost, challenge]);
 
-  const handleStartQuiz = () => {
-    if (!challenge) return;
-    startQuiz(challenge.questions, challenge.topic, challenge.difficulty, false, null, challenge.id);
-    router.replace('/quiz/play');
+  const handleStartQuiz = async () => {
+    try {
+      // Always fetch fresh challenge data to ensure we have questions
+      const freshData = await apiClient.getChallenge(id!);
+      if (!freshData || !freshData.questions || freshData.questions.length === 0) {
+        setError('No questions found. Try creating a new challenge.');
+        return;
+      }
+      startQuiz(freshData.questions, freshData.topic, freshData.difficulty, false, null, freshData.id);
+      router.replace('/quiz/play');
+    } catch {
+      setError('Failed to load quiz. Try again.');
+    }
   };
 
   const handleHostStart = async () => {
     if (!id) return;
     setStarting(true);
+    setError('');
     try {
       await apiClient.startChallenge(id);
-      handleStartQuiz();
-    } catch {
-      setError('Failed to start. Try again.');
+      await handleStartQuiz();
+    } catch (err: any) {
+      setError('Failed to start: ' + (err?.message || 'Unknown error'));
       setStarting(false);
     }
   };
