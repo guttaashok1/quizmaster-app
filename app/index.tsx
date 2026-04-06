@@ -98,6 +98,7 @@ function DashboardView() {
   const [loadingChallenges, setLoadingChallenges] = useState(false);
 
   useEffect(() => {
+    if (!user.username || user.username === 'Player') return;
     const loadChallenges = async () => {
       setLoadingChallenges(true);
       try {
@@ -111,7 +112,7 @@ function DashboardView() {
       setLoadingChallenges(false);
     };
     loadChallenges();
-  }, []);
+  }, [user.username]);
 
   const handleJoinPublic = async (challengeId: string) => {
     try {
