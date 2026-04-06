@@ -1,14 +1,15 @@
 import { Router, Request, Response } from 'express';
+import { FileStore } from '../services/fileStore';
 
 interface User {
   username: string;
-  password: string; // In production, hash this. For MVP, store plain.
+  password: string;
   avatarEmoji: string;
   totalScore: number;
   createdAt: string;
 }
 
-const users = new Map<string, User>();
+const users = new FileStore<User>('users.json');
 
 const router = Router();
 

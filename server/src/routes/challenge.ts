@@ -1,4 +1,5 @@
 import { Router, Request, Response } from 'express';
+import { FileStore } from '../services/fileStore';
 
 interface Challenger {
   name: string;
@@ -16,7 +17,7 @@ interface Challenge {
   createdAt: string;
 }
 
-const challenges = new Map<string, Challenge>();
+const challenges = new FileStore<Challenge>('challenges.json');
 
 function generateId(): string {
   const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
