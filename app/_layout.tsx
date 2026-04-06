@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { StatusBar } from 'react-native';
 import { Stack, useRouter } from 'expo-router';
 import { useFonts } from 'expo-font';
@@ -13,12 +13,25 @@ function RootLayoutNav() {
   const { colors, isDark } = useTheme();
   const router = useRouter();
   const hasCompletedOnboarding = useUserStore((s) => s.hasCompletedOnboarding);
+  const [hydrated, setHydrated] = useState(false);
+
+  // Wait for Zustand store to rehydrate from AsyncStorage before checking onboarding
+  useEffect(() => {
+    const unsub = useUserStore.persist.onFinishHydration(() => {
+      setHydrated(true);
+    });
+    // If already hydrated (e.g. sync storage)
+    if (useUserStore.persist.hasHydrated()) {
+      setHydrated(true);
+    }
+    return () => unsub();
+  }, []);
 
   useEffect(() => {
-    if (!hasCompletedOnboarding) {
+    if (hydrated && !hasCompletedOnboarding) {
       router.replace('/welcome');
     }
-  }, [hasCompletedOnboarding]);
+  }, [hydrated, hasCompletedOnboarding]);
 
   return (
     <>

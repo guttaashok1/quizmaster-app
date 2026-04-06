@@ -58,8 +58,8 @@ export default function TopicInputScreen() {
   const [inputMode, setInputMode] = useState<InputMode>('topic');
   const [pasteContent, setPasteContent] = useState('');
   const [urlInput, setUrlInput] = useState('');
-  const [questionCount, setQuestionCount] = useState(10);
-  const [timePerQuestion, setTimePerQuestion] = useState(30);
+  const [questionCount, setQuestionCount] = useState(5);
+  const [timePerQuestion, setTimePerQuestion] = useState(5);
   const [errorMessage, setErrorMessage] = useState('');
   const [challengeMode, setChallengeMode] = useState(false);
   const scrollRef = useRef<ScrollView>(null);
@@ -309,7 +309,7 @@ export default function TopicInputScreen() {
           <View style={styles.optionRow}>
             <Text style={[styles.optionLabel, { color: colors.textSecondary }]}>Timer</Text>
             <View style={styles.optionChips}>
-              {[15, 30, 45, 60].map((secs) => (
+              {[5, 15, 30, 45, 60].map((secs) => (
                 <TouchableOpacity key={secs} onPress={() => { haptics.selection(); setTimePerQuestion(secs); }}
                   style={[styles.miniChip, { backgroundColor: timePerQuestion === secs ? colors.primary : colors.surface, borderColor: timePerQuestion === secs ? colors.primary : colors.border, borderRadius: borderRadius.full }]}>
                   <Text style={{ color: timePerQuestion === secs ? colors.textOnPrimary : colors.text, fontSize: 12, fontWeight: '600' }}>{secs}s</Text>
