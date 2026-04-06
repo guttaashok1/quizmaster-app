@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, SafeAreaView } from 'react-native';
+import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useTheme } from '../../src/theme/ThemeContext';
 import { useQuizStore } from '../../src/stores/useQuizStore';
@@ -50,6 +50,7 @@ export default function QuizPlayScreen() {
     answerQuestion,
     nextQuestion,
     dismissExplanation,
+    resetQuiz,
   } = useQuizStore();
 
   const addWrongAnswer = useReviewStore((s) => s.addWrongAnswer);
@@ -207,6 +208,15 @@ export default function QuizPlayScreen() {
       <AnswerFlash color={flashColor} />
 
       <View style={[styles.topBar, { paddingHorizontal: spacing.md }]}>
+        <TouchableOpacity
+          onPress={() => {
+            resetQuiz();
+            router.replace('/');
+          }}
+          style={styles.exitBtn}
+        >
+          <Text style={[styles.exitText, { color: colors.textMuted }]}>{'\u2715'}</Text>
+        </TouchableOpacity>
         <Text style={[styles.questionCounter, { color: colors.textSecondary }]}>Q {currentIndex + 1}/{questions.length}</Text>
         <View style={styles.diffBadge}>
           <Text style={[styles.diffText, { color: colors.textMuted }]}>
@@ -302,5 +312,7 @@ const styles = StyleSheet.create({
   diffBadge: { paddingHorizontal: 8, paddingVertical: 2 },
   diffText: { fontSize: 11, fontWeight: '800', letterSpacing: 1 },
   content: { flex: 1 },
+  exitBtn: { padding: 4 },
+  exitText: { fontSize: 22, fontWeight: '700' },
   questionCounter: { fontSize: 14, fontWeight: '700' },
 });
