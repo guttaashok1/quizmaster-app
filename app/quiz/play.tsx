@@ -1,5 +1,6 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity } from 'react-native';
+import Animated, { FadeInRight, FadeInUp } from 'react-native-reanimated';
 import { useRouter } from 'expo-router';
 import { useTheme } from '../../src/theme/ThemeContext';
 import { useQuizStore } from '../../src/stores/useQuizStore';
@@ -230,58 +231,57 @@ export default function QuizPlayScreen() {
         <ProgressBar progress={progress} height={4} />
       </View>
 
-      <View style={{ paddingHorizontal: spacing.md, marginBottom: spacing.md }}>
+      <View style={[{ paddingHorizontal: spacing.md, marginBottom: spacing.md }, timeRemaining <= 5 && timeRemaining > 0 && { shadowColor: '#EF4444', shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0.5, shadowRadius: 12 }]}>
         <CountdownTimer timeRemaining={timeRemaining} difficulty={currentAdaptiveDifficulty} customTime={customTimePerQuestion} />
       </View>
 
       <View style={[styles.content, { paddingHorizontal: spacing.md }]}>
-        {currentQuestion.type === 'mcq' && (
-          <QuestionCard
-            question={currentQuestion as MCQQuestion}
-            questionNumber={currentIndex + 1}
-            totalQuestions={questions.length}
-            selectedAnswer={selectedAnswer}
-            onSelectAnswer={handleMCQAnswer}
-            disabled={showExplanation || selectedAnswer !== null}
-            correctIndex={(currentQuestion as MCQQuestion).correctIndex}
-            showResult={showExplanation}
-          />
-        )}
-
-        {currentQuestion.type === 'true_false' && (
-          <TrueFalseCard
-            question={currentQuestion as TrueFalseQuestion}
-            questionNumber={currentIndex + 1}
-            totalQuestions={questions.length}
-            selectedAnswer={selectedBool}
-            onAnswer={handleTrueFalseAnswer}
-            disabled={showExplanation || selectedBool !== null}
-            showResult={showExplanation}
-          />
-        )}
-
-        {currentQuestion.type === 'fill_blank' && (
-          <FillBlankCard
-            question={currentQuestion as FillBlankQuestion}
-            questionNumber={currentIndex + 1}
-            totalQuestions={questions.length}
-            onAnswer={handleFillBlankAnswer}
-            disabled={showExplanation}
-            showResult={showExplanation}
-            userAnswer={textAnswer}
-          />
-        )}
-
-        {currentQuestion.type === 'matching' && (
-          <MatchingCard
-            question={currentQuestion as MatchingQuestion}
-            questionNumber={currentIndex + 1}
-            totalQuestions={questions.length}
-            onAnswer={handleMatchingAnswer}
-            disabled={showExplanation}
-            showResult={showExplanation}
-          />
-        )}
+        <Animated.View key={`q_${currentIndex}`} entering={FadeInRight.duration(300)}>
+          {currentQuestion.type === 'mcq' && (
+            <QuestionCard
+              question={currentQuestion as MCQQuestion}
+              questionNumber={currentIndex + 1}
+              totalQuestions={questions.length}
+              selectedAnswer={selectedAnswer}
+              onSelectAnswer={handleMCQAnswer}
+              disabled={showExplanation || selectedAnswer !== null}
+              correctIndex={(currentQuestion as MCQQuestion).correctIndex}
+              showResult={showExplanation}
+            />
+          )}
+          {currentQuestion.type === 'true_false' && (
+            <TrueFalseCard
+              question={currentQuestion as TrueFalseQuestion}
+              questionNumber={currentIndex + 1}
+              totalQuestions={questions.length}
+              selectedAnswer={selectedBool}
+              onAnswer={handleTrueFalseAnswer}
+              disabled={showExplanation || selectedBool !== null}
+              showResult={showExplanation}
+            />
+          )}
+          {currentQuestion.type === 'fill_blank' && (
+            <FillBlankCard
+              question={currentQuestion as FillBlankQuestion}
+              questionNumber={currentIndex + 1}
+              totalQuestions={questions.length}
+              onAnswer={handleFillBlankAnswer}
+              disabled={showExplanation}
+              showResult={showExplanation}
+              userAnswer={textAnswer}
+            />
+          )}
+          {currentQuestion.type === 'matching' && (
+            <MatchingCard
+              question={currentQuestion as MatchingQuestion}
+              questionNumber={currentIndex + 1}
+              totalQuestions={questions.length}
+              onAnswer={handleMatchingAnswer}
+              disabled={showExplanation}
+              showResult={showExplanation}
+            />
+          )}
+        </Animated.View>
       </View>
 
       <ExplanationModal

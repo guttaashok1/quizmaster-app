@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, StyleSheet, ViewStyle } from 'react-native';
+import { View, StyleSheet, ViewStyle, Platform } from 'react-native';
 import { useTheme } from '../../theme/ThemeContext';
 
 interface CardProps {
@@ -16,19 +16,22 @@ export function Card({ children, style, elevated = false }: CardProps) {
       style={[
         styles.card,
         {
-          backgroundColor: elevated ? colors.surfaceElevated : colors.card,
+          backgroundColor: elevated
+            ? (Platform.OS === 'web' ? colors.surface + 'E6' : colors.surface + 'E6')
+            : colors.surface,
           borderRadius: borderRadius.xl,
           padding: elevated ? spacing.lg : spacing.md,
-          borderColor: colors.border,
+          borderColor: elevated ? 'rgba(255,255,255,0.1)' : colors.border,
+          borderTopColor: elevated ? 'rgba(255,255,255,0.15)' : colors.border,
           borderLeftColor: colors.primary + '40',
-          borderLeftWidth: 3,
+          borderLeftWidth: 2,
         },
         elevated && {
           shadowColor: colors.primary,
-          shadowOffset: { width: 0, height: 4 },
-          shadowOpacity: 0.08,
-          shadowRadius: 12,
-          elevation: 4,
+          shadowOffset: { width: 0, height: 6 },
+          shadowOpacity: 0.12,
+          shadowRadius: 16,
+          elevation: 6,
         },
         style,
       ]}

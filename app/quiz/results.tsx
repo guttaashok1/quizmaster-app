@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
+import Animated, { FadeInDown, FadeInUp, ZoomIn } from 'react-native-reanimated';
 import { useTheme } from '../../src/theme/ThemeContext';
 import { Button } from '../../src/components/ui/Button';
 import { Card } from '../../src/components/ui/Card';
@@ -188,7 +189,7 @@ export default function ResultsScreen() {
       <RewardModal visible={showReward} milestone={100} onDismiss={() => setShowReward(false)} />
 
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
-        <View style={styles.header}>
+        <Animated.View entering={ZoomIn.duration(500)} style={styles.header}>
           <Text style={styles.starsText}>{starsText}</Text>
           <Text style={[styles.title, { color: colors.text }]}>
             {percentage >= 90 ? 'Amazing!' : percentage >= 70 ? 'Great Job!' : percentage >= 50 ? 'Good Effort!' : 'Keep Learning!'}
@@ -196,7 +197,7 @@ export default function ResultsScreen() {
           <Text style={[styles.topicLabel, { color: colors.textSecondary }]}>
             {result.topic} - {result.difficulty}
           </Text>
-        </View>
+        </Animated.View>
 
         {newAchievements.length > 0 && (
           <View>
@@ -211,14 +212,16 @@ export default function ResultsScreen() {
           </View>
         )}
 
-        <View style={{ borderRadius: 24, overflow: 'hidden', marginBottom: 24 }}>
-          <LinearGradient colors={colors.gradientPrimary} style={styles.scoreCard}>
-            <Text style={[styles.scoreLabel, { color: 'rgba(255,255,255,0.7)' }]}>Total Score</Text>
-            <Text style={[styles.scoreValue, { color: '#FFFFFF' }]}>
-              {result.score}
-            </Text>
-          </LinearGradient>
-        </View>
+        <Animated.View entering={FadeInUp.duration(500).delay(200)}>
+          <View style={{ borderRadius: 24, overflow: 'hidden', marginBottom: 24 }}>
+            <LinearGradient colors={colors.gradientPrimary} style={styles.scoreCard}>
+              <Text style={[styles.scoreLabel, { color: 'rgba(255,255,255,0.7)' }]}>Total Score</Text>
+              <Text style={[styles.scoreValue, { color: '#FFFFFF' }]}>
+                {result.score}
+              </Text>
+            </LinearGradient>
+          </View>
+        </Animated.View>
 
         {challengeData && (
           <View>
@@ -252,19 +255,19 @@ export default function ResultsScreen() {
           </View>
         )}
 
-        <View>
-          <View style={styles.statsGrid}>
-            {statItems.map((item, i) => (
-              <Card key={i} style={styles.statItem}>
+        <View style={styles.statsGrid}>
+          {statItems.map((item, i) => (
+            <Animated.View key={i} entering={FadeInUp.duration(400).delay(400 + i * 100)} style={styles.statItem}>
+              <Card style={{ width: '100%', alignItems: 'center', paddingVertical: 16 }}>
                 <Text style={styles.statIcon}>{item.icon}</Text>
                 <Text style={[styles.statValue, { color: colors.text }]}>{item.value}</Text>
                 <Text style={[styles.statLabel, { color: colors.textSecondary }]}>{item.label}</Text>
               </Card>
-            ))}
-          </View>
+            </Animated.View>
+          ))}
         </View>
 
-        <View style={styles.buttons}>
+        <Animated.View entering={FadeInUp.duration(500).delay(800)} style={styles.buttons}>
           <Button
             title="Review Answers"
             onPress={handleReviewQuiz}
@@ -297,7 +300,7 @@ export default function ResultsScreen() {
             <Button title="Save Deck" onPress={handleSaveDeck} variant="ghost" size="md" style={{ flex: 1 }} icon={<Text>{'\uD83D\uDCBE'}</Text>} />
             <Button title="Home" onPress={() => { resetQuiz(); router.replace('/'); }} variant="ghost" size="md" style={{ flex: 1 }} icon={<Text>{'\uD83C\uDFE0'}</Text>} />
           </View>
-        </View>
+        </Animated.View>
       </ScrollView>
     </SafeAreaView>
   );
@@ -317,7 +320,7 @@ const styles = StyleSheet.create({
   scoreLabel: { fontSize: 14, fontWeight: '600', marginBottom: 4 },
   scoreValue: { fontSize: 48, fontWeight: '800' },
   statsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginBottom: 32 },
-  statItem: { width: '47%', alignItems: 'center', paddingVertical: 16 },
+  statItem: { width: '47%' },
   statIcon: { fontSize: 24, marginBottom: 8 },
   statValue: { fontSize: 20, fontWeight: '800', marginBottom: 4 },
   statLabel: { fontSize: 13, fontWeight: '500' },

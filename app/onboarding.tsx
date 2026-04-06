@@ -10,7 +10,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import Animated, { FadeInDown } from 'react-native-reanimated';
+import Animated, { FadeInDown, ZoomIn } from 'react-native-reanimated';
 import { useTheme } from '../src/theme/ThemeContext';
 import { Button } from '../src/components/ui/Button';
 import { useUserStore } from '../src/stores/useUserStore';
@@ -84,6 +84,9 @@ export default function OnboardingScreen() {
         <Animated.View entering={FadeInDown.duration(400)} style={styles.header}>
           <Text style={[styles.title, { color: colors.text }]}>
             {isLoginMode ? 'Welcome Back!' : 'Welcome to QuizMaster!'}
+          </Text>
+          <Text style={[styles.subtitle, { color: colors.textMuted }]}>
+            {isLoginMode ? 'Sign in to continue your journey' : 'Create an account to start learning'}
           </Text>
         </Animated.View>
 
@@ -173,22 +176,23 @@ export default function OnboardingScreen() {
               Choose an Avatar
             </Text>
             <View style={styles.avatarGrid}>
-              {AVATAR_OPTIONS.map((emoji) => (
-                <TouchableOpacity
-                  key={emoji}
-                  onPress={() => setSelectedAvatar(emoji)}
-                  style={[
-                    styles.avatarOption,
-                    {
-                      backgroundColor:
-                        selectedAvatar === emoji ? colors.primary + '30' : 'transparent',
-                      borderColor: selectedAvatar === emoji ? colors.primary : 'transparent',
-                      borderRadius: borderRadius.md,
-                    },
-                  ]}
-                >
-                  <Text style={styles.avatarOptionEmoji}>{emoji}</Text>
-                </TouchableOpacity>
+              {AVATAR_OPTIONS.map((emoji, i) => (
+                <Animated.View key={emoji} entering={ZoomIn.duration(300).delay(i * 30)}>
+                  <TouchableOpacity
+                    onPress={() => setSelectedAvatar(emoji)}
+                    style={[
+                      styles.avatarOption,
+                      {
+                        backgroundColor:
+                          selectedAvatar === emoji ? colors.primary + '30' : 'transparent',
+                        borderColor: selectedAvatar === emoji ? colors.primary : 'transparent',
+                        borderRadius: borderRadius.md,
+                      },
+                    ]}
+                  >
+                    <Text style={styles.avatarOptionEmoji}>{emoji}</Text>
+                  </TouchableOpacity>
+                </Animated.View>
               ))}
             </View>
           </Animated.View>
@@ -227,6 +231,7 @@ const styles = StyleSheet.create({
   backText: { fontSize: 16, fontWeight: '600' },
   header: { alignItems: 'center', marginBottom: 32, paddingTop: 16 },
   title: { fontSize: 28, fontWeight: '800', textAlign: 'center' },
+  subtitle: { fontSize: 14, textAlign: 'center', marginTop: 4 },
   label: { fontSize: 16, fontWeight: '600', marginBottom: 8 },
   nameInput: {
     fontSize: 18,

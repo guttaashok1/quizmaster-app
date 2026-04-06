@@ -9,7 +9,7 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import Animated, { FadeInDown } from 'react-native-reanimated';
+import Animated, { FadeInDown, FadeInRight, ZoomIn } from 'react-native-reanimated';
 import { useTheme } from '../src/theme/ThemeContext';
 import { Button } from '../src/components/ui/Button';
 import { Card } from '../src/components/ui/Card';
@@ -30,6 +30,7 @@ export default function LobbyScreen() {
   const [challenge, setChallenge] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [starting, setStarting] = useState(false);
+  const [countdown, setCountdown] = useState<number | null>(null);
   const [error, setError] = useState('');
   const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -69,7 +70,13 @@ export default function LobbyScreen() {
         // If host started, begin quiz for everyone
         if (data.status === 'started' && !isHost) {
           clearInterval(pollingRef.current!);
-          handleStartQuiz();
+          setCountdown(3);
+          setTimeout(() => setCountdown(2), 1000);
+          setTimeout(() => setCountdown(1), 2000);
+          setTimeout(async () => {
+            setCountdown(0);
+            await handleStartQuiz();
+          }, 3000);
         }
       } catch {
         // Silently ignore polling errors
@@ -102,7 +109,14 @@ export default function LobbyScreen() {
     setError('');
     try {
       await apiClient.startChallenge(id);
-      await handleStartQuiz();
+      // Countdown before starting quiz
+      setCountdown(3);
+      setTimeout(() => setCountdown(2), 1000);
+      setTimeout(() => setCountdown(1), 2000);
+      setTimeout(async () => {
+        setCountdown(0);
+        await handleStartQuiz();
+      }, 3000);
     } catch (err: any) {
       setError('Failed to start: ' + (err?.message || 'Unknown error'));
       setStarting(false);
@@ -184,7 +198,7 @@ export default function LobbyScreen() {
           {participants.map((name, i) => (
             <Animated.View
               key={name + i}
-              entering={FadeInDown.duration(300).delay(i * 80)}
+              entering={FadeInRight.duration(400).delay(i * 100)}
               style={[styles.participantRow, { backgroundColor: colors.surface, borderColor: colors.border, borderRadius: borderRadius.sm }]}
             >
               <Text style={styles.participantEmoji}>
@@ -205,6 +219,16 @@ export default function LobbyScreen() {
             </View>
           )}
         </Animated.View>
+
+        {countdown !== null && (
+          <View style={styles.countdownOverlay}>
+            <Animated.View entering={ZoomIn.duration(300)}>
+              <Text style={styles.countdownText}>
+                {countdown === 0 ? 'GO!' : countdown}
+              </Text>
+            </Animated.View>
+          </View>
+        )}
 
         {/* Actions */}
         <View style={styles.actions}>
@@ -253,7 +277,7 @@ const styles = StyleSheet.create({
   topicText: { fontSize: 16, fontWeight: '500', marginTop: 4, textTransform: 'capitalize' },
   codeCard: { alignItems: 'center', paddingVertical: 20, marginTop: 20, borderWidth: 2 },
   codeLabel: { fontSize: 13, fontWeight: '500', marginBottom: 8 },
-  codeText: { fontSize: 36, fontWeight: '900', letterSpacing: 2 },
+  codeText: { fontSize: 40, fontWeight: '900', letterSpacing: 2, textShadowColor: 'rgba(108,99,255,0.3)', textShadowOffset: { width: 0, height: 2 }, textShadowRadius: 8 },
   copyHint: { fontSize: 11, marginTop: 4 },
   participantsSection: { flex: 1, marginTop: 24 },
   sectionTitle: { fontSize: 18, fontWeight: '700', marginBottom: 12 },
@@ -266,4 +290,6 @@ const styles = StyleSheet.create({
   waitingBanner: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, padding: 16, marginBottom: 12 },
   waitingBannerText: { fontSize: 15, fontWeight: '600' },
   visibilityBadge: { paddingHorizontal: 12, paddingVertical: 4, marginTop: 8 },
+  countdownOverlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.7)', alignItems: 'center', justifyContent: 'center', zIndex: 999 },
+  countdownText: { fontSize: 120, fontWeight: '900', color: '#FFFFFF' },
 });

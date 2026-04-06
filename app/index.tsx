@@ -9,10 +9,11 @@ import {
   TextInput,
   ActivityIndicator,
   Platform,
+  RefreshControl,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
-import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
+import Animated, { FadeInDown, FadeInRight, FadeInUp, ZoomIn } from 'react-native-reanimated';
 import { useTheme } from '../src/theme/ThemeContext';
 import { Button } from '../src/components/ui/Button';
 import { Card } from '../src/components/ui/Card';
@@ -89,6 +90,20 @@ function DashboardView() {
   const startQuiz = useQuizStore((s) => s.startQuiz);
   const logout = useUserStore((s) => s.logout);
 
+  const [refreshing, setRefreshing] = useState(false);
+  const onRefresh = async () => {
+    setRefreshing(true);
+    try {
+      const [pub, mine] = await Promise.all([
+        apiClient.getPublicChallenges().catch(() => []),
+        apiClient.getMyChallenges(user.username).catch(() => []),
+      ]);
+      setPublicChallenges(pub);
+      setMyChallenges(mine);
+    } catch {}
+    setRefreshing(false);
+  };
+
   const [challengeCode, setChallengeCode] = useState('');
   const [challengeError, setChallengeError] = useState('');
   const [challengeLoading, setChallengeLoading] = useState(false);
@@ -150,8 +165,9 @@ function DashboardView() {
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
-      <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+      <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />}>
         {/* Compact banner */}
+        <Animated.View entering={FadeInDown.duration(500)}>
         <LinearGradient
           colors={isDark ? [colors.primaryDark, colors.background] : [colors.primaryLight + '30', colors.background]}
           style={styles.banner}
@@ -167,7 +183,9 @@ function DashboardView() {
             </TouchableOpacity>
           </View>
         </LinearGradient>
+        </Animated.View>
 
+        <Animated.View entering={FadeInDown.duration(500).delay(100)}>
         <Button
           title="Start New Quiz"
           onPress={() => router.push('/topic-input')}
@@ -176,8 +194,10 @@ function DashboardView() {
           style={styles.startButton}
           icon={<Text style={{ fontSize: 20 }}>{'\uD83D\uDE80'}</Text>}
         />
+        </Animated.View>
 
         {/* Challenges Section */}
+        <Animated.View entering={FadeInDown.duration(500).delay(200)}>
         <Text style={[styles.sectionTitle, { color: colors.text }]}>{'\u2694\uFE0F'} Challenges</Text>
 
         {/* Tabs */}
@@ -202,6 +222,7 @@ function DashboardView() {
             </TouchableOpacity>
           ))}
         </View>
+        </Animated.View>
 
         {/* Live public challenges */}
         {activeTab === 'live' && (
@@ -211,8 +232,9 @@ function DashboardView() {
             ) : publicChallenges.length === 0 ? (
               <Text style={[styles.emptyText, { color: colors.textMuted }]}>No live challenges right now. Create one!</Text>
             ) : (
-              publicChallenges.map(ch => (
-                <View key={ch.id} style={[styles.challengeItem, { backgroundColor: colors.surface, borderColor: colors.border, borderRadius: borderRadius.sm }]}>
+              publicChallenges.map((ch, i) => (
+                <Animated.View key={ch.id} entering={FadeInRight.duration(400).delay(i * 80)}>
+                <View style={[styles.challengeItem, { backgroundColor: colors.surface, borderColor: colors.border, borderRadius: borderRadius.sm }]}>
                   <View style={{ flex: 1 }}>
                     <Text style={[styles.challengeItemTopic, { color: colors.text }]}>{ch.topic}</Text>
                     <Text style={[styles.challengeItemMeta, { color: colors.textMuted }]}>
@@ -226,6 +248,7 @@ function DashboardView() {
                     <Text style={{ color: '#fff', fontSize: 12, fontWeight: '700' }}>Join</Text>
                   </TouchableOpacity>
                 </View>
+                </Animated.View>
               ))
             )}
           </View>
@@ -237,9 +260,9 @@ function DashboardView() {
             {myChallenges.length === 0 ? (
               <Text style={[styles.emptyText, { color: colors.textMuted }]}>You haven't created any challenges yet.</Text>
             ) : (
-              myChallenges.map(ch => (
+              myChallenges.map((ch, i) => (
+                <Animated.View key={ch.id} entering={FadeInRight.duration(400).delay(i * 80)}>
                 <TouchableOpacity
-                  key={ch.id}
                   onPress={() => router.push(`/lobby?id=${ch.id}&host=true`)}
                   style={[styles.challengeItem, { backgroundColor: colors.surface, borderColor: colors.border, borderRadius: borderRadius.sm }]}
                 >
@@ -258,6 +281,7 @@ function DashboardView() {
                     </Text>
                   </View>
                 </TouchableOpacity>
+                </Animated.View>
               ))
             )}
           </View>
@@ -294,11 +318,13 @@ function DashboardView() {
         <Text style={[styles.sectionTitle, { color: colors.text }]}>Stats</Text>
         <View style={styles.statsRow}>
           {stats.map((stat, i) => (
-            <View key={i} style={[styles.statItem, { backgroundColor: colors.surface, borderColor: colors.border, borderRadius: borderRadius.sm }]}>
+            <Animated.View key={i} entering={FadeInUp.duration(400).delay(400 + i * 80)} style={{ flex: 1 }}>
+            <View style={[styles.statItem, { backgroundColor: colors.surface, borderColor: colors.border, borderRadius: borderRadius.sm }]}>
               <Text style={styles.statEmoji}>{stat.icon}</Text>
               <Text style={[styles.statValue, { color: colors.text }]}>{stat.value}</Text>
               <Text style={[styles.statLabel, { color: colors.textMuted }]}>{stat.label}</Text>
             </View>
+            </Animated.View>
           ))}
         </View>
 
@@ -312,6 +338,14 @@ function DashboardView() {
           <Text style={[styles.logoutText, { color: colors.textMuted }]}>Log Out</Text>
         </TouchableOpacity>
       </ScrollView>
+      <Animated.View entering={ZoomIn.duration(400).delay(600)} style={styles.fab}>
+        <TouchableOpacity
+          onPress={() => router.push('/topic-input?challenge=true')}
+          style={[styles.fabButton, { backgroundColor: colors.primary }]}
+        >
+          <Text style={styles.fabIcon}>{'\u2795'}</Text>
+        </TouchableOpacity>
+      </Animated.View>
     </SafeAreaView>
   );
 }
@@ -445,4 +479,7 @@ const styles = StyleSheet.create({
   bottomButtons: { flexDirection: 'row', gap: 8, marginBottom: 16 },
   logoutBtn: { alignItems: 'center', paddingVertical: 12 },
   logoutText: { fontSize: 14, fontWeight: '600' },
+  fab: { position: 'absolute', bottom: 24, right: 24 },
+  fabButton: { width: 56, height: 56, borderRadius: 28, alignItems: 'center', justifyContent: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8, elevation: 8 },
+  fabIcon: { fontSize: 24, color: '#FFFFFF' },
 });
