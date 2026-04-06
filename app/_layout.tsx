@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { StatusBar } from 'react-native';
+import { Platform, StatusBar } from 'react-native';
 import { Stack, useRouter } from 'expo-router';
 import { useFonts } from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
@@ -13,25 +13,54 @@ function RootLayoutNav() {
   const { colors, isDark } = useTheme();
   const router = useRouter();
   const hasCompletedOnboarding = useUserStore((s) => s.hasCompletedOnboarding);
-  const [hydrated, setHydrated] = useState(false);
+  const [ready, setReady] = useState(false);
 
-  // Wait for Zustand store to rehydrate from AsyncStorage before checking onboarding
+  // Wait for store to rehydrate before making any routing decisions
   useEffect(() => {
-    const unsub = useUserStore.persist.onFinishHydration(() => {
-      setHydrated(true);
-    });
-    // If already hydrated (e.g. sync storage)
-    if (useUserStore.persist.hasHydrated()) {
-      setHydrated(true);
-    }
-    return () => unsub();
+    let timeout: ReturnType<typeof setTimeout>;
+
+    const checkHydration = () => {
+      try {
+        if (useUserStore.persist.hasHydrated()) {
+          setReady(true);
+          return;
+        }
+      } catch {}
+
+      // Fallback: check localStorage directly on web
+      if (Platform.OS === 'web' && typeof window !== 'undefined') {
+        try {
+          const stored = localStorage.getItem('user-storage');
+          if (stored) {
+            const parsed = JSON.parse(stored);
+            if (parsed?.state?.hasCompletedOnboarding === true) {
+              setReady(true);
+              return;
+            }
+          }
+        } catch {}
+      }
+
+      // Also listen for hydration event
+      const unsub = useUserStore.persist.onFinishHydration(() => {
+        setReady(true);
+        unsub();
+      });
+
+      // Safety timeout — if hydration takes too long, proceed anyway
+      timeout = setTimeout(() => setReady(true), 1500);
+    };
+
+    checkHydration();
+    return () => clearTimeout(timeout);
   }, []);
 
+  // Only redirect to welcome if store is hydrated AND user hasn't onboarded
   useEffect(() => {
-    if (hydrated && !hasCompletedOnboarding) {
+    if (ready && !hasCompletedOnboarding) {
       router.replace('/welcome');
     }
-  }, [hydrated, hasCompletedOnboarding]);
+  }, [ready, hasCompletedOnboarding]);
 
   return (
     <>
