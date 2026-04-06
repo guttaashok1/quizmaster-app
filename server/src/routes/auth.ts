@@ -1,20 +1,10 @@
 import { Router, Request, Response } from 'express';
-import { FileStore } from '../services/fileStore';
-
-interface User {
-  username: string;
-  password: string;
-  avatarEmoji: string;
-  totalScore: number;
-  createdAt: string;
-}
-
-const users = new FileStore<User>('users.json');
+import { createUser, findUser, updateUserScore, getPublicProfile } from '../services/database';
 
 const router = Router();
 
 // Register a new user
-router.post('/register', (req: Request, res: Response) => {
+router.post('/register', async (req: Request, res: Response) => {
   try {
     const { username, password, avatarEmoji } = req.body;
 
@@ -28,24 +18,15 @@ router.post('/register', (req: Request, res: Response) => {
       return;
     }
 
-    const normalizedUsername = username.trim().toLowerCase();
-
-    if (users.has(normalizedUsername)) {
+    // Check if username already exists
+    const existing = await findUser(username);
+    if (existing) {
       res.status(409).json({ message: 'Username already taken', code: 'USERNAME_TAKEN' });
       return;
     }
 
-    const user: User = {
-      username: username.trim(),
-      password,
-      avatarEmoji: avatarEmoji || '🧠',
-      totalScore: 0,
-      createdAt: new Date().toISOString(),
-    };
-
-    users.set(normalizedUsername, user);
-
-    res.json({ username: user.username, avatarEmoji: user.avatarEmoji, totalScore: 0 });
+    const user = await createUser(username.trim(), password, avatarEmoji);
+    res.json(user);
   } catch (error) {
     const errMsg = error instanceof Error ? error.message : String(error);
     console.error('Registration error:', errMsg);
@@ -54,7 +35,7 @@ router.post('/register', (req: Request, res: Response) => {
 });
 
 // Login
-router.post('/login', (req: Request, res: Response) => {
+router.post('/login', async (req: Request, res: Response) => {
   try {
     const { username, password } = req.body;
 
@@ -63,8 +44,7 @@ router.post('/login', (req: Request, res: Response) => {
       return;
     }
 
-    const normalizedUsername = username.trim().toLowerCase();
-    const user = users.get(normalizedUsername);
+    const user = await findUser(username);
 
     if (!user || user.password !== password) {
       res.status(401).json({ message: 'Invalid username or password', code: 'AUTH_ERROR' });
@@ -80,7 +60,7 @@ router.post('/login', (req: Request, res: Response) => {
 });
 
 // Update score
-router.post('/score', (req: Request, res: Response) => {
+router.post('/score', async (req: Request, res: Response) => {
   try {
     const { username, score } = req.body;
 
@@ -89,16 +69,14 @@ router.post('/score', (req: Request, res: Response) => {
       return;
     }
 
-    const normalizedUsername = username.trim().toLowerCase();
-    const user = users.get(normalizedUsername);
+    const user = await updateUserScore(username, score);
 
     if (!user) {
       res.status(404).json({ message: 'User not found', code: 'NOT_FOUND' });
       return;
     }
 
-    user.totalScore = score;
-    res.json({ username: user.username, avatarEmoji: user.avatarEmoji, totalScore: user.totalScore });
+    res.json(user);
   } catch (error) {
     const errMsg = error instanceof Error ? error.message : String(error);
     console.error('Score update error:', errMsg);
@@ -107,16 +85,21 @@ router.post('/score', (req: Request, res: Response) => {
 });
 
 // Get public profile
-router.get('/user/:username', (req: Request, res: Response) => {
-  const normalizedUsername = req.params.username.trim().toLowerCase();
-  const user = users.get(normalizedUsername);
+router.get('/user/:username', async (req: Request, res: Response) => {
+  try {
+    const user = await getPublicProfile(req.params.username);
 
-  if (!user) {
-    res.status(404).json({ message: 'User not found', code: 'NOT_FOUND' });
-    return;
+    if (!user) {
+      res.status(404).json({ message: 'User not found', code: 'NOT_FOUND' });
+      return;
+    }
+
+    res.json(user);
+  } catch (error) {
+    const errMsg = error instanceof Error ? error.message : String(error);
+    console.error('Profile error:', errMsg);
+    res.status(500).json({ message: 'Failed to get profile', code: 'SERVER_ERROR' });
   }
-
-  res.json({ username: user.username, avatarEmoji: user.avatarEmoji, totalScore: user.totalScore });
 });
 
 export default router;

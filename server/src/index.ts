@@ -7,6 +7,7 @@ import rateLimit from 'express-rate-limit';
 import quizRouter from './routes/quiz';
 import challengeRouter from './routes/challenge';
 import authRouter from './routes/auth';
+import { initDatabase } from './services/database';
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -29,6 +30,14 @@ app.use('/api/quiz', quizRouter);
 app.use('/api/challenge', challengeRouter);
 app.use('/api/auth', authRouter);
 
-app.listen(Number(PORT), '0.0.0.0', () => {
-  console.log(`Quiz API server running on http://0.0.0.0:${PORT}`);
-});
+// Initialize database then start server
+initDatabase()
+  .then(() => {
+    app.listen(Number(PORT), '0.0.0.0', () => {
+      console.log(`Quiz API server running on http://0.0.0.0:${PORT}`);
+    });
+  })
+  .catch((err) => {
+    console.error('Failed to initialize database:', err);
+    process.exit(1);
+  });

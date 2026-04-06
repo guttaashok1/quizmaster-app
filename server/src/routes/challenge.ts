@@ -1,23 +1,9 @@
 import { Router, Request, Response } from 'express';
-import { FileStore } from '../services/fileStore';
-
-interface Challenger {
-  name: string;
-  score: number;
-}
-
-interface Challenge {
-  id: string;
-  topic: string;
-  difficulty: string;
-  questions: any[];
-  creatorName: string;
-  creatorScore: number;
-  challengers: Challenger[];
-  createdAt: string;
-}
-
-const challenges = new FileStore<Challenge>('challenges.json');
+import {
+  createChallenge as dbCreateChallenge,
+  getChallenge as dbGetChallenge,
+  addChallengerResult,
+} from '../services/database';
 
 function generateId(): string {
   const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
@@ -31,7 +17,7 @@ function generateId(): string {
 const router = Router();
 
 // Create a new challenge
-router.post('/', (req: Request, res: Response) => {
+router.post('/', async (req: Request, res: Response) => {
   try {
     const { topic, difficulty, questions, creatorName, creatorScore } = req.body;
 
@@ -41,7 +27,7 @@ router.post('/', (req: Request, res: Response) => {
     }
 
     const id = generateId();
-    const challenge: Challenge = {
+    const challenge = await dbCreateChallenge({
       id,
       topic,
       difficulty,
@@ -50,9 +36,7 @@ router.post('/', (req: Request, res: Response) => {
       creatorScore,
       challengers: [],
       createdAt: new Date().toISOString(),
-    };
-
-    challenges.set(id, challenge);
+    });
 
     res.json(challenge);
   } catch (error) {
@@ -63,31 +47,42 @@ router.post('/', (req: Request, res: Response) => {
 });
 
 // Get challenge by ID
-router.get('/:id', (req: Request, res: Response) => {
-  const challenge = challenges.get(req.params.id);
-  if (!challenge) {
-    res.status(404).json({ message: 'Challenge not found', code: 'NOT_FOUND' });
-    return;
+router.get('/:id', async (req: Request, res: Response) => {
+  try {
+    const challenge = await dbGetChallenge(req.params.id);
+    if (!challenge) {
+      res.status(404).json({ message: 'Challenge not found', code: 'NOT_FOUND' });
+      return;
+    }
+    res.json(challenge);
+  } catch (error) {
+    const errMsg = error instanceof Error ? error.message : String(error);
+    console.error('Get challenge error:', errMsg);
+    res.status(500).json({ message: 'Failed to get challenge', code: 'SERVER_ERROR' });
   }
-  res.json(challenge);
 });
 
 // Add challenger result
-router.post('/:id/result', (req: Request, res: Response) => {
-  const challenge = challenges.get(req.params.id);
-  if (!challenge) {
-    res.status(404).json({ message: 'Challenge not found', code: 'NOT_FOUND' });
-    return;
-  }
+router.post('/:id/result', async (req: Request, res: Response) => {
+  try {
+    const { name, score } = req.body;
+    if (!name || score == null) {
+      res.status(400).json({ message: 'Missing name or score', code: 'VALIDATION_ERROR' });
+      return;
+    }
 
-  const { name, score } = req.body;
-  if (!name || score == null) {
-    res.status(400).json({ message: 'Missing name or score', code: 'VALIDATION_ERROR' });
-    return;
-  }
+    const challenge = await addChallengerResult(req.params.id, name, score);
+    if (!challenge) {
+      res.status(404).json({ message: 'Challenge not found', code: 'NOT_FOUND' });
+      return;
+    }
 
-  challenge.challengers.push({ name, score });
-  res.json(challenge);
+    res.json(challenge);
+  } catch (error) {
+    const errMsg = error instanceof Error ? error.message : String(error);
+    console.error('Challenge result error:', errMsg);
+    res.status(500).json({ message: 'Failed to add result', code: 'SERVER_ERROR' });
+  }
 });
 
 export default router;
