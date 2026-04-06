@@ -111,7 +111,7 @@ export default function HomeScreen() {
               {'\u2694\uFE0F'} Play with Friends
             </Text>
             <Text style={[styles.challengeHint, { color: colors.textMuted }]}>
-              To create a challenge: finish a quiz, then tap "Challenge" on the results screen. Share the code with friends!
+              Start a quiz with Challenge mode on, or enter a friend's code to compete!
             </Text>
             <View style={styles.challengeRow}>
               <TextInput
@@ -176,7 +176,9 @@ export default function HomeScreen() {
           <View style={styles.statsGrid}>
             {stats.map((stat, i) => (
               <Card key={i} elevated style={styles.statCard}>
-                <Text style={styles.statIcon}>{stat.icon}</Text>
+                <View style={[styles.statIconBadge, { backgroundColor: colors.primary + '15' }]}>
+                  <Text style={styles.statIcon}>{stat.icon}</Text>
+                </View>
                 <Text style={[styles.statValue, { color: colors.text }]}>{stat.value}</Text>
                 <Text style={[styles.statLabel, { color: colors.textSecondary }]}>{stat.label}</Text>
               </Card>
@@ -220,7 +222,8 @@ const styles = StyleSheet.create({
   sectionTitle: { fontSize: 20, fontWeight: '700', marginBottom: 16 },
   statsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginBottom: 24 },
   statCard: { width: '47%', alignItems: 'center', paddingVertical: 20 },
-  statIcon: { fontSize: 28, marginBottom: 8 },
+  statIconBadge: { width: 44, height: 44, borderRadius: 22, alignItems: 'center' as const, justifyContent: 'center' as const, marginBottom: 8 },
+  statIcon: { fontSize: 28 },
   statValue: { fontSize: 22, fontWeight: '800', marginBottom: 4 },
   statLabel: { fontSize: 13, fontWeight: '500' },
   challengeCard: { marginBottom: 16 },

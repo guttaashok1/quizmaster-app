@@ -5,12 +5,14 @@ import {
   StyleSheet,
   ViewStyle,
   ActivityIndicator,
+  View,
 } from 'react-native';
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
   withSpring,
 } from 'react-native-reanimated';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme } from '../../theme/ThemeContext';
 import { haptics } from '../../services/hapticService';
 
@@ -57,13 +59,6 @@ export function Button({
     onPress();
   };
 
-  const bgColor = {
-    primary: colors.primary,
-    secondary: colors.secondary,
-    outline: 'transparent',
-    ghost: 'transparent',
-  }[variant];
-
   const textColor = {
     primary: colors.textOnPrimary,
     secondary: colors.textOnPrimary,
@@ -80,6 +75,69 @@ export function Button({
   }[size];
 
   const fontSize = { sm: 14, md: 16, lg: 18 }[size];
+
+  const useGradient = variant === 'primary' || variant === 'secondary';
+  const gradientColors = variant === 'primary'
+    ? colors.gradientPrimary
+    : colors.gradientSecondary;
+
+  const pillRadius = borderRadius.full;
+
+  if (useGradient) {
+    return (
+      <Animated.View style={[animatedStyle, style]}>
+        <LinearGradient
+          colors={gradientColors as [string, string, ...string[]]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 0 }}
+          style={[
+            {
+              borderRadius: pillRadius,
+              overflow: 'hidden' as const,
+              shadowColor: colors.primary,
+              shadowOffset: { width: 0, height: 4 },
+              shadowOpacity: 0.3,
+              shadowRadius: 8,
+              elevation: 6,
+              opacity: disabled ? 0.5 : 1,
+            },
+          ]}
+        >
+          <TouchableOpacity
+            onPress={handlePress}
+            onPressIn={handlePressIn}
+            onPressOut={handlePressOut}
+            disabled={disabled || loading}
+            activeOpacity={0.8}
+            style={[
+              styles.button,
+              {
+                borderColor: 'transparent',
+                borderRadius: pillRadius,
+                ...padding,
+              },
+            ]}
+          >
+            {loading ? (
+              <ActivityIndicator color={textColor} />
+            ) : (
+              <>
+                {icon}
+                <Text style={[styles.text, { color: textColor, fontSize }]}>
+                  {title}
+                </Text>
+              </>
+            )}
+          </TouchableOpacity>
+        </LinearGradient>
+      </Animated.View>
+    );
+  }
+
+  const bgColor = {
+    outline: 'transparent',
+    ghost: 'transparent',
+  }[variant as 'outline' | 'ghost'];
 
   return (
     <AnimatedTouchable

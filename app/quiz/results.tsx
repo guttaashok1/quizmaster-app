@@ -9,6 +9,7 @@ import {
   Alert,
 } from 'react-native';
 import { useRouter } from 'expo-router';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme } from '../../src/theme/ThemeContext';
 import { Button } from '../../src/components/ui/Button';
 import { Card } from '../../src/components/ui/Card';
@@ -198,11 +199,13 @@ export default function ResultsScreen() {
           </View>
         )}
 
-        <View>
-          <Card elevated style={styles.scoreCard}>
-            <Text style={[styles.scoreLabel, { color: colors.textSecondary }]}>Total Score</Text>
-            <AnimatedScore targetScore={result.score} />
-          </Card>
+        <View style={{ borderRadius: 24, overflow: 'hidden', marginBottom: 24 }}>
+          <LinearGradient colors={colors.gradientPrimary} style={styles.scoreCard}>
+            <Text style={[styles.scoreLabel, { color: 'rgba(255,255,255,0.7)' }]}>Total Score</Text>
+            <Text style={[styles.scoreValue, { color: '#FFFFFF' }]}>
+              {result.score}
+            </Text>
+          </LinearGradient>
         </View>
 
         {challengeData && (
@@ -290,7 +293,7 @@ const styles = StyleSheet.create({
   achievementCard: { marginBottom: 20, borderWidth: 1 },
   achievementTitle: { fontSize: 16, fontWeight: '800', marginBottom: 8 },
   achievementItem: { fontSize: 15, fontWeight: '600', marginBottom: 4 },
-  scoreCard: { alignItems: 'center', paddingVertical: 24, marginBottom: 24 },
+  scoreCard: { alignItems: 'center', paddingVertical: 24 },
   scoreLabel: { fontSize: 14, fontWeight: '600', marginBottom: 4 },
   scoreValue: { fontSize: 48, fontWeight: '800' },
   statsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginBottom: 32 },

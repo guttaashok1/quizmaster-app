@@ -17,11 +17,19 @@ export function Card({ children, style, elevated = false }: CardProps) {
         styles.card,
         {
           backgroundColor: elevated ? colors.surfaceElevated : colors.card,
-          borderRadius: borderRadius.lg,
-          padding: spacing.md,
+          borderRadius: borderRadius.xl,
+          padding: elevated ? spacing.lg : spacing.md,
           borderColor: colors.border,
+          borderLeftColor: colors.primary + '40',
+          borderLeftWidth: 3,
         },
-        elevated && styles.elevated,
+        elevated && {
+          shadowColor: colors.primary,
+          shadowOffset: { width: 0, height: 4 },
+          shadowOpacity: 0.08,
+          shadowRadius: 12,
+          elevation: 4,
+        },
         style,
       ]}
     >
@@ -33,12 +41,5 @@ export function Card({ children, style, elevated = false }: CardProps) {
 const styles = StyleSheet.create({
   card: {
     borderWidth: 1,
-  },
-  elevated: {
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 4,
   },
 });

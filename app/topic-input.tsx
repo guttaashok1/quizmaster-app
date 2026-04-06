@@ -9,6 +9,7 @@ import {
   TouchableOpacity,
   Alert,
   Platform,
+  Switch,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useTheme } from '../src/theme/ThemeContext';
@@ -17,6 +18,7 @@ import { Card } from '../src/components/ui/Card';
 import { TopicChip } from '../src/components/topic/TopicChip';
 import { VoiceInputButton } from '../src/components/topic/VoiceInputButton';
 import { useQuizStore } from '../src/stores/useQuizStore';
+import { useUserStore } from '../src/stores/useUserStore';
 import { useReviewStore } from '../src/stores/useReviewStore';
 import { apiClient } from '../src/services/api';
 import { Difficulty, QuestionType } from '../src/types/quiz';
@@ -43,6 +45,7 @@ export default function TopicInputScreen() {
   const router = useRouter();
   const { colors, spacing, borderRadius } = useTheme();
   const startQuiz = useQuizStore((s) => s.startQuiz);
+  const username = useUserStore((s) => s.username);
   const reviewCards = useReviewStore((s) => s.cards);
   const today = new Date().toISOString().split('T')[0];
   const dueCount = reviewCards.filter((c) => c.nextReviewDate <= today).length;
@@ -58,6 +61,7 @@ export default function TopicInputScreen() {
   const [questionCount, setQuestionCount] = useState(10);
   const [timePerQuestion, setTimePerQuestion] = useState(30);
   const [errorMessage, setErrorMessage] = useState('');
+  const [challengeMode, setChallengeMode] = useState(false);
   const scrollRef = useRef<ScrollView>(null);
 
   const toggleType = (type: QuestionType) => {
@@ -103,6 +107,26 @@ export default function TopicInputScreen() {
         sourceContent: inputMode === 'paste' ? pasteContent : inputMode === 'url' ? urlInput : undefined,
       });
 
+      if (challengeMode) {
+        try {
+          const challenge = await apiClient.createChallenge({
+            topic: topicText,
+            difficulty,
+            questions: response.questions,
+            creatorName: username,
+            creatorScore: 0,
+          });
+          startQuiz(response.questions, topicText, difficulty, true, timePerQuestion, challenge.id);
+          Alert.alert(
+            'Challenge Created!',
+            `Share this code with friends: ${challenge.id}\n\nThey can enter it on their home screen to play the same quiz!`,
+            [{ text: 'Start Quiz', onPress: () => router.push('/quiz/play') }]
+          );
+          return;
+        } catch {
+          // Fall through to normal quiz if challenge creation fails
+        }
+      }
       startQuiz(response.questions, topicText, difficulty, true, timePerQuestion);
       router.push('/quiz/play');
     } catch (error) {
@@ -111,7 +135,7 @@ export default function TopicInputScreen() {
     } finally {
       setLoading(false);
     }
-  }, [topic, difficulty, startQuiz, router, selectedTypes, inputMode, pasteContent, urlInput]);
+  }, [topic, difficulty, startQuiz, router, selectedTypes, inputMode, pasteContent, urlInput, challengeMode, username]);
 
   const handleVoicePress = async () => {
     if (Platform.OS === 'web') {
@@ -320,9 +344,22 @@ export default function TopicInputScreen() {
           </View>
         </View>
 
+        <View style={[styles.challengeToggle, { backgroundColor: colors.surface, borderColor: colors.border, borderRadius: borderRadius.md }]}>
+          <View style={{ flex: 1 }}>
+            <Text style={[styles.challengeToggleTitle, { color: colors.text }]}>{'\u2694\uFE0F'} Challenge a Friend</Text>
+            <Text style={[styles.challengeToggleHint, { color: colors.textMuted }]}>Create a code to share with friends</Text>
+          </View>
+          <Switch
+            value={challengeMode}
+            onValueChange={setChallengeMode}
+            trackColor={{ false: colors.border, true: colors.primary + '60' }}
+            thumbColor={challengeMode ? colors.primary : colors.textMuted}
+          />
+        </View>
+
         <View>
           <Button
-            title={loading ? 'Generating Questions...' : 'Generate Quiz'}
+            title={loading ? 'Generating Questions...' : challengeMode ? 'Create Challenge' : 'Generate Quiz'}
             onPress={handleGenerate}
             variant="primary"
             size="lg"
@@ -358,6 +395,9 @@ const styles = StyleSheet.create({
   errorIcon: { fontSize: 20 },
   errorText: { flex: 1, fontSize: 14, fontWeight: '600', lineHeight: 20 },
   errorClose: { fontSize: 18, fontWeight: '700', paddingLeft: 8 },
+  challengeToggle: { flexDirection: 'row', alignItems: 'center', padding: 16, borderWidth: 1, marginBottom: 16 },
+  challengeToggleTitle: { fontSize: 15, fontWeight: '700' },
+  challengeToggleHint: { fontSize: 12, marginTop: 2 },
   chipsContainer: { flexDirection: 'row', flexWrap: 'wrap', marginBottom: 24 },
   reviewBanner: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 20, borderWidth: 1 },
   reviewIcon: { fontSize: 28 },
