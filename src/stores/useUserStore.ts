@@ -18,6 +18,7 @@ interface UserState extends UserProfile {
   recentTopics: string[];
   hasCompletedOnboarding: boolean;
   hasReached100Points: boolean;
+  lastActivity: number | null;
   updateAfterQuiz: (result: QuizResult, topic: string) => void;
   setUsername: (name: string) => void;
   setPassword: (password: string) => void;
@@ -29,6 +30,8 @@ interface UserState extends UserProfile {
   addXP: (amount: number) => void;
   checkAchievements: () => Achievement[];
   completeOnboarding: () => void;
+  setLastActivity: (time: number) => void;
+  logout: () => void;
 }
 
 const ACHIEVEMENT_DEFS = [
@@ -65,6 +68,7 @@ export const useUserStore = create<UserState>()(
       recentTopics: [],
       hasCompletedOnboarding: false,
       hasReached100Points: false,
+      lastActivity: null,
       streakFreezes: 1, // start with 1 free freeze
       streakFreezeUsedToday: false,
       dailyChallengeCompleted: null,
@@ -137,7 +141,9 @@ export const useUserStore = create<UserState>()(
       setUsername: (name) => set({ username: name }),
       setPassword: (password) => set({ password }),
       setAvatar: (emoji) => set({ avatarEmoji: emoji }),
-      completeOnboarding: () => set({ hasCompletedOnboarding: true }),
+      completeOnboarding: () => set({ hasCompletedOnboarding: true, lastActivity: Date.now() }),
+      setLastActivity: (time: number) => set({ lastActivity: time }),
+      logout: () => set({ hasCompletedOnboarding: false, username: 'Player', password: '', avatarEmoji: '\uD83E\uDDE0', lastActivity: null }),
 
       addAchievement: (achievement) =>
         set((state) => ({
