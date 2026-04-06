@@ -11,7 +11,7 @@ import {
   Platform,
   Switch,
 } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useTheme } from '../src/theme/ThemeContext';
 import { Button } from '../src/components/ui/Button';
 import { Card } from '../src/components/ui/Card';
@@ -61,7 +61,8 @@ export default function TopicInputScreen() {
   const [questionCount, setQuestionCount] = useState(5);
   const [timePerQuestion, setTimePerQuestion] = useState(5);
   const [errorMessage, setErrorMessage] = useState('');
-  const [challengeMode, setChallengeMode] = useState(false);
+  const { challenge } = useLocalSearchParams<{ challenge?: string }>();
+  const [challengeMode, setChallengeMode] = useState(challenge === 'true');
   const scrollRef = useRef<ScrollView>(null);
 
   const toggleType = (type: QuestionType) => {

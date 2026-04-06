@@ -1,6 +1,6 @@
-import { useEffect, useState, useCallback } from 'react';
-import { StatusBar, View, Text, StyleSheet, Platform } from 'react-native';
-import { Stack, useRouter, useSegments } from 'expo-router';
+import { useEffect, useState } from 'react';
+import { StatusBar, View, Text, StyleSheet, Platform, ActivityIndicator } from 'react-native';
+import { Stack, useRouter } from 'expo-router';
 import { useFonts } from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
 import 'react-native-reanimated';
@@ -9,66 +9,56 @@ import { useUserStore } from '../src/stores/useUserStore';
 
 SplashScreen.preventAutoHideAsync();
 
-function useStoreHydration(): boolean {
-  const [hydrated, setHydrated] = useState(false);
-
-  useEffect(() => {
-    // Check if already hydrated
-    if (useUserStore.persist.hasHydrated()) {
-      setHydrated(true);
-      return;
-    }
-
-    // Listen for hydration to finish
-    const unsub = useUserStore.persist.onFinishHydration(() => {
-      setHydrated(true);
-    });
-
-    // Fallback for web: manually check localStorage
-    if (Platform.OS === 'web' && typeof window !== 'undefined') {
-      // Give AsyncStorage a moment to load, then check
-      const timer = setTimeout(() => {
-        if (!useUserStore.persist.hasHydrated()) {
-          // Force re-check — AsyncStorage on web is synchronous via localStorage
-          setHydrated(true);
-        }
-      }, 500);
-      return () => { unsub(); clearTimeout(timer); };
-    }
-
-    return unsub;
-  }, []);
-
-  return hydrated;
-}
-
 function RootLayoutNav() {
   const { colors, isDark } = useTheme();
   const router = useRouter();
-  const segments = useSegments();
-  const hydrated = useStoreHydration();
   const hasCompletedOnboarding = useUserStore((s) => s.hasCompletedOnboarding);
+  const [isReady, setIsReady] = useState(false);
+  const [checkedOnce, setCheckedOnce] = useState(false);
 
   useEffect(() => {
-    if (!hydrated) return;
+    // On web, AsyncStorage is backed by localStorage which is synchronous
+    // Give Zustand a tick to rehydrate, then check
+    const timer = setTimeout(() => {
+      setIsReady(true);
+    }, Platform.OS === 'web' ? 100 : 0);
 
-    const onAuthScreen = segments[0] === 'welcome' || segments[0] === 'onboarding';
-
-    if (!hasCompletedOnboarding && !onAuthScreen) {
-      // Not logged in and not on auth screen -> go to welcome
-      router.replace('/welcome');
-    } else if (hasCompletedOnboarding && onAuthScreen) {
-      // Already logged in but on auth screen -> go to home
-      router.replace('/');
+    // Also listen for the persist rehydration
+    try {
+      if (useUserStore.persist.hasHydrated()) {
+        setIsReady(true);
+        clearTimeout(timer);
+      } else {
+        const unsub = useUserStore.persist.onFinishHydration(() => {
+          setIsReady(true);
+          clearTimeout(timer);
+          unsub();
+        });
+      }
+    } catch {
+      // If persist API isn't available, rely on timeout
     }
-  }, [hydrated, hasCompletedOnboarding, segments]);
 
-  // Show loading screen while store hydrates
-  if (!hydrated) {
+    return () => clearTimeout(timer);
+  }, []);
+
+  // Handle navigation after hydration — only once
+  useEffect(() => {
+    if (!isReady || checkedOnce) return;
+    setCheckedOnce(true);
+
+    // Re-read from store after hydration
+    const onboarded = useUserStore.getState().hasCompletedOnboarding;
+    if (!onboarded) {
+      router.replace('/welcome');
+    }
+  }, [isReady]);
+
+  if (!isReady) {
     return (
       <View style={[styles.loading, { backgroundColor: colors.background }]}>
         <Text style={{ fontSize: 48 }}>{'\uD83E\uDDE0'}</Text>
-        <Text style={[styles.loadingText, { color: colors.textMuted }]}>Loading...</Text>
+        <ActivityIndicator size="small" color={colors.primary} style={{ marginTop: 16 }} />
       </View>
     );
   }
@@ -124,10 +114,5 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 12,
-  },
-  loadingText: {
-    fontSize: 16,
-    fontWeight: '600',
   },
 });
