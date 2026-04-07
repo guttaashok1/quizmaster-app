@@ -166,88 +166,126 @@ function DashboardView() {
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />}>
-        {/* Compact banner */}
-        <Animated.View entering={FadeInDown.duration(500)}>
-        <LinearGradient
-          colors={isDark ? [colors.primaryDark, colors.background] : [colors.primaryLight + '30', colors.background]}
-          style={styles.banner}
-        >
-          <View style={styles.bannerRow}>
-            <Text style={styles.bannerEmoji}>{user.avatarEmoji}</Text>
-            <View style={{ flex: 1 }}>
-              <Text style={[styles.bannerName, { color: colors.text }]}>Hey, {user.username}!</Text>
-              <Text style={[styles.bannerLevel, { color: colors.xp }]}>Level {user.xpLevel}</Text>
+
+        {/* Hero banner with gradient */}
+        <Animated.View entering={FadeInDown.duration(600)}>
+          <LinearGradient colors={colors.gradientPrimary} style={styles.heroBanner}>
+            <View style={styles.heroBannerTop}>
+              <View style={styles.heroAvatarWrap}>
+                <Text style={styles.heroAvatar}>{user.avatarEmoji}</Text>
+              </View>
+              <TouchableOpacity onPress={() => router.push('/profile')} style={styles.heroProfileBtn}>
+                <Text style={styles.heroProfileText}>{'\u2699\uFE0F'}</Text>
+              </TouchableOpacity>
             </View>
-            <TouchableOpacity onPress={() => router.push('/profile')}>
-              <Text style={[styles.profileLink, { color: colors.primary }]}>Profile</Text>
-            </TouchableOpacity>
-          </View>
-        </LinearGradient>
+            <Text style={styles.heroGreeting}>Hey, {user.username}! {'\uD83D\uDC4B'}</Text>
+            <Text style={styles.heroSub}>Level {user.xpLevel} · {user.totalScore} pts · {user.gamesPlayed} games</Text>
+
+            {/* Inline stats */}
+            <View style={styles.heroStats}>
+              {stats.map((stat, i) => (
+                <View key={i} style={styles.heroStatItem}>
+                  <Text style={styles.heroStatValue}>{stat.value}</Text>
+                  <Text style={styles.heroStatLabel}>{stat.label}</Text>
+                </View>
+              ))}
+            </View>
+          </LinearGradient>
         </Animated.View>
 
-        <Animated.View entering={FadeInDown.duration(500).delay(100)}>
-        <Button
-          title="Start New Quiz"
-          onPress={() => router.push('/topic-input')}
-          variant="primary"
-          size="lg"
-          style={styles.startButton}
-          icon={<Text style={{ fontSize: 20 }}>{'\uD83D\uDE80'}</Text>}
-        />
+        {/* Quick actions row */}
+        <Animated.View entering={FadeInDown.duration(500).delay(150)}>
+          <View style={styles.quickActions}>
+            <TouchableOpacity
+              onPress={() => router.push('/topic-input')}
+              style={[styles.quickActionMain, { backgroundColor: colors.accent, borderRadius: borderRadius.xl }]}
+            >
+              <Text style={styles.quickActionEmoji}>{'\uD83D\uDE80'}</Text>
+              <Text style={styles.quickActionTitle}>Start Quiz</Text>
+            </TouchableOpacity>
+            <View style={styles.quickActionSide}>
+              <TouchableOpacity
+                onPress={() => router.push('/topic-input?challenge=true')}
+                style={[styles.quickActionSmall, { backgroundColor: colors.secondary, borderRadius: borderRadius.lg }]}
+              >
+                <Text style={styles.quickActionSmallEmoji}>{'\u2694\uFE0F'}</Text>
+                <Text style={styles.quickActionSmallText}>Challenge</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => router.push('/leaderboard')}
+                style={[styles.quickActionSmall, { backgroundColor: colors.warning, borderRadius: borderRadius.lg }]}
+              >
+                <Text style={styles.quickActionSmallEmoji}>{'\uD83C\uDFC6'}</Text>
+                <Text style={styles.quickActionSmallText}>Rankings</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
         </Animated.View>
 
         {/* Challenges Section */}
-        <Animated.View entering={FadeInDown.duration(500).delay(200)}>
-        <Text style={[styles.sectionTitle, { color: colors.text }]}>{'\u2694\uFE0F'} Challenges</Text>
-
-        {/* Tabs */}
-        <View style={styles.tabRow}>
-          {[
-            { key: 'live', label: 'Live', icon: '\uD83C\uDF0D' },
-            { key: 'mine', label: 'Mine', icon: '\uD83D\uDC51' },
-            { key: 'code', label: 'Join Code', icon: '\uD83D\uDD11' },
-          ].map(tab => (
-            <TouchableOpacity
-              key={tab.key}
-              onPress={() => setActiveTab(tab.key as any)}
-              style={[styles.tab, {
-                backgroundColor: activeTab === tab.key ? colors.primary : colors.surface,
-                borderColor: activeTab === tab.key ? colors.primary : colors.border,
-                borderRadius: borderRadius.full,
-              }]}
-            >
-              <Text style={{ fontSize: 12, fontWeight: '600', color: activeTab === tab.key ? colors.textOnPrimary : colors.text }}>
-                {tab.icon} {tab.label}
+        <Animated.View entering={FadeInDown.duration(500).delay(300)}>
+          <View style={styles.sectionHeader}>
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>{'\uD83C\uDF0D'} Live Challenges</Text>
+            <TouchableOpacity onPress={() => setActiveTab(activeTab === 'live' ? 'mine' : 'live')}>
+              <Text style={[styles.sectionToggle, { color: colors.primary }]}>
+                {activeTab === 'live' ? 'My Challenges' : 'Public'}
               </Text>
             </TouchableOpacity>
-          ))}
-        </View>
+          </View>
+
+          {/* Tab pills */}
+          <View style={styles.tabRow}>
+            {[
+              { key: 'live', label: 'Public', icon: '\uD83C\uDF0D' },
+              { key: 'mine', label: 'Mine', icon: '\uD83D\uDC51' },
+              { key: 'code', label: 'Enter Code', icon: '\uD83D\uDD11' },
+            ].map(tab => (
+              <TouchableOpacity
+                key={tab.key}
+                onPress={() => setActiveTab(tab.key as any)}
+                style={[styles.tab, {
+                  backgroundColor: activeTab === tab.key ? colors.primary : 'transparent',
+                  borderColor: activeTab === tab.key ? colors.primary : colors.border,
+                  borderRadius: borderRadius.full,
+                }]}
+              >
+                <Text style={{ fontSize: 13, fontWeight: '700', color: activeTab === tab.key ? '#FFF' : colors.text }}>
+                  {tab.icon} {tab.label}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
         </Animated.View>
 
         {/* Live public challenges */}
         {activeTab === 'live' && (
           <View style={styles.challengeList}>
             {loadingChallenges ? (
-              <ActivityIndicator size="small" color={colors.primary} style={{ padding: 20 }} />
+              <ActivityIndicator size="small" color={colors.primary} style={{ padding: 24 }} />
             ) : publicChallenges.length === 0 ? (
-              <Text style={[styles.emptyText, { color: colors.textMuted }]}>No live challenges right now. Create one!</Text>
+              <View style={[styles.emptyCard, { backgroundColor: colors.surface, borderColor: colors.border, borderRadius: borderRadius.lg }]}>
+                <Text style={styles.emptyEmoji}>{'\uD83C\uDFAE'}</Text>
+                <Text style={[styles.emptyTitle, { color: colors.text }]}>No live challenges</Text>
+                <Text style={[styles.emptyDesc, { color: colors.textMuted }]}>Be the first — create a public challenge!</Text>
+              </View>
             ) : (
               publicChallenges.map((ch, i) => (
                 <Animated.View key={ch.id} entering={FadeInRight.duration(400).delay(i * 80)}>
-                <View style={[styles.challengeItem, { backgroundColor: colors.surface, borderColor: colors.border, borderRadius: borderRadius.sm }]}>
-                  <View style={{ flex: 1 }}>
-                    <Text style={[styles.challengeItemTopic, { color: colors.text }]}>{ch.topic}</Text>
-                    <Text style={[styles.challengeItemMeta, { color: colors.textMuted }]}>
-                      {ch.difficulty} · {(ch.participants || []).length} player{(ch.participants || []).length !== 1 ? 's' : ''} · by {ch.creatorName}
-                    </Text>
-                  </View>
                   <TouchableOpacity
                     onPress={() => handleJoinPublic(ch.id)}
-                    style={[styles.joinSmallBtn, { backgroundColor: colors.primary, borderRadius: borderRadius.sm }]}
+                    style={[styles.challengeCard, { backgroundColor: colors.surface, borderColor: colors.border, borderRadius: borderRadius.lg }]}
                   >
-                    <Text style={{ color: '#fff', fontSize: 12, fontWeight: '700' }}>Join</Text>
+                    <View style={[styles.challengeDot, { backgroundColor: colors.correct }]} />
+                    <View style={{ flex: 1 }}>
+                      <Text style={[styles.challengeCardTopic, { color: colors.text }]}>{ch.topic}</Text>
+                      <Text style={[styles.challengeCardMeta, { color: colors.textMuted }]}>
+                        {ch.difficulty} · {(ch.participants || []).length} player{(ch.participants || []).length !== 1 ? 's' : ''} · by {ch.creatorName}
+                      </Text>
+                    </View>
+                    <View style={[styles.joinPill, { backgroundColor: colors.primary, borderRadius: borderRadius.full }]}>
+                      <Text style={styles.joinPillText}>Join</Text>
+                    </View>
                   </TouchableOpacity>
-                </View>
                 </Animated.View>
               ))
             )}
@@ -258,29 +296,34 @@ function DashboardView() {
         {activeTab === 'mine' && (
           <View style={styles.challengeList}>
             {myChallenges.length === 0 ? (
-              <Text style={[styles.emptyText, { color: colors.textMuted }]}>You haven't created any challenges yet.</Text>
+              <View style={[styles.emptyCard, { backgroundColor: colors.surface, borderColor: colors.border, borderRadius: borderRadius.lg }]}>
+                <Text style={styles.emptyEmoji}>{'\uD83D\uDC51'}</Text>
+                <Text style={[styles.emptyTitle, { color: colors.text }]}>No challenges yet</Text>
+                <Text style={[styles.emptyDesc, { color: colors.textMuted }]}>Create your first challenge and invite friends!</Text>
+              </View>
             ) : (
               myChallenges.map((ch, i) => (
                 <Animated.View key={ch.id} entering={FadeInRight.duration(400).delay(i * 80)}>
-                <TouchableOpacity
-                  onPress={() => router.push(`/lobby?id=${ch.id}&host=true`)}
-                  style={[styles.challengeItem, { backgroundColor: colors.surface, borderColor: colors.border, borderRadius: borderRadius.sm }]}
-                >
-                  <View style={{ flex: 1 }}>
-                    <Text style={[styles.challengeItemTopic, { color: colors.text }]}>{ch.topic}</Text>
-                    <Text style={[styles.challengeItemMeta, { color: colors.textMuted }]}>
-                      {ch.difficulty} · {(ch.participants || []).length} players · {ch.id}
-                    </Text>
-                  </View>
-                  <View style={[styles.statusBadge, {
-                    backgroundColor: ch.status === 'waiting' ? colors.warning + '20' : ch.status === 'started' ? colors.correct + '20' : colors.textMuted + '20',
-                    borderRadius: borderRadius.full,
-                  }]}>
-                    <Text style={{ fontSize: 10, fontWeight: '700', color: ch.status === 'waiting' ? colors.warning : ch.status === 'started' ? colors.correct : colors.textMuted }}>
-                      {ch.status === 'waiting' ? 'OPEN' : ch.status === 'started' ? 'LIVE' : 'DONE'}
-                    </Text>
-                  </View>
-                </TouchableOpacity>
+                  <TouchableOpacity
+                    onPress={() => router.push(`/lobby?id=${ch.id}&host=true`)}
+                    style={[styles.challengeCard, { backgroundColor: colors.surface, borderColor: colors.border, borderRadius: borderRadius.lg }]}
+                  >
+                    <View style={[styles.challengeDot, { backgroundColor: ch.status === 'waiting' ? colors.warning : ch.status === 'started' ? colors.correct : colors.textMuted }]} />
+                    <View style={{ flex: 1 }}>
+                      <Text style={[styles.challengeCardTopic, { color: colors.text }]}>{ch.topic}</Text>
+                      <Text style={[styles.challengeCardMeta, { color: colors.textMuted }]}>
+                        {ch.difficulty} · {(ch.participants || []).length} players · {ch.id}
+                      </Text>
+                    </View>
+                    <View style={[styles.statusPill, {
+                      backgroundColor: ch.status === 'waiting' ? colors.warning + '20' : ch.status === 'started' ? colors.correct + '20' : colors.textMuted + '20',
+                      borderRadius: borderRadius.full,
+                    }]}>
+                      <Text style={{ fontSize: 10, fontWeight: '800', color: ch.status === 'waiting' ? colors.warning : ch.status === 'started' ? colors.correct : colors.textMuted }}>
+                        {ch.status === 'waiting' ? 'OPEN' : ch.status === 'started' ? 'LIVE' : 'DONE'}
+                      </Text>
+                    </View>
+                  </TouchableOpacity>
                 </Animated.View>
               ))
             )}
@@ -289,10 +332,11 @@ function DashboardView() {
 
         {/* Join by code */}
         {activeTab === 'code' && (
-          <View style={styles.codeSection}>
+          <View style={[styles.codeCard, { backgroundColor: colors.surface, borderColor: colors.border, borderRadius: borderRadius.lg }]}>
+            <Text style={[styles.codeCardTitle, { color: colors.text }]}>{'\uD83D\uDD11'} Enter a challenge code</Text>
             <View style={styles.challengeRow}>
               <TextInput
-                style={[styles.challengeInput, { color: colors.text, borderColor: colors.border, backgroundColor: colors.surface, borderRadius: borderRadius.sm }]}
+                style={[styles.challengeInput, { color: colors.text, borderColor: colors.border, backgroundColor: colors.background, borderRadius: borderRadius.sm }]}
                 placeholder="e.g. ch_abc123"
                 placeholderTextColor={colors.textMuted}
                 value={challengeCode}
@@ -314,38 +358,25 @@ function DashboardView() {
           </View>
         )}
 
-        {/* Compact Stats */}
-        <Text style={[styles.sectionTitle, { color: colors.text }]}>Stats</Text>
-        <View style={styles.statsRow}>
-          {stats.map((stat, i) => (
-            <Animated.View key={i} entering={FadeInUp.duration(400).delay(400 + i * 80)} style={{ flex: 1 }}>
-            <View style={[styles.statItem, { backgroundColor: colors.surface, borderColor: colors.border, borderRadius: borderRadius.sm }]}>
-              <Text style={styles.statEmoji}>{stat.icon}</Text>
-              <Text style={[styles.statValue, { color: colors.text }]}>{stat.value}</Text>
-              <Text style={[styles.statLabel, { color: colors.textMuted }]}>{stat.label}</Text>
-            </View>
-            </Animated.View>
-          ))}
-        </View>
+        {/* Bottom row */}
+        <Animated.View entering={FadeInUp.duration(400).delay(500)}>
+          <View style={styles.bottomRow}>
+            <TouchableOpacity onPress={() => router.push('/history')} style={[styles.bottomBtn, { backgroundColor: colors.surface, borderColor: colors.border, borderRadius: borderRadius.lg }]}>
+              <Text style={styles.bottomBtnEmoji}>{'\uD83D\uDCDA'}</Text>
+              <Text style={[styles.bottomBtnText, { color: colors.text }]}>History</Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => router.push('/profile')} style={[styles.bottomBtn, { backgroundColor: colors.surface, borderColor: colors.border, borderRadius: borderRadius.lg }]}>
+              <Text style={styles.bottomBtnEmoji}>{'\uD83D\uDC64'}</Text>
+              <Text style={[styles.bottomBtnText, { color: colors.text }]}>Profile</Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={logout} style={[styles.bottomBtn, { backgroundColor: colors.surface, borderColor: colors.border, borderRadius: borderRadius.lg }]}>
+              <Text style={styles.bottomBtnEmoji}>{'\uD83D\uDEAA'}</Text>
+              <Text style={[styles.bottomBtnText, { color: colors.textMuted }]}>Logout</Text>
+            </TouchableOpacity>
+          </View>
+        </Animated.View>
 
-        {/* Bottom nav */}
-        <View style={styles.bottomButtons}>
-          <Button title="History" onPress={() => router.push('/history')} variant="outline" size="sm" style={{ flex: 1 }} icon={<Text>{'\uD83D\uDCDA'}</Text>} />
-          <Button title="Leaderboard" onPress={() => router.push('/leaderboard')} variant="outline" size="sm" style={{ flex: 1 }} icon={<Text>{'\uD83C\uDFC5'}</Text>} />
-        </View>
-
-        <TouchableOpacity onPress={logout} style={styles.logoutBtn}>
-          <Text style={[styles.logoutText, { color: colors.textMuted }]}>Log Out</Text>
-        </TouchableOpacity>
       </ScrollView>
-      <Animated.View entering={ZoomIn.duration(400).delay(600)} style={styles.fab}>
-        <TouchableOpacity
-          onPress={() => router.push('/topic-input?challenge=true')}
-          style={[styles.fabButton, { backgroundColor: colors.primary }]}
-        >
-          <Text style={styles.fabIcon}>{'\u2795'}</Text>
-        </TouchableOpacity>
-      </Animated.View>
     </SafeAreaView>
   );
 }
@@ -449,37 +480,65 @@ const styles = StyleSheet.create({
   // Dashboard
   container: { flex: 1 },
   scroll: { padding: 16, paddingBottom: 32 },
-  banner: { borderRadius: 16, padding: 16, marginBottom: 16 },
-  bannerRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  bannerEmoji: { fontSize: 40 },
-  bannerName: { fontSize: 18, fontWeight: '700' },
-  bannerLevel: { fontSize: 13, fontWeight: '600', marginTop: 2 },
-  profileLink: { fontSize: 14, fontWeight: '600' },
-  startButton: { marginBottom: 16 },
-  tabRow: { flexDirection: 'row', gap: 6, marginBottom: 12 },
-  tab: { flex: 1, paddingVertical: 8, alignItems: 'center', borderWidth: 1 },
-  challengeList: { marginBottom: 16 },
-  challengeItem: { flexDirection: 'row', alignItems: 'center', padding: 12, borderWidth: 1, marginBottom: 8 },
-  challengeItemTopic: { fontSize: 14, fontWeight: '700' },
-  challengeItemMeta: { fontSize: 11, marginTop: 2 },
-  joinSmallBtn: { paddingHorizontal: 14, paddingVertical: 6 },
-  statusBadge: { paddingHorizontal: 8, paddingVertical: 3 },
-  emptyText: { fontSize: 13, textAlign: 'center', padding: 20 },
-  codeSection: { marginBottom: 16 },
+
+  // Hero banner
+  heroBanner: { borderRadius: 24, padding: 20, paddingTop: 24, marginBottom: 20 },
+  heroBannerTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 },
+  heroAvatarWrap: { width: 52, height: 52, borderRadius: 26, backgroundColor: 'rgba(255,255,255,0.2)', alignItems: 'center', justifyContent: 'center' },
+  heroAvatar: { fontSize: 28 },
+  heroProfileBtn: { width: 36, height: 36, borderRadius: 18, backgroundColor: 'rgba(255,255,255,0.15)', alignItems: 'center', justifyContent: 'center' },
+  heroProfileText: { fontSize: 18 },
+  heroGreeting: { fontSize: 24, fontWeight: '900', color: '#FFFFFF', marginBottom: 4 },
+  heroSub: { fontSize: 13, color: 'rgba(255,255,255,0.7)', marginBottom: 16 },
+  heroStats: { flexDirection: 'row', backgroundColor: 'rgba(255,255,255,0.12)', borderRadius: 16, padding: 12 },
+  heroStatItem: { flex: 1, alignItems: 'center' },
+  heroStatValue: { fontSize: 18, fontWeight: '800', color: '#FFFFFF' },
+  heroStatLabel: { fontSize: 10, color: 'rgba(255,255,255,0.6)', marginTop: 2 },
+
+  // Quick actions
+  quickActions: { flexDirection: 'row', gap: 12, marginBottom: 20 },
+  quickActionMain: { flex: 2, height: 100, alignItems: 'center', justifyContent: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.15, shadowRadius: 8, elevation: 4 },
+  quickActionEmoji: { fontSize: 32, marginBottom: 4 },
+  quickActionTitle: { fontSize: 16, fontWeight: '800', color: '#FFFFFF' },
+  quickActionSide: { flex: 1, gap: 8 },
+  quickActionSmall: { flex: 1, alignItems: 'center', justifyContent: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4, elevation: 2 },
+  quickActionSmallEmoji: { fontSize: 20, marginBottom: 2 },
+  quickActionSmallText: { fontSize: 11, fontWeight: '700', color: '#FFFFFF' },
+
+  // Section
+  sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
+  sectionTitle: { fontSize: 18, fontWeight: '800' },
+  sectionToggle: { fontSize: 13, fontWeight: '600' },
+  tabRow: { flexDirection: 'row', gap: 8, marginBottom: 14 },
+  tab: { flex: 1, paddingVertical: 8, alignItems: 'center', borderWidth: 1.5 },
+
+  // Challenge cards
+  challengeList: { marginBottom: 20 },
+  challengeCard: { flexDirection: 'row', alignItems: 'center', padding: 14, borderWidth: 1, marginBottom: 10, gap: 12 },
+  challengeDot: { width: 8, height: 8, borderRadius: 4 },
+  challengeCardTopic: { fontSize: 15, fontWeight: '700' },
+  challengeCardMeta: { fontSize: 11, marginTop: 3 },
+  joinPill: { paddingHorizontal: 16, paddingVertical: 7 },
+  joinPillText: { color: '#FFF', fontSize: 13, fontWeight: '800' },
+  statusPill: { paddingHorizontal: 10, paddingVertical: 4 },
+
+  // Empty states
+  emptyCard: { alignItems: 'center', padding: 32, borderWidth: 1, marginBottom: 12 },
+  emptyEmoji: { fontSize: 40, marginBottom: 8 },
+  emptyTitle: { fontSize: 16, fontWeight: '700', marginBottom: 4 },
+  emptyDesc: { fontSize: 13, textAlign: 'center' },
+
+  // Code input
+  codeCard: { padding: 16, borderWidth: 1, marginBottom: 20 },
+  codeCardTitle: { fontSize: 15, fontWeight: '700', marginBottom: 12 },
   challengeRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  challengeInput: { flex: 1, height: 40, borderWidth: 1, paddingHorizontal: 10, fontSize: 14 },
-  joinButton: { minWidth: 60 },
-  challengeErrorText: { fontSize: 12, marginTop: 4 },
-  sectionTitle: { fontSize: 16, fontWeight: '700', marginBottom: 8 },
-  statsRow: { flexDirection: 'row', gap: 8, marginBottom: 16 },
-  statItem: { flex: 1, alignItems: 'center', paddingVertical: 10, borderWidth: 1 },
-  statEmoji: { fontSize: 18, marginBottom: 2 },
-  statValue: { fontSize: 16, fontWeight: '800' },
-  statLabel: { fontSize: 10, fontWeight: '500', marginTop: 1 },
-  bottomButtons: { flexDirection: 'row', gap: 8, marginBottom: 16 },
-  logoutBtn: { alignItems: 'center', paddingVertical: 12 },
-  logoutText: { fontSize: 14, fontWeight: '600' },
-  fab: { position: 'absolute', bottom: 24, right: 24 },
-  fabButton: { width: 56, height: 56, borderRadius: 28, alignItems: 'center', justifyContent: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8, elevation: 8 },
-  fabIcon: { fontSize: 24, color: '#FFFFFF' },
+  challengeInput: { flex: 1, height: 44, borderWidth: 1.5, paddingHorizontal: 12, fontSize: 15 },
+  joinButton: { minWidth: 70 },
+  challengeErrorText: { fontSize: 12, marginTop: 6 },
+
+  // Bottom
+  bottomRow: { flexDirection: 'row', gap: 10 },
+  bottomBtn: { flex: 1, alignItems: 'center', paddingVertical: 14, borderWidth: 1 },
+  bottomBtnEmoji: { fontSize: 22, marginBottom: 4 },
+  bottomBtnText: { fontSize: 12, fontWeight: '600' },
 });
