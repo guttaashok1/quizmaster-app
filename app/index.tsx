@@ -167,28 +167,20 @@ function DashboardView() {
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />}>
 
-        {/* Hero banner with gradient */}
+        {/* Compact hero banner */}
         <Animated.View entering={FadeInDown.duration(600)}>
           <LinearGradient colors={colors.gradientPrimary} style={styles.heroBanner}>
-            <View style={styles.heroBannerTop}>
+            <View style={styles.heroBannerRow}>
               <View style={styles.heroAvatarWrap}>
                 <Text style={styles.heroAvatar}>{user.avatarEmoji}</Text>
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.heroGreeting}>Hey, {user.username}! {'\uD83D\uDC4B'}</Text>
+                <Text style={styles.heroSub}>Lv.{user.xpLevel} · {user.totalScore} pts · {user.gamesPlayed} games</Text>
               </View>
               <TouchableOpacity onPress={() => router.push('/profile')} style={styles.heroProfileBtn}>
                 <Text style={styles.heroProfileText}>{'\u2699\uFE0F'}</Text>
               </TouchableOpacity>
-            </View>
-            <Text style={styles.heroGreeting}>Hey, {user.username}! {'\uD83D\uDC4B'}</Text>
-            <Text style={styles.heroSub}>Level {user.xpLevel} · {user.totalScore} pts · {user.gamesPlayed} games</Text>
-
-            {/* Inline stats */}
-            <View style={styles.heroStats}>
-              {stats.map((stat, i) => (
-                <View key={i} style={styles.heroStatItem}>
-                  <Text style={styles.heroStatValue}>{stat.value}</Text>
-                  <Text style={styles.heroStatLabel}>{stat.label}</Text>
-                </View>
-              ))}
             </View>
           </LinearGradient>
         </Animated.View>
@@ -482,18 +474,14 @@ const styles = StyleSheet.create({
   scroll: { padding: 16, paddingBottom: 32 },
 
   // Hero banner
-  heroBanner: { borderRadius: 24, padding: 20, paddingTop: 24, marginBottom: 20 },
-  heroBannerTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 },
-  heroAvatarWrap: { width: 52, height: 52, borderRadius: 26, backgroundColor: 'rgba(255,255,255,0.2)', alignItems: 'center', justifyContent: 'center' },
-  heroAvatar: { fontSize: 28 },
-  heroProfileBtn: { width: 36, height: 36, borderRadius: 18, backgroundColor: 'rgba(255,255,255,0.15)', alignItems: 'center', justifyContent: 'center' },
-  heroProfileText: { fontSize: 18 },
-  heroGreeting: { fontSize: 24, fontWeight: '900', color: '#FFFFFF', marginBottom: 4 },
-  heroSub: { fontSize: 13, color: 'rgba(255,255,255,0.7)', marginBottom: 16 },
-  heroStats: { flexDirection: 'row', backgroundColor: 'rgba(255,255,255,0.12)', borderRadius: 16, padding: 12 },
-  heroStatItem: { flex: 1, alignItems: 'center' },
-  heroStatValue: { fontSize: 18, fontWeight: '800', color: '#FFFFFF' },
-  heroStatLabel: { fontSize: 10, color: 'rgba(255,255,255,0.6)', marginTop: 2 },
+  heroBanner: { borderRadius: 20, paddingHorizontal: 16, paddingVertical: 14, marginBottom: 16 },
+  heroBannerRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  heroAvatarWrap: { width: 44, height: 44, borderRadius: 22, backgroundColor: 'rgba(255,255,255,0.2)', alignItems: 'center', justifyContent: 'center' },
+  heroAvatar: { fontSize: 24 },
+  heroProfileBtn: { width: 32, height: 32, borderRadius: 16, backgroundColor: 'rgba(255,255,255,0.15)', alignItems: 'center', justifyContent: 'center' },
+  heroProfileText: { fontSize: 16 },
+  heroGreeting: { fontSize: 18, fontWeight: '800', color: '#FFFFFF' },
+  heroSub: { fontSize: 12, color: 'rgba(255,255,255,0.7)', marginTop: 2 },
 
   // Quick actions
   quickActions: { flexDirection: 'row', gap: 12, marginBottom: 20 },
