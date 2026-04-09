@@ -1,0 +1,30 @@
+services:
+  # Backend API Server
+  - type: web
+    name: quizmaster-api
+    runtime: node
+    region: oregon
+    plan: free
+    rootDir: server
+    buildCommand: npm install && npm run build
+    startCommand: node dist/index.js
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: ANTHROPIC_API_KEY
+        sync: false  # Set manually in Render dashboard
+
+  # Frontend Static Site
+  - type: web
+    name: quizmaster
+    runtime: static
+    buildCommand: npm install && npm run build:web
+    staticPublishPath: dist
+    headers:
+      - path: /sw.js
+        name: Cache-Control
+        value: no-cache
+    envVars:
+      - key: EXPO_PUBLIC_API_URL
+        sync: false  # Set to the backend URL after deploying the API
