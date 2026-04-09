@@ -15,12 +15,21 @@ const PORT = process.env.PORT || 3001;
 app.use(cors());
 app.use(express.json());
 
-const limiter = rateLimit({
+// Only rate-limit quiz generation (calls Claude API, expensive)
+const quizLimiter = rateLimit({
   windowMs: 60 * 1000,
   max: 10,
   message: { message: 'Too many requests, please try again later', code: 'RATE_LIMIT' },
 });
-app.use('/api/', limiter);
+app.use('/api/quiz', quizLimiter);
+
+// General rate limit - generous for polling/lobby
+const generalLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 120,
+  message: { message: 'Too many requests, please try again later', code: 'RATE_LIMIT' },
+});
+app.use('/api/', generalLimiter);
 
 app.get('/api/health', (_req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
