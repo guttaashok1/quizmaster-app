@@ -8,6 +8,8 @@ import {
   getChallengeStatus as dbGetChallengeStatus,
   getPublicChallenges as dbGetPublicChallenges,
   getMyChallenges as dbGetMyChallenges,
+  answerChallengeQuestion as dbAnswerChallengeQuestion,
+  getChallengeProgress as dbGetChallengeProgress,
 } from '../services/database';
 
 function generateId(): string {
@@ -149,6 +151,39 @@ router.post('/:id/start', async (req: Request, res: Response) => {
     const errMsg = error instanceof Error ? error.message : String(error);
     console.error('Start challenge error:', errMsg);
     res.status(500).json({ message: 'Failed to start challenge', code: 'SERVER_ERROR' });
+  }
+});
+
+// Submit answer for a question (first answer wins)
+router.post('/:id/answer', async (req: Request, res: Response) => {
+  try {
+    const { questionIndex, username, correct, timeMs } = req.body;
+    if (questionIndex == null || !username || correct == null) {
+      res.status(400).json({ message: 'Missing fields', code: 'VALIDATION_ERROR' });
+      return;
+    }
+    const result = await dbAnswerChallengeQuestion(req.params.id, questionIndex, username, correct, timeMs || 0);
+    res.json(result);
+  } catch (error) {
+    const errMsg = error instanceof Error ? error.message : String(error);
+    console.error('Answer challenge error:', errMsg);
+    res.status(500).json({ message: 'Failed to submit answer', code: 'SERVER_ERROR' });
+  }
+});
+
+// Get challenge progress (for polling during quiz)
+router.get('/:id/progress', async (req: Request, res: Response) => {
+  try {
+    const progress = await dbGetChallengeProgress(req.params.id);
+    if (!progress) {
+      res.status(404).json({ message: 'Challenge not found', code: 'NOT_FOUND' });
+      return;
+    }
+    res.json(progress);
+  } catch (error) {
+    const errMsg = error instanceof Error ? error.message : String(error);
+    console.error('Challenge progress error:', errMsg);
+    res.status(500).json({ message: 'Failed to get progress', code: 'SERVER_ERROR' });
   }
 });
 

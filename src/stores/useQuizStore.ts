@@ -35,6 +35,7 @@ interface QuizState {
   adaptiveDifficulty: boolean;
   currentAdaptiveDifficulty: Difficulty;
   customTimePerQuestion: number | null;
+  isMultiplayer: boolean;
   challengeId: string | null;
 
   startQuiz: (questions: Question[], topic: string, difficulty: Difficulty, adaptive?: boolean, customTime?: number | null, challengeId?: string | null) => void;
@@ -104,6 +105,7 @@ export const useQuizStore = create<QuizState>()((set, get) => ({
   lastAnswerCorrect: null,
   adaptiveDifficulty: false,
   currentAdaptiveDifficulty: 'easy',
+  isMultiplayer: false,
   challengeId: null,
   customTimePerQuestion: null,
 
@@ -127,6 +129,7 @@ export const useQuizStore = create<QuizState>()((set, get) => ({
       currentAdaptiveDifficulty: difficulty,
       customTimePerQuestion: customTime,
       challengeId: challengeId,
+      isMultiplayer: !!challengeId,
     });
   },
 
@@ -289,5 +292,6 @@ export const useQuizStore = create<QuizState>()((set, get) => ({
       currentAdaptiveDifficulty: 'easy',
       customTimePerQuestion: null,
       challengeId: null,
+      isMultiplayer: false,
     }),
 }));

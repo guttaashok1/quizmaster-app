@@ -108,6 +108,14 @@ class ApiClient {
     return this.request(`/challenge/${id}/status`);
   }
 
+  async getChallengeProgress(id: string): Promise<any> {
+    return this.request(`/challenge/${id}/progress`);
+  }
+
+  async answerChallengeQuestion(id: string, data: { questionIndex: number; username: string; correct: boolean; timeMs: number }): Promise<{ recorded: boolean; answeredBy?: string; correct?: boolean }> {
+    return this.request(`/challenge/${id}/answer`, { method: 'POST', body: JSON.stringify(data) });
+  }
+
   async register(data: { username: string; password: string; avatarEmoji: string }): Promise<any> {
     return this.request('/auth/register', { method: 'POST', body: JSON.stringify(data) });
   }

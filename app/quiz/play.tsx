@@ -5,6 +5,8 @@ import { useRouter } from 'expo-router';
 import { useTheme } from '../../src/theme/ThemeContext';
 import { useQuizStore } from '../../src/stores/useQuizStore';
 import { useReviewStore } from '../../src/stores/useReviewStore';
+import { apiClient } from '../../src/services/api';
+import { useUserStore } from '../../src/stores/useUserStore';
 import { useCountdown } from '../../src/hooks/useCountdown';
 import { QuestionCard } from '../../src/components/quiz/QuestionCard';
 import { TrueFalseCard } from '../../src/components/quiz/TrueFalseCard';
@@ -34,6 +36,8 @@ export default function QuizPlayScreen() {
   const [flashColor, setFlashColor] = useState<string | null>(null);
   const prevAdaptiveDiff = useRef<string | null>(null);
   const [diffChange, setDiffChange] = useState<string | null>(null);
+  const [mpToast, setMpToast] = useState<string | null>(null);
+  const submittedRef = useRef<number>(-1);
 
   const {
     questions,
@@ -53,6 +57,10 @@ export default function QuizPlayScreen() {
     dismissExplanation,
     resetQuiz,
   } = useQuizStore();
+
+  const challengeId = useQuizStore((s) => s.challengeId);
+  const isMultiplayer = useQuizStore((s) => s.isMultiplayer);
+  const username = useUserStore((s) => s.username);
 
   const addWrongAnswer = useReviewStore((s) => s.addWrongAnswer);
 
@@ -106,6 +114,78 @@ export default function QuizPlayScreen() {
       addWrongAnswer(currentQuestion, topic);
     }
   }, [lastAnswerCorrect, answers.length]);
+
+  // Multiplayer polling effect
+  useEffect(() => {
+    if (!isMultiplayer || !challengeId || status !== 'playing') return;
+
+    const poll = setInterval(async () => {
+      try {
+        const progress = await apiClient.getChallengeProgress(challengeId);
+        if (!progress) return;
+
+        const serverQ = progress.currentQuestion;
+        const localQ = useQuizStore.getState().currentIndex;
+
+        // Server is ahead — someone else answered. Auto-advance.
+        if (serverQ > localQ && !useQuizStore.getState().showExplanation) {
+          const key = String(localQ);
+          const answer = progress.questionAnswers[key];
+          if (answer && answer.answeredBy !== username) {
+            setMpToast(`\u26A1 ${answer.answeredBy} answered first!`);
+            setTimeout(() => setMpToast(null), 2000);
+          }
+          // Force advance to next question
+          useQuizStore.getState().nextQuestion();
+        }
+
+        // Check if quiz is done (server advanced past all questions)
+        if (serverQ >= progress.totalQuestions) {
+          clearInterval(poll);
+        }
+      } catch {}
+    }, 2000);
+
+    return () => clearInterval(poll);
+  }, [isMultiplayer, challengeId, status]);
+
+  // Submit answer to server in multiplayer mode
+  useEffect(() => {
+    if (!isMultiplayer || !challengeId) return;
+    if (answers.length === 0) return;
+
+    const lastAnswer = answers[answers.length - 1];
+    const qIndex = answers.length - 1;
+
+    // Don't submit the same question twice
+    if (qIndex <= submittedRef.current) return;
+    submittedRef.current = qIndex;
+
+    apiClient.answerChallengeQuestion(challengeId, {
+      questionIndex: qIndex,
+      username,
+      correct: lastAnswer.correct,
+      timeMs: lastAnswer.timeSpent * 1000,
+    }).catch(() => {});
+  }, [answers.length, isMultiplayer, challengeId]);
+
+  // In multiplayer, auto-advance after answering (skip explanation modal)
+  useEffect(() => {
+    if (!isMultiplayer || !showExplanation) return;
+    const timer = setTimeout(() => {
+      setSelectedAnswer(null);
+      setSelectedBool(null);
+      setTextAnswer('');
+      setDiffChange(null);
+      dismissExplanation();
+      if (status === 'finished' || isLastQuestion) {
+        router.replace('/quiz/results');
+      } else {
+        nextQuestion();
+      }
+    }, 1500);
+    return () => clearTimeout(timer);
+  }, [isMultiplayer, showExplanation]);
 
   const handleMCQAnswer = useCallback(
     (index: number) => {
@@ -207,6 +287,11 @@ export default function QuizPlayScreen() {
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
       <Confetti active={showConfetti} />
       <AnswerFlash color={flashColor} />
+      {mpToast && (
+        <View style={styles.mpToast}>
+          <Text style={styles.mpToastText}>{mpToast}</Text>
+        </View>
+      )}
 
       <View style={[styles.topBar, { paddingHorizontal: spacing.md }]}>
         <TouchableOpacity
@@ -315,4 +400,6 @@ const styles = StyleSheet.create({
   exitBtn: { padding: 4 },
   exitText: { fontSize: 22, fontWeight: '700' },
   questionCounter: { fontSize: 14, fontWeight: '700' },
+  mpToast: { position: 'absolute', top: 80, left: 20, right: 20, backgroundColor: 'rgba(0,0,0,0.8)', borderRadius: 12, padding: 12, zIndex: 999, alignItems: 'center' } as any,
+  mpToastText: { color: '#FFFFFF', fontSize: 15, fontWeight: '700' },
 });

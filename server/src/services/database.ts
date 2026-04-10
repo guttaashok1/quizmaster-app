@@ -38,6 +38,8 @@ export async function initDatabase(): Promise<void> {
     await pool.query(`ALTER TABLE challenges ADD COLUMN IF NOT EXISTS status VARCHAR(20) DEFAULT 'waiting'`);
     await pool.query(`ALTER TABLE challenges ADD COLUMN IF NOT EXISTS participants JSONB DEFAULT '[]'`);
     await pool.query(`ALTER TABLE challenges ADD COLUMN IF NOT EXISTS visibility VARCHAR(10) DEFAULT 'private'`);
+    await pool.query(`ALTER TABLE challenges ADD COLUMN IF NOT EXISTS current_question INTEGER DEFAULT 0`);
+    await pool.query(`ALTER TABLE challenges ADD COLUMN IF NOT EXISTS question_answers JSONB DEFAULT '{}'`);
 
     console.log('Database tables ready');
   } catch (err) {
@@ -254,6 +256,60 @@ export async function startChallenge(id: string): Promise<Challenge | null> {
     createdAt: row.created_at,
     status: row.status,
     participants: row.participants,
+  };
+}
+
+export async function answerChallengeQuestion(
+  id: string,
+  questionIndex: number,
+  username: string,
+  correct: boolean,
+  timeMs: number
+): Promise<{ recorded: boolean; answeredBy?: string; correct?: boolean }> {
+  // Get current answers
+  const result = await pool.query('SELECT question_answers, current_question FROM challenges WHERE id = $1', [id]);
+  if (result.rows.length === 0) return { recorded: false };
+
+  const answers = result.rows[0].question_answers || {};
+  const key = String(questionIndex);
+
+  // If someone already answered this question, reject
+  if (answers[key]) {
+    return { recorded: false, answeredBy: answers[key].answeredBy, correct: answers[key].correct };
+  }
+
+  // Record this answer and advance the question
+  answers[key] = { answeredBy: username, correct, timeMs, answeredAt: new Date().toISOString() };
+  const nextQuestion = questionIndex + 1;
+
+  await pool.query(
+    'UPDATE challenges SET question_answers = $2, current_question = $3 WHERE id = $1',
+    [id, JSON.stringify(answers), nextQuestion]
+  );
+
+  return { recorded: true, answeredBy: username, correct };
+}
+
+export async function getChallengeProgress(id: string): Promise<{
+  currentQuestion: number;
+  questionAnswers: Record<string, { answeredBy: string; correct: boolean; timeMs: number }>;
+  status: string;
+  participants: string[];
+  totalQuestions: number;
+} | null> {
+  const result = await pool.query(
+    'SELECT current_question, question_answers, status, participants, questions FROM challenges WHERE id = $1',
+    [id]
+  );
+  if (result.rows.length === 0) return null;
+  const row = result.rows[0];
+  const questions = row.questions || [];
+  return {
+    currentQuestion: row.current_question || 0,
+    questionAnswers: row.question_answers || {},
+    status: row.status || 'waiting',
+    participants: row.participants || [],
+    totalQuestions: Array.isArray(questions) ? questions.length : 0,
   };
 }
 
