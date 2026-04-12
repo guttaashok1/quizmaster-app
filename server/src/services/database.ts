@@ -324,3 +324,11 @@ export async function getChallengeStatus(id: string): Promise<{ status: string; 
     participants: result.rows[0].participants || [],
   };
 }
+
+export async function deleteChallenge(id: string, username: string): Promise<boolean> {
+  const result = await pool.query(
+    'DELETE FROM challenges WHERE id = $1 AND LOWER(creator_name) = LOWER($2)',
+    [id, username]
+  );
+  return (result.rowCount ?? 0) > 0;
+}

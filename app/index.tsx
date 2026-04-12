@@ -156,6 +156,13 @@ function DashboardView() {
     }
   };
 
+  const handleDeleteChallenge = async (challengeId: string) => {
+    try {
+      await apiClient.deleteChallenge(challengeId, user.username);
+      setMyChallenges((prev) => prev.filter((c) => c.id !== challengeId));
+    } catch {}
+  };
+
   const stats = [
     { label: 'Score', value: user.totalScore.toLocaleString(), icon: '\u2B50' },
     { label: 'Played', value: user.gamesPlayed.toString(), icon: '\uD83C\uDFAE' },
@@ -296,26 +303,34 @@ function DashboardView() {
             ) : (
               myChallenges.map((ch, i) => (
                 <Animated.View key={ch.id} entering={FadeInRight.duration(400).delay(i * 80)}>
-                  <TouchableOpacity
-                    onPress={() => router.push(`/lobby?id=${ch.id}&host=true`)}
-                    style={[styles.challengeCard, { backgroundColor: colors.surface, borderColor: colors.border, borderRadius: borderRadius.lg }]}
-                  >
-                    <View style={[styles.challengeDot, { backgroundColor: ch.status === 'waiting' ? colors.warning : ch.status === 'started' ? colors.correct : colors.textMuted }]} />
-                    <View style={{ flex: 1 }}>
-                      <Text style={[styles.challengeCardTopic, { color: colors.text }]}>{ch.topic}</Text>
-                      <Text style={[styles.challengeCardMeta, { color: colors.textMuted }]}>
-                        {ch.difficulty} · {(ch.participants || []).length} players · {ch.id}
-                      </Text>
-                    </View>
-                    <View style={[styles.statusPill, {
-                      backgroundColor: ch.status === 'waiting' ? colors.warning + '20' : ch.status === 'started' ? colors.correct + '20' : colors.textMuted + '20',
-                      borderRadius: borderRadius.full,
-                    }]}>
-                      <Text style={{ fontSize: 10, fontWeight: '800', color: ch.status === 'waiting' ? colors.warning : ch.status === 'started' ? colors.correct : colors.textMuted }}>
-                        {ch.status === 'waiting' ? 'OPEN' : ch.status === 'started' ? 'LIVE' : 'DONE'}
-                      </Text>
-                    </View>
-                  </TouchableOpacity>
+                  <View style={[styles.challengeCard, { backgroundColor: colors.surface, borderColor: colors.border, borderRadius: borderRadius.lg }]}>
+                    <TouchableOpacity
+                      onPress={() => router.push(`/lobby?id=${ch.id}&host=true`)}
+                      style={{ flexDirection: 'row', alignItems: 'center', flex: 1, gap: 12 }}
+                    >
+                      <View style={[styles.challengeDot, { backgroundColor: ch.status === 'waiting' ? colors.warning : ch.status === 'started' ? colors.correct : colors.textMuted }]} />
+                      <View style={{ flex: 1 }}>
+                        <Text style={[styles.challengeCardTopic, { color: colors.text }]}>{ch.topic}</Text>
+                        <Text style={[styles.challengeCardMeta, { color: colors.textMuted }]}>
+                          {ch.difficulty} · {(ch.participants || []).length} players · {ch.id}
+                        </Text>
+                      </View>
+                      <View style={[styles.statusPill, {
+                        backgroundColor: ch.status === 'waiting' ? colors.warning + '20' : ch.status === 'started' ? colors.correct + '20' : colors.textMuted + '20',
+                        borderRadius: borderRadius.full,
+                      }]}>
+                        <Text style={{ fontSize: 10, fontWeight: '800', color: ch.status === 'waiting' ? colors.warning : ch.status === 'started' ? colors.correct : colors.textMuted }}>
+                          {ch.status === 'waiting' ? 'OPEN' : ch.status === 'started' ? 'LIVE' : 'DONE'}
+                        </Text>
+                      </View>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      onPress={() => handleDeleteChallenge(ch.id)}
+                      style={{ paddingHorizontal: 8, paddingVertical: 8, marginLeft: 4 }}
+                    >
+                      <Text style={{ fontSize: 16, fontWeight: '700', color: colors.wrong }}>{'\u2715'}</Text>
+                    </TouchableOpacity>
+                  </View>
                 </Animated.View>
               ))
             )}

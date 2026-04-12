@@ -10,6 +10,7 @@ import {
   getMyChallenges as dbGetMyChallenges,
   answerChallengeQuestion as dbAnswerChallengeQuestion,
   getChallengeProgress as dbGetChallengeProgress,
+  deleteChallenge as dbDeleteChallenge,
 } from '../services/database';
 
 function generateId(): string {
@@ -200,6 +201,27 @@ router.get('/:id/status', async (req: Request, res: Response) => {
     const errMsg = error instanceof Error ? error.message : String(error);
     console.error('Challenge status error:', errMsg);
     res.status(500).json({ message: 'Failed to get status', code: 'SERVER_ERROR' });
+  }
+});
+
+// Delete a challenge (creator only)
+router.delete('/:id', async (req: Request, res: Response) => {
+  try {
+    const { username } = req.body;
+    if (!username) {
+      res.status(400).json({ message: 'Username is required', code: 'VALIDATION_ERROR' });
+      return;
+    }
+    const deleted = await dbDeleteChallenge(req.params.id, username);
+    if (!deleted) {
+      res.status(404).json({ message: 'Challenge not found or you are not the creator', code: 'NOT_FOUND' });
+      return;
+    }
+    res.json({ success: true });
+  } catch (error) {
+    const errMsg = error instanceof Error ? error.message : String(error);
+    console.error('Delete challenge error:', errMsg);
+    res.status(500).json({ message: 'Failed to delete challenge', code: 'SERVER_ERROR' });
   }
 });
 

@@ -116,6 +116,10 @@ class ApiClient {
     return this.request(`/challenge/${id}/answer`, { method: 'POST', body: JSON.stringify(data) });
   }
 
+  async deleteChallenge(id: string, username: string): Promise<{ success: boolean }> {
+    return this.request(`/challenge/${id}`, { method: 'DELETE', body: JSON.stringify({ username }) });
+  }
+
   async register(data: { username: string; password: string; avatarEmoji: string }): Promise<any> {
     return this.request('/auth/register', { method: 'POST', body: JSON.stringify(data) });
   }
