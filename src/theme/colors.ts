@@ -1,86 +1,102 @@
 export const lightColors = {
-  primary: '#7C3AED',        // vibrant purple
-  primaryLight: '#A78BFA',
-  primaryDark: '#5B21B6',
-  secondary: '#F43F5E',      // rose/pink
-  secondaryLight: '#FB7185',
-  accent: '#06D6A0',         // emerald green
-  accentLight: '#34D399',
+  // Duolingo-style palette
+  primary: '#58CC02',        // Duolingo green
+  primaryLight: '#89E219',
+  primaryDark: '#58A700',    // Darker shade for button bottom border
+  secondary: '#CE82FF',      // purple
+  secondaryLight: '#E5B5FF',
+  accent: '#1CB0F6',         // bright blue
+  accentLight: '#84D8F7',
 
-  background: '#F5F3FF',     // light purple tint
+  background: '#FFFFFF',
   surface: '#FFFFFF',
   surfaceElevated: '#FFFFFF',
   card: '#FFFFFF',
 
-  text: '#1E1B4B',           // deep indigo
-  textSecondary: '#6366F1',  // indigo for secondary text
-  textMuted: '#9CA3AF',
+  text: '#3C3C3C',           // Duolingo dark gray
+  textSecondary: '#777777',
+  textMuted: '#AFAFAF',
   textOnPrimary: '#FFFFFF',
 
-  correct: '#10B981',
-  correctLight: '#D1FAE5',
-  wrong: '#EF4444',
-  wrongLight: '#FEE2E2',
-  warning: '#F59E0B',
-  warningLight: '#FEF3C7',
+  correct: '#58CC02',
+  correctLight: '#D7FFB8',
+  wrong: '#FF4B4B',
+  wrongLight: '#FFDFE0',
+  warning: '#FFC800',        // Duolingo gold
+  warningLight: '#FFF4C2',
 
-  border: '#E0E7FF',         // light indigo border
-  divider: '#EEF2FF',
+  border: '#E5E5E5',         // Neutral border for cards
+  divider: '#E5E5E5',
   overlay: 'rgba(0, 0, 0, 0.5)',
 
-  heart: '#EF4444',
-  star: '#FBBF24',
-  streak: '#F97316',
-  xp: '#7C3AED',
+  heart: '#FF4B4B',
+  star: '#FFC800',
+  streak: '#FF9600',         // Duolingo orange
+  xp: '#58CC02',
 
-  // Gradient arrays for LinearGradient
-  gradientPrimary: ['#7C3AED', '#5B21B6'],
-  gradientSecondary: ['#F43F5E', '#E11D48'],
-  gradientAccent: ['#06D6A0', '#059669'],
-  gradientHero: ['#7C3AED', '#4338CA', '#312E81'],
-  gradientCard: ['#F5F3FF', '#EDE9FE'],
+  // Brutalist shadow colors (solid dark colors for offset shadows)
+  shadowPrimary: '#58A700',   // darker green
+  shadowSecondary: '#A560E2', // darker purple
+  shadowAccent: '#0E87C7',    // darker blue
+  shadowWarning: '#E5B100',   // darker gold
+  shadowWrong: '#E74040',     // darker red
+  shadowBorder: '#3C3C3C',    // dark gray for neutral shadows
+
+  // Keep gradient arrays for compatibility (but prefer solid colors)
+  gradientPrimary: ['#58CC02', '#58A700'],
+  gradientSecondary: ['#CE82FF', '#A560E2'],
+  gradientAccent: ['#1CB0F6', '#0E87C7'],
+  gradientHero: ['#58CC02', '#58A700'],
+  gradientCard: ['#FFFFFF', '#F7F7F7'],
 };
 
 export const darkColors: typeof lightColors = {
-  primary: '#A78BFA',
-  primaryLight: '#C4B5FD',
-  primaryDark: '#7C3AED',
-  secondary: '#FB7185',
-  secondaryLight: '#FDA4AF',
-  accent: '#34D399',
-  accentLight: '#6EE7B7',
+  primary: '#58CC02',
+  primaryLight: '#89E219',
+  primaryDark: '#3F8E00',
+  secondary: '#CE82FF',
+  secondaryLight: '#E5B5FF',
+  accent: '#1CB0F6',
+  accentLight: '#84D8F7',
 
-  background: '#0F0A1F',     // deep purple-black
-  surface: '#1A1533',
-  surfaceElevated: '#252040',
-  card: '#1A1533',
+  background: '#131F24',      // Duolingo dark mode background
+  surface: '#1F2C33',
+  surfaceElevated: '#2B3A42',
+  card: '#1F2C33',
 
-  text: '#F5F3FF',
-  textSecondary: '#A5B4FC',
-  textMuted: '#6B7280',
+  text: '#F7F7F7',
+  textSecondary: '#AFAFAF',
+  textMuted: '#6D7276',
   textOnPrimary: '#FFFFFF',
 
-  correct: '#34D399',
-  correctLight: '#064E3B',
-  wrong: '#F87171',
-  wrongLight: '#7F1D1D',
-  warning: '#FBBF24',
-  warningLight: '#78350F',
+  correct: '#58CC02',
+  correctLight: '#1F4220',
+  wrong: '#FF4B4B',
+  wrongLight: '#4D1919',
+  warning: '#FFC800',
+  warningLight: '#4D3F00',
 
-  border: '#312E81',
-  divider: '#1E1B4B',
+  border: '#37464F',
+  divider: '#37464F',
   overlay: 'rgba(0, 0, 0, 0.7)',
 
-  heart: '#F87171',
-  star: '#FBBF24',
-  streak: '#FB923C',
-  xp: '#A78BFA',
+  heart: '#FF4B4B',
+  star: '#FFC800',
+  streak: '#FF9600',
+  xp: '#58CC02',
 
-  gradientPrimary: ['#A78BFA', '#7C3AED'],
-  gradientSecondary: ['#FB7185', '#F43F5E'],
-  gradientAccent: ['#34D399', '#06D6A0'],
-  gradientHero: ['#1E1B4B', '#312E81', '#3B0764'],
-  gradientCard: ['#1A1533', '#252040'],
+  shadowPrimary: '#3F8E00',
+  shadowSecondary: '#A560E2',
+  shadowAccent: '#0E87C7',
+  shadowWarning: '#E5B100',
+  shadowWrong: '#E74040',
+  shadowBorder: '#000000',
+
+  gradientPrimary: ['#58CC02', '#3F8E00'],
+  gradientSecondary: ['#CE82FF', '#A560E2'],
+  gradientAccent: ['#1CB0F6', '#0E87C7'],
+  gradientHero: ['#1F2C33', '#131F24'],
+  gradientCard: ['#1F2C33', '#131F24'],
 };
 
 export type Colors = typeof lightColors;

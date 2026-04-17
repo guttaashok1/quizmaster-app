@@ -35,15 +35,15 @@ function WelcomeView() {
   const { colors, borderRadius } = useTheme();
 
   return (
-    <LinearGradient colors={colors.gradientHero} style={styles.welcomeContainer}>
+    <View style={[styles.welcomeContainer, { backgroundColor: colors.background }]}>
       <SafeAreaView style={{ flex: 1 }}>
         <View style={styles.welcomeContent}>
           <Animated.View entering={FadeInDown.duration(600)} style={styles.hero}>
-            <View style={styles.iconCircle}>
+            <View style={[styles.iconCircle, { backgroundColor: colors.primary, borderColor: colors.shadowPrimary }]}>
               <Text style={styles.heroEmoji}>{'\uD83E\uDDE0'}</Text>
             </View>
-            <Text style={styles.appName}>QuizMaster</Text>
-            <Text style={styles.tagline}>Learn anything, one question at a time</Text>
+            <Text style={[styles.appName, { color: colors.text }]}>QUIZMASTER</Text>
+            <Text style={[styles.tagline, { color: colors.textSecondary }]}>Learn anything, one question at a time</Text>
           </Animated.View>
 
           <Animated.View entering={FadeInDown.duration(600).delay(200)} style={styles.features}>
@@ -51,34 +51,38 @@ function WelcomeView() {
               <Animated.View
                 key={f.title}
                 entering={FadeInDown.duration(400).delay(300 + i * 100)}
-                style={[styles.featureRow, { borderRadius: borderRadius.md }]}
+                style={styles.featureWrap}
               >
-                <Text style={styles.featureIcon}>{f.icon}</Text>
-                <View style={styles.featureText}>
-                  <Text style={styles.featureTitle}>{f.title}</Text>
-                  <Text style={styles.featureDesc}>{f.desc}</Text>
+                <View style={[styles.featureShadow, { backgroundColor: colors.border }]} />
+                <View style={[styles.featureRow, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+                  <Text style={styles.featureIcon}>{f.icon}</Text>
+                  <View style={styles.featureText}>
+                    <Text style={[styles.featureTitle, { color: colors.text }]}>{f.title}</Text>
+                    <Text style={[styles.featureDesc, { color: colors.textSecondary }]}>{f.desc}</Text>
+                  </View>
                 </View>
               </Animated.View>
             ))}
           </Animated.View>
 
           <Animated.View entering={FadeInUp.duration(600).delay(600)} style={styles.authButtons}>
-            <TouchableOpacity
+            <Button
+              title="Sign Up"
               onPress={() => router.push('/onboarding')}
-              style={[styles.signUpBtn, { borderRadius: borderRadius.md }]}
-            >
-              <Text style={[styles.signUpText, { color: colors.primary }]}>Sign Up</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
+              variant="primary"
+              size="lg"
+              style={{ marginBottom: 16 }}
+            />
+            <Button
+              title="Log In"
               onPress={() => router.push('/onboarding?mode=login')}
-              style={[styles.loginBtn, { borderRadius: borderRadius.md }]}
-            >
-              <Text style={styles.loginText}>Log In</Text>
-            </TouchableOpacity>
+              variant="accent"
+              size="lg"
+            />
           </Animated.View>
         </View>
       </SafeAreaView>
-    </LinearGradient>
+    </View>
   );
 }
 
@@ -174,49 +178,65 @@ function DashboardView() {
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />}>
 
-        {/* Compact hero banner */}
+        {/* Brutalist hero banner */}
         <Animated.View entering={FadeInDown.duration(600)}>
-          <LinearGradient colors={colors.gradientPrimary} style={styles.heroBanner}>
-            <View style={styles.heroBannerRow}>
-              <View style={styles.heroAvatarWrap}>
-                <Text style={styles.heroAvatar}>{user.avatarEmoji}</Text>
+          <View style={styles.heroWrap}>
+            <View style={[styles.heroShadow, { backgroundColor: colors.shadowPrimary }]} />
+            <View style={[styles.heroBanner, { backgroundColor: colors.primary, borderColor: colors.shadowPrimary }]}>
+              <View style={styles.heroBannerRow}>
+                <View style={[styles.heroAvatarWrap, { borderColor: '#FFFFFF' }]}>
+                  <Text style={styles.heroAvatar}>{user.avatarEmoji}</Text>
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.heroGreeting}>Hey, {user.username}!</Text>
+                  <Text style={styles.heroSub}>LV.{user.xpLevel} · {user.totalScore} PTS · {user.gamesPlayed} GAMES</Text>
+                </View>
+                <TouchableOpacity onPress={() => router.push('/profile')} style={[styles.heroProfileBtn, { borderColor: '#FFFFFF' }]}>
+                  <Text style={styles.heroProfileText}>{'\u2699\uFE0F'}</Text>
+                </TouchableOpacity>
               </View>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.heroGreeting}>Hey, {user.username}! {'\uD83D\uDC4B'}</Text>
-                <Text style={styles.heroSub}>Lv.{user.xpLevel} · {user.totalScore} pts · {user.gamesPlayed} games</Text>
-              </View>
-              <TouchableOpacity onPress={() => router.push('/profile')} style={styles.heroProfileBtn}>
-                <Text style={styles.heroProfileText}>{'\u2699\uFE0F'}</Text>
-              </TouchableOpacity>
             </View>
-          </LinearGradient>
+          </View>
         </Animated.View>
 
-        {/* Quick actions row */}
+        {/* Brutalist quick actions */}
         <Animated.View entering={FadeInDown.duration(500).delay(150)}>
           <View style={styles.quickActions}>
-            <TouchableOpacity
-              onPress={() => router.push('/topic-input')}
-              style={[styles.quickActionMain, { backgroundColor: colors.accent, borderRadius: borderRadius.xl }]}
-            >
-              <Text style={styles.quickActionEmoji}>{'\uD83D\uDE80'}</Text>
-              <Text style={styles.quickActionTitle}>Start Quiz</Text>
-            </TouchableOpacity>
+            {/* Main Start Quiz */}
+            <View style={styles.quickActionMainWrap}>
+              <View style={[styles.qaShadow, { backgroundColor: colors.shadowAccent }]} />
+              <TouchableOpacity
+                onPress={() => router.push('/topic-input')}
+                activeOpacity={1}
+                style={[styles.quickActionMain, { backgroundColor: colors.accent, borderColor: colors.shadowAccent }]}
+              >
+                <Text style={styles.quickActionEmoji}>{'\uD83D\uDE80'}</Text>
+                <Text style={styles.quickActionTitle}>START QUIZ</Text>
+              </TouchableOpacity>
+            </View>
             <View style={styles.quickActionSide}>
-              <TouchableOpacity
-                onPress={() => router.push('/topic-input?challenge=true')}
-                style={[styles.quickActionSmall, { backgroundColor: colors.secondary, borderRadius: borderRadius.lg }]}
-              >
-                <Text style={styles.quickActionSmallEmoji}>{'\u2694\uFE0F'}</Text>
-                <Text style={styles.quickActionSmallText}>Challenge</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                onPress={() => router.push('/leaderboard')}
-                style={[styles.quickActionSmall, { backgroundColor: colors.warning, borderRadius: borderRadius.lg }]}
-              >
-                <Text style={styles.quickActionSmallEmoji}>{'\uD83C\uDFC6'}</Text>
-                <Text style={styles.quickActionSmallText}>Rankings</Text>
-              </TouchableOpacity>
+              <View style={{ flex: 1, position: 'relative' }}>
+                <View style={[styles.qaShadow, { backgroundColor: colors.shadowSecondary }]} />
+                <TouchableOpacity
+                  onPress={() => router.push('/topic-input?challenge=true')}
+                  activeOpacity={1}
+                  style={[styles.quickActionSmall, { backgroundColor: colors.secondary, borderColor: colors.shadowSecondary }]}
+                >
+                  <Text style={styles.quickActionSmallEmoji}>{'\u2694\uFE0F'}</Text>
+                  <Text style={styles.quickActionSmallText}>CHALLENGE</Text>
+                </TouchableOpacity>
+              </View>
+              <View style={{ flex: 1, position: 'relative' }}>
+                <View style={[styles.qaShadow, { backgroundColor: colors.shadowWarning }]} />
+                <TouchableOpacity
+                  onPress={() => router.push('/leaderboard')}
+                  activeOpacity={1}
+                  style={[styles.quickActionSmall, { backgroundColor: colors.warning, borderColor: colors.shadowWarning }]}
+                >
+                  <Text style={styles.quickActionSmallEmoji}>{'\uD83C\uDFC6'}</Text>
+                  <Text style={styles.quickActionSmallText}>RANKINGS</Text>
+                </TouchableOpacity>
+              </View>
             </View>
           </View>
         </Animated.View>
@@ -464,60 +484,62 @@ const styles = StyleSheet.create({
   // Loading
   loadingView: { flex: 1, alignItems: 'center', justifyContent: 'center' },
 
-  // Welcome
+  // Welcome (brutalist)
   welcomeContainer: { flex: 1 },
   welcomeContent: { flex: 1, padding: 24, justifyContent: 'space-between' },
   hero: { alignItems: 'center', paddingTop: 48 },
-  iconCircle: { width: 120, height: 120, borderRadius: 60, alignItems: 'center', justifyContent: 'center', marginBottom: 20, backgroundColor: 'rgba(255,255,255,0.15)' },
+  iconCircle: { width: 128, height: 128, borderRadius: 64, borderWidth: 4, alignItems: 'center', justifyContent: 'center', marginBottom: 20 },
   heroEmoji: { fontSize: 64 },
-  appName: { fontSize: 36, fontWeight: '900', letterSpacing: -1, marginBottom: 8, color: '#FFFFFF' },
-  tagline: { fontSize: 16, fontWeight: '500', textAlign: 'center', color: 'rgba(255,255,255,0.7)' },
-  features: { gap: 12, marginVertical: 32 },
-  featureRow: { flexDirection: 'row', alignItems: 'center', padding: 16, gap: 14, backgroundColor: 'rgba(255,255,255,0.12)' },
-  featureIcon: { fontSize: 28 },
+  appName: { fontSize: 40, fontWeight: '900', letterSpacing: 1, marginBottom: 8 },
+  tagline: { fontSize: 15, fontWeight: '600', textAlign: 'center' },
+  features: { gap: 14, marginVertical: 32 },
+  featureWrap: { position: 'relative' },
+  featureShadow: { position: 'absolute', top: 4, left: 0, right: 0, bottom: 0, borderRadius: 14 },
+  featureRow: { flexDirection: 'row', alignItems: 'center', padding: 16, gap: 14, borderWidth: 2, borderRadius: 14 },
+  featureIcon: { fontSize: 32 },
   featureText: { flex: 1 },
-  featureTitle: { fontSize: 15, fontWeight: '700', marginBottom: 2, color: '#FFFFFF' },
-  featureDesc: { fontSize: 13, color: 'rgba(255,255,255,0.7)' },
+  featureTitle: { fontSize: 15, fontWeight: '900', marginBottom: 2, textTransform: 'uppercase' as const, letterSpacing: 0.3 },
+  featureDesc: { fontSize: 13, fontWeight: '600' },
   authButtons: { paddingBottom: 24 },
-  signUpBtn: { backgroundColor: '#FFFFFF', height: 52, alignItems: 'center', justifyContent: 'center', marginBottom: 12 },
-  signUpText: { fontSize: 17, fontWeight: '700' },
-  loginBtn: { backgroundColor: 'transparent', borderWidth: 2, borderColor: '#FFFFFF', height: 52, alignItems: 'center', justifyContent: 'center' },
-  loginText: { fontSize: 17, fontWeight: '700', color: '#FFFFFF' },
 
   // Dashboard
   container: { flex: 1 },
   scroll: { padding: 16, paddingBottom: 32 },
 
-  // Hero banner
-  heroBanner: { borderRadius: 20, paddingHorizontal: 16, paddingVertical: 14, marginBottom: 16 },
+  // Hero banner (brutalist)
+  heroWrap: { position: 'relative', marginBottom: 20 },
+  heroShadow: { position: 'absolute', top: 5, left: 0, right: 0, bottom: 0, borderRadius: 20 },
+  heroBanner: { borderRadius: 20, borderWidth: 3, paddingHorizontal: 16, paddingVertical: 14 },
   heroBannerRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  heroAvatarWrap: { width: 44, height: 44, borderRadius: 22, backgroundColor: 'rgba(255,255,255,0.2)', alignItems: 'center', justifyContent: 'center' },
+  heroAvatarWrap: { width: 48, height: 48, borderRadius: 24, borderWidth: 3, backgroundColor: 'rgba(255,255,255,0.2)', alignItems: 'center', justifyContent: 'center' },
   heroAvatar: { fontSize: 24 },
-  heroProfileBtn: { width: 32, height: 32, borderRadius: 16, backgroundColor: 'rgba(255,255,255,0.15)', alignItems: 'center', justifyContent: 'center' },
-  heroProfileText: { fontSize: 16 },
-  heroGreeting: { fontSize: 18, fontWeight: '800', color: '#FFFFFF' },
-  heroSub: { fontSize: 12, color: 'rgba(255,255,255,0.7)', marginTop: 2 },
+  heroProfileBtn: { width: 40, height: 40, borderRadius: 20, borderWidth: 3, backgroundColor: 'rgba(255,255,255,0.15)', alignItems: 'center', justifyContent: 'center' },
+  heroProfileText: { fontSize: 18 },
+  heroGreeting: { fontSize: 18, fontWeight: '900', color: '#FFFFFF', textTransform: 'uppercase' as const, letterSpacing: 0.5 },
+  heroSub: { fontSize: 11, color: 'rgba(255,255,255,0.9)', marginTop: 3, fontWeight: '700', letterSpacing: 0.5 },
 
-  // Quick actions
-  quickActions: { flexDirection: 'row', gap: 12, marginBottom: 20 },
-  quickActionMain: { flex: 2, height: 100, alignItems: 'center', justifyContent: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.15, shadowRadius: 8, elevation: 4 },
+  // Quick actions (brutalist)
+  quickActions: { flexDirection: 'row', gap: 12, marginBottom: 24 },
+  quickActionMainWrap: { flex: 2, position: 'relative' },
+  qaShadow: { position: 'absolute', top: 5, left: 0, right: 0, bottom: 0, borderRadius: 18 },
+  quickActionMain: { height: 100, alignItems: 'center', justifyContent: 'center', borderWidth: 3, borderRadius: 18 },
   quickActionEmoji: { fontSize: 32, marginBottom: 4 },
-  quickActionTitle: { fontSize: 16, fontWeight: '800', color: '#FFFFFF' },
+  quickActionTitle: { fontSize: 14, fontWeight: '900', color: '#FFFFFF', letterSpacing: 0.5, textTransform: 'uppercase' as const },
   quickActionSide: { flex: 1, gap: 8 },
-  quickActionSmall: { flex: 1, alignItems: 'center', justifyContent: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4, elevation: 2 },
-  quickActionSmallEmoji: { fontSize: 20, marginBottom: 2 },
-  quickActionSmallText: { fontSize: 11, fontWeight: '700', color: '#FFFFFF' },
+  quickActionSmall: { flex: 1, alignItems: 'center', justifyContent: 'center', borderWidth: 3, borderRadius: 16 },
+  quickActionSmallEmoji: { fontSize: 18, marginBottom: 1 },
+  quickActionSmallText: { fontSize: 10, fontWeight: '900', color: '#FFFFFF', letterSpacing: 0.5, textTransform: 'uppercase' as const },
 
   // Section
   sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
-  sectionTitle: { fontSize: 18, fontWeight: '800' },
-  sectionToggle: { fontSize: 13, fontWeight: '600' },
+  sectionTitle: { fontSize: 16, fontWeight: '900', textTransform: 'uppercase' as const, letterSpacing: 0.8 },
+  sectionToggle: { fontSize: 12, fontWeight: '800', textTransform: 'uppercase' as const, letterSpacing: 0.5 },
   tabRow: { flexDirection: 'row', gap: 8, marginBottom: 14 },
-  tab: { flex: 1, paddingVertical: 8, alignItems: 'center', borderWidth: 1.5 },
+  tab: { flex: 1, paddingVertical: 10, alignItems: 'center', borderWidth: 2 },
 
   // Challenge cards
   challengeList: { marginBottom: 20 },
-  challengeCard: { flexDirection: 'row', alignItems: 'center', padding: 14, borderWidth: 1, marginBottom: 10, gap: 12 },
+  challengeCard: { flexDirection: 'row', alignItems: 'center', padding: 14, borderWidth: 2, marginBottom: 10, gap: 12 },
   challengeDot: { width: 8, height: 8, borderRadius: 4 },
   challengeCardTopic: { fontSize: 15, fontWeight: '700' },
   challengeCardMeta: { fontSize: 11, marginTop: 3 },
@@ -526,13 +548,13 @@ const styles = StyleSheet.create({
   statusPill: { paddingHorizontal: 10, paddingVertical: 4 },
 
   // Empty states
-  emptyCard: { alignItems: 'center', padding: 32, borderWidth: 1, marginBottom: 12 },
+  emptyCard: { alignItems: 'center', padding: 32, borderWidth: 2, marginBottom: 12 },
   emptyEmoji: { fontSize: 40, marginBottom: 8 },
   emptyTitle: { fontSize: 16, fontWeight: '700', marginBottom: 4 },
   emptyDesc: { fontSize: 13, textAlign: 'center' },
 
   // Code input
-  codeCard: { padding: 16, borderWidth: 1, marginBottom: 20 },
+  codeCard: { padding: 16, borderWidth: 2, marginBottom: 20 },
   codeCardTitle: { fontSize: 15, fontWeight: '700', marginBottom: 12 },
   challengeRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   challengeInput: { flex: 1, height: 44, borderWidth: 1.5, paddingHorizontal: 12, fontSize: 15 },
@@ -541,7 +563,7 @@ const styles = StyleSheet.create({
 
   // Bottom
   bottomRow: { flexDirection: 'row', gap: 10 },
-  bottomBtn: { flex: 1, alignItems: 'center', paddingVertical: 14, borderWidth: 1 },
+  bottomBtn: { flex: 1, alignItems: 'center', paddingVertical: 14, borderWidth: 2 },
   bottomBtnEmoji: { fontSize: 22, marginBottom: 4 },
   bottomBtnText: { fontSize: 12, fontWeight: '600' },
 });

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   TouchableOpacity,
   Text,
@@ -6,22 +6,15 @@ import {
   ViewStyle,
   ActivityIndicator,
   View,
+  Pressable,
 } from 'react-native';
-import Animated, {
-  useAnimatedStyle,
-  useSharedValue,
-  withSpring,
-} from 'react-native-reanimated';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme } from '../../theme/ThemeContext';
 import { haptics } from '../../services/hapticService';
-
-const AnimatedTouchable = Animated.createAnimatedComponent(TouchableOpacity);
 
 interface ButtonProps {
   title: string;
   onPress: () => void;
-  variant?: 'primary' | 'secondary' | 'outline' | 'ghost';
+  variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'warning' | 'accent';
   size?: 'sm' | 'md' | 'lg';
   disabled?: boolean;
   loading?: boolean;
@@ -29,6 +22,11 @@ interface ButtonProps {
   icon?: React.ReactNode;
 }
 
+/**
+ * Duolingo-style brutalist button
+ * - Solid color top layer sitting on a darker bottom "shadow" layer
+ * - On press, top layer shifts down to meet the shadow (the 3D press-down effect)
+ */
 export function Button({
   title,
   onPress,
@@ -39,149 +37,172 @@ export function Button({
   style,
   icon,
 }: ButtonProps) {
-  const { colors, borderRadius } = useTheme();
-  const scale = useSharedValue(1);
-
-  const animatedStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: scale.value }],
-  }));
-
-  const handlePressIn = () => {
-    scale.value = withSpring(0.96);
-  };
-
-  const handlePressOut = () => {
-    scale.value = withSpring(1);
-  };
+  const { colors } = useTheme();
+  const [pressed, setPressed] = useState(false);
 
   const handlePress = () => {
     haptics.light();
     onPress();
   };
 
-  const textColor = {
-    primary: colors.textOnPrimary,
-    secondary: colors.textOnPrimary,
-    outline: colors.primary,
-    ghost: colors.primary,
+  // Color scheme for each variant
+  const variantStyles = {
+    primary: {
+      bg: colors.primary,
+      shadowBg: colors.shadowPrimary,
+      text: '#FFFFFF',
+      border: colors.shadowPrimary,
+    },
+    secondary: {
+      bg: colors.secondary,
+      shadowBg: colors.shadowSecondary,
+      text: '#FFFFFF',
+      border: colors.shadowSecondary,
+    },
+    accent: {
+      bg: colors.accent,
+      shadowBg: colors.shadowAccent,
+      text: '#FFFFFF',
+      border: colors.shadowAccent,
+    },
+    warning: {
+      bg: colors.warning,
+      shadowBg: colors.shadowWarning,
+      text: '#FFFFFF',
+      border: colors.shadowWarning,
+    },
+    outline: {
+      bg: colors.surface,
+      shadowBg: colors.border,
+      text: colors.text,
+      border: colors.border,
+    },
+    ghost: {
+      bg: 'transparent',
+      shadowBg: 'transparent',
+      text: colors.primary,
+      border: 'transparent',
+    },
   }[variant];
 
-  const borderColor = variant === 'outline' ? colors.primary : 'transparent';
-
   const padding = {
-    sm: { paddingVertical: 8, paddingHorizontal: 16 },
-    md: { paddingVertical: 14, paddingHorizontal: 24 },
-    lg: { paddingVertical: 18, paddingHorizontal: 32 },
+    sm: { paddingVertical: 10, paddingHorizontal: 16, minHeight: 40 },
+    md: { paddingVertical: 14, paddingHorizontal: 22, minHeight: 48 },
+    lg: { paddingVertical: 18, paddingHorizontal: 28, minHeight: 56 },
   }[size];
 
-  const fontSize = { sm: 14, md: 16, lg: 18 }[size];
+  const fontSize = { sm: 13, md: 15, lg: 17 }[size];
+  const shadowDepth = size === 'sm' ? 3 : size === 'lg' ? 5 : 4;
 
-  const useGradient = variant === 'primary' || variant === 'secondary';
-  const gradientColors = variant === 'primary'
-    ? colors.gradientPrimary
-    : colors.gradientSecondary;
-
-  const pillRadius = borderRadius.full;
-
-  if (useGradient) {
+  // Ghost variant: simple, no 3D effect
+  if (variant === 'ghost') {
     return (
-      <Animated.View style={[animatedStyle, style]}>
-        <LinearGradient
-          colors={gradientColors as [string, string, ...string[]]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 0 }}
-          style={[
-            {
-              borderRadius: pillRadius,
-              overflow: 'hidden' as const,
-              shadowColor: colors.primary,
-              shadowOffset: { width: 0, height: 4 },
-              shadowOpacity: 0.3,
-              shadowRadius: 8,
-              elevation: 6,
-              opacity: disabled ? 0.5 : 1,
-            },
-          ]}
-        >
-          <TouchableOpacity
-            onPress={handlePress}
-            onPressIn={handlePressIn}
-            onPressOut={handlePressOut}
-            disabled={disabled || loading}
-            activeOpacity={0.8}
-            style={[
-              styles.button,
-              {
-                borderColor: 'transparent',
-                borderRadius: pillRadius,
-                ...padding,
-              },
-            ]}
-          >
-            {loading ? (
-              <ActivityIndicator color={textColor} />
-            ) : (
-              <>
-                {icon}
-                <Text style={[styles.text, { color: textColor, fontSize }]}>
-                  {title}
-                </Text>
-              </>
-            )}
-          </TouchableOpacity>
-        </LinearGradient>
-      </Animated.View>
+      <TouchableOpacity
+        onPress={handlePress}
+        disabled={disabled || loading}
+        activeOpacity={0.6}
+        style={[styles.ghost, padding, style]}
+      >
+        {loading ? (
+          <ActivityIndicator color={variantStyles.text} />
+        ) : (
+          <>
+            {icon}
+            <Text style={[styles.ghostText, { color: variantStyles.text, fontSize }]}>
+              {title}
+            </Text>
+          </>
+        )}
+      </TouchableOpacity>
     );
   }
 
-  const bgColor = {
-    outline: 'transparent',
-    ghost: 'transparent',
-  }[variant as 'outline' | 'ghost'];
-
+  // Brutalist 3D button — two stacked layers
   return (
-    <AnimatedTouchable
-      onPress={handlePress}
-      onPressIn={handlePressIn}
-      onPressOut={handlePressOut}
-      disabled={disabled || loading}
-      activeOpacity={0.8}
-      style={[
-        styles.button,
-        {
-          backgroundColor: bgColor,
-          borderColor,
-          borderRadius: borderRadius.md,
-          opacity: disabled ? 0.5 : 1,
-          ...padding,
-        },
-        animatedStyle,
-        style,
-      ]}
-    >
-      {loading ? (
-        <ActivityIndicator color={textColor} />
-      ) : (
-        <>
-          {icon}
-          <Text style={[styles.text, { color: textColor, fontSize }]}>
-            {title}
-          </Text>
-        </>
-      )}
-    </AnimatedTouchable>
+    <View style={[styles.wrapper, style]}>
+      {/* Shadow layer (bottom) */}
+      <View
+        style={[
+          styles.shadowLayer,
+          {
+            backgroundColor: variantStyles.shadowBg,
+            top: shadowDepth,
+            opacity: disabled ? 0.5 : 1,
+          },
+        ]}
+      />
+      {/* Top layer (button face) */}
+      <Pressable
+        onPress={handlePress}
+        onPressIn={() => setPressed(true)}
+        onPressOut={() => setPressed(false)}
+        disabled={disabled || loading}
+        style={[
+          styles.topLayer,
+          padding,
+          {
+            backgroundColor: variantStyles.bg,
+            borderColor: variantStyles.border,
+            transform: [{ translateY: pressed ? shadowDepth : 0 }],
+            opacity: disabled ? 0.5 : 1,
+          },
+        ]}
+      >
+        {loading ? (
+          <ActivityIndicator color={variantStyles.text} />
+        ) : (
+          <>
+            {icon}
+            <Text
+              style={[
+                styles.text,
+                {
+                  color: variantStyles.text,
+                  fontSize,
+                },
+              ]}
+            >
+              {title}
+            </Text>
+          </>
+        )}
+      </Pressable>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  button: {
+  wrapper: {
+    position: 'relative',
+  },
+  shadowLayer: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    borderRadius: 16,
+    height: '100%',
+  },
+  topLayer: {
+    borderRadius: 16,
+    borderWidth: 2,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 2,
     gap: 8,
   },
   text: {
+    fontWeight: '800',
+    letterSpacing: 0.5,
+    textTransform: 'uppercase' as const,
+  },
+  ghost: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+  },
+  ghostText: {
     fontWeight: '700',
   },
 });

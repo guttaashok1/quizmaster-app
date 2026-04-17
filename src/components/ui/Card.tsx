@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, StyleSheet, ViewStyle, Platform } from 'react-native';
+import { View, StyleSheet, ViewStyle } from 'react-native';
 import { useTheme } from '../../theme/ThemeContext';
 
 interface CardProps {
@@ -8,41 +8,56 @@ interface CardProps {
   elevated?: boolean;
 }
 
+/**
+ * Duolingo-style brutalist card
+ * - Thick 2px border
+ * - Flat solid background (no gradients)
+ * - Optional hard offset shadow when elevated (no blur)
+ */
 export function Card({ children, style, elevated = false }: CardProps) {
-  const { colors, borderRadius, spacing } = useTheme();
+  const { colors } = useTheme();
 
   return (
-    <View
-      style={[
-        styles.card,
-        {
-          backgroundColor: elevated
-            ? (Platform.OS === 'web' ? colors.surface + 'E6' : colors.surface + 'E6')
-            : colors.surface,
-          borderRadius: borderRadius.xl,
-          padding: elevated ? spacing.lg : spacing.md,
-          borderColor: elevated ? 'rgba(255,255,255,0.1)' : colors.border,
-          borderTopColor: elevated ? 'rgba(255,255,255,0.15)' : colors.border,
-          borderLeftColor: colors.primary + '40',
-          borderLeftWidth: 2,
-        },
-        elevated && {
-          shadowColor: colors.primary,
-          shadowOffset: { width: 0, height: 6 },
-          shadowOpacity: 0.12,
-          shadowRadius: 16,
-          elevation: 6,
-        },
-        style,
-      ]}
-    >
-      {children}
+    <View style={[styles.wrapper, style]}>
+      {elevated && (
+        <View
+          style={[
+            styles.shadow,
+            { backgroundColor: colors.border },
+          ]}
+        />
+      )}
+      <View
+        style={[
+          styles.card,
+          {
+            backgroundColor: colors.surface,
+            borderColor: colors.border,
+          },
+          elevated && { marginBottom: 4 },
+        ]}
+      >
+        {children}
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
+  wrapper: {
+    position: 'relative',
+  },
+  shadow: {
+    position: 'absolute',
+    top: 4,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    borderRadius: 16,
+  },
   card: {
-    borderWidth: 1,
+    borderWidth: 2,
+    borderRadius: 16,
+    padding: 16,
   },
 });
