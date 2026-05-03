@@ -25,7 +25,7 @@ function loadApiKey(): string {
 }
 
 let _client: Anthropic | null = null;
-function getClient(): Anthropic {
+export function getClient(): Anthropic {
   if (!_client) {
     _client = new Anthropic({
       apiKey: loadApiKey(),

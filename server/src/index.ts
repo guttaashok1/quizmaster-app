@@ -7,6 +7,7 @@ import rateLimit from 'express-rate-limit';
 import quizRouter from './routes/quiz';
 import challengeRouter from './routes/challenge';
 import authRouter from './routes/auth';
+import interviewRouter from './routes/interview';
 import { initDatabase } from './services/database';
 
 const app = express();
@@ -38,15 +39,19 @@ app.get('/api/health', (_req, res) => {
 app.use('/api/quiz', quizRouter);
 app.use('/api/challenge', challengeRouter);
 app.use('/api/auth', authRouter);
+app.use('/api/interview', interviewRouter);
 
-// Initialize database then start server
+// Serve the interview web app
+app.use('/interview', express.static(resolve(__dirname, '../public/interview')));
+
+// Initialize database then start server (DB failure is non-fatal; interview routes work without it)
 initDatabase()
-  .then(() => {
-    app.listen(Number(PORT), '0.0.0.0', () => {
-      console.log(`Quiz API server running on http://0.0.0.0:${PORT}`);
-    });
-  })
   .catch((err) => {
-    console.error('Failed to initialize database:', err);
-    process.exit(1);
+    console.warn('Database unavailable — quiz/challenge/auth routes will fail, interview routes still work:', err.message);
+  })
+  .finally(() => {
+    app.listen(Number(PORT), '0.0.0.0', () => {
+      console.log(`Server running on http://0.0.0.0:${PORT}`);
+      console.log(`Interview Coach: http://0.0.0.0:${PORT}/interview`);
+    });
   });
