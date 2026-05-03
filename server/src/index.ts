@@ -41,17 +41,22 @@ app.use('/api/challenge', challengeRouter);
 app.use('/api/auth', authRouter);
 app.use('/api/interview', interviewRouter);
 
-// Serve the interview web app
+// Serve the interview web app (static files bundled via vercel.json includeFiles)
 app.use('/interview', express.static(resolve(__dirname, '../public/interview')));
 
-// Initialize database then start server (DB failure is non-fatal; interview routes work without it)
-initDatabase()
-  .catch((err) => {
-    console.warn('Database unavailable — quiz/challenge/auth routes will fail, interview routes still work:', err.message);
-  })
-  .finally(() => {
-    app.listen(Number(PORT), '0.0.0.0', () => {
-      console.log(`Server running on http://0.0.0.0:${PORT}`);
-      console.log(`Interview Coach: http://0.0.0.0:${PORT}/interview`);
+// Export for Vercel serverless — Vercel imports this module directly
+export default app;
+
+// Only start a listening server when running locally (not on Vercel)
+if (!process.env.VERCEL) {
+  initDatabase()
+    .catch((err) => {
+      console.warn('Database unavailable — quiz/challenge/auth routes will fail, interview routes still work:', err.message);
+    })
+    .finally(() => {
+      app.listen(Number(PORT), '0.0.0.0', () => {
+        console.log(`Server running on http://0.0.0.0:${PORT}`);
+        console.log(`Interview Coach: http://0.0.0.0:${PORT}/interview`);
+      });
     });
-  });
+}
