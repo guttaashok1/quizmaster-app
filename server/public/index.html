@@ -59,56 +59,47 @@
       z-index: 1;
     }
 
-    /* ── Background waveform art ── */
-    .hero-art {
-      position: absolute;
-      right: 0; top: 0; bottom: 0;
-      width: 65%;
-      z-index: 0;
-      display: flex;
+    /* ── Hero inner two-column grid ── */
+    .hero-inner {
+      position: relative;
+      z-index: 10;
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 80px 48px;
+      width: 100%;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 48px;
       align-items: center;
-      justify-content: flex-end;
-      padding-right: 48px;
-    }
-    .waveform-art {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      opacity: 0.18;
-    }
-    .wf-col {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 5px;
-    }
-    .wf-bar {
-      width: 5px;
-      border-radius: 3px;
-      background: linear-gradient(to top, #1d4ed8, #38bdf8);
     }
 
-    /* floating UI cards in hero art area */
+    /* ── Right panel: floating UI cards ── */
+    .hero-art-panel {
+      position: relative;
+      height: 460px;
+    }
+
+    /* floating UI cards — positioned within hero-art-panel */
     .hero-ui-card {
       position: absolute;
-      background: rgba(255,255,255,0.04);
-      border: 1px solid rgba(255,255,255,0.10);
-      backdrop-filter: blur(12px);
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.12);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
       border-radius: 12px;
       padding: 14px 18px;
-      z-index: 2;
     }
     .hui-card-1 {
-      top: 18%; right: 8%;
+      top: 0; right: 0;
       width: 260px;
     }
     .hui-card-2 {
-      top: 50%; right: 3%;
-      transform: translateY(-50%);
-      width: 300px;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      width: 290px;
     }
     .hui-card-3 {
-      bottom: 18%; right: 12%;
+      bottom: 0; left: 0;
       width: 240px;
     }
     .hui-label {
@@ -127,14 +118,9 @@
     .hui-bullet { display: flex; gap: 7px; font-size: 12px; color: rgba(255,255,255,0.65); margin-bottom: 5px; line-height: 1.5; }
     .hui-bullet::before { content: '→'; color: #60a5fa; flex-shrink: 0; font-weight: 700; }
 
-    /* ── Hero text content ── */
+    /* ── Hero text content (left column) ── */
     .hero-content {
-      position: relative;
-      z-index: 10;
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 0 48px;
-      width: 100%;
+      /* lives inside .hero-inner grid — no extra positioning needed */
     }
     .hero-eyebrow {
       font-size: 12px; font-weight: 700;
@@ -507,51 +493,53 @@
   <div class="hero-scene"></div>
   <div class="hero-overlay"></div>
 
-  <!-- Background art: floating UI cards + waveform -->
-  <div class="hero-art">
-    <!-- Floating card 1: Resume scan -->
-    <div class="hero-ui-card hui-card-1">
-      <div class="hui-label">Resume Parsed</div>
-      <div class="hui-line" style="width:88%"></div>
-      <div class="hui-line" style="width:70%"></div>
-      <div class="hui-line" style="width:80%"></div>
-      <div style="display:flex;gap:6px;margin-top:8px">
-        <span style="background:rgba(37,99,235,0.15);border:1px solid rgba(37,99,235,0.3);border-radius:999px;padding:3px 10px;font-size:11px;color:#93c5fd">Python</span>
-        <span style="background:rgba(37,99,235,0.15);border:1px solid rgba(37,99,235,0.3);border-radius:999px;padding:3px 10px;font-size:11px;color:#93c5fd">AWS</span>
-        <span style="background:rgba(37,99,235,0.15);border:1px solid rgba(37,99,235,0.3);border-radius:999px;padding:3px 10px;font-size:11px;color:#93c5fd">Team Lead</span>
+  <div class="hero-inner">
+    <!-- Left column: copy -->
+    <div class="hero-content">
+      <div class="hero-eyebrow">AI-Powered Interview Practice</div>
+      <h1>Practice your way<br>to the <span class="accent">right job.</span></h1>
+      <p class="hero-sub">Upload your resume, paste a job description, and speak any interview question aloud — get real-time, tailored AI coaching word by word.</p>
+      <div class="hero-cta-row">
+        <a href="/register.html" class="btn-hero-primary">Get Started Free</a>
+        <a href="/about.html" class="btn-hero-outline">See How It Works</a>
       </div>
     </div>
 
-    <!-- Floating card 2: Live answer streaming -->
-    <div class="hero-ui-card hui-card-2">
-      <div class="hui-label"><div class="hui-pulse"></div> Streaming answer</div>
-      <div class="hui-bullet">Led team of 5 engineers through critical migration</div>
-      <div class="hui-bullet">Reduced deployment time by 60% in 3 months</div>
-      <div class="hui-bullet">Zero production incidents post-launch</div>
-      <div class="hui-mini-bars">
-        <div class="hui-mini-bar" style="height:20px"></div>
-        <div class="hui-mini-bar" style="height:28px"></div>
-        <div class="hui-mini-bar" style="height:32px;animation:vwave 1s .1s ease-in-out infinite"></div>
-        <div class="hui-mini-bar" style="height:26px"></div>
-        <div class="hui-mini-bar" style="height:18px"></div>
+    <!-- Right column: floating UI art cards -->
+    <div class="hero-art-panel">
+      <!-- Card 1: Resume scan (top-right) -->
+      <div class="hero-ui-card hui-card-1">
+        <div class="hui-label">Resume Parsed</div>
+        <div class="hui-line" style="width:88%"></div>
+        <div class="hui-line" style="width:70%"></div>
+        <div class="hui-line" style="width:80%"></div>
+        <div style="display:flex;gap:6px;margin-top:8px">
+          <span style="background:rgba(37,99,235,0.15);border:1px solid rgba(37,99,235,0.3);border-radius:999px;padding:3px 10px;font-size:11px;color:#93c5fd">Python</span>
+          <span style="background:rgba(37,99,235,0.15);border:1px solid rgba(37,99,235,0.3);border-radius:999px;padding:3px 10px;font-size:11px;color:#93c5fd">AWS</span>
+          <span style="background:rgba(37,99,235,0.15);border:1px solid rgba(37,99,235,0.3);border-radius:999px;padding:3px 10px;font-size:11px;color:#93c5fd">Team Lead</span>
+        </div>
       </div>
-    </div>
 
-    <!-- Floating card 3: Question detected -->
-    <div class="hero-ui-card hui-card-3">
-      <div class="hui-label">Question Detected</div>
-      <div class="hui-text">"Tell me about a time you led a team under pressure…"</div>
-    </div>
-  </div>
+      <!-- Card 2: Live streaming answer (center) -->
+      <div class="hero-ui-card hui-card-2">
+        <div class="hui-label"><div class="hui-pulse"></div> Streaming answer</div>
+        <div class="hui-bullet">Led team of 5 engineers through critical migration</div>
+        <div class="hui-bullet">Reduced deployment time by 60% in 3 months</div>
+        <div class="hui-bullet">Zero production incidents post-launch</div>
+        <div class="hui-mini-bars">
+          <div class="hui-mini-bar" style="height:20px"></div>
+          <div class="hui-mini-bar" style="height:28px"></div>
+          <div class="hui-mini-bar" style="height:32px;animation:vwave 1s .1s ease-in-out infinite"></div>
+          <div class="hui-mini-bar" style="height:26px"></div>
+          <div class="hui-mini-bar" style="height:18px"></div>
+        </div>
+      </div>
 
-  <!-- Hero copy -->
-  <div class="hero-content">
-    <div class="hero-eyebrow">AI-Powered Interview Practice</div>
-    <h1>Practice your way<br>to the <span class="accent">right job.</span></h1>
-    <p class="hero-sub">Upload your resume, paste a job description, and speak any interview question aloud — get real-time, tailored AI coaching word by word.</p>
-    <div class="hero-cta-row">
-      <a href="/register.html" class="btn-hero-primary">Get Started Free</a>
-      <a href="/about.html" class="btn-hero-outline">See How It Works</a>
+      <!-- Card 3: Question detected (bottom-left) -->
+      <div class="hero-ui-card hui-card-3">
+        <div class="hui-label">Question Detected</div>
+        <div class="hui-text">"Tell me about a time you led a team under pressure…"</div>
+      </div>
     </div>
   </div>
 </section>
