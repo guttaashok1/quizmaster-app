@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Create Account — Interview Coach</title>
+  <link rel="stylesheet" href="/styles.css" />
+  <style>
+    body { display: flex; flex-direction: column; min-height: 100vh; }
+    .auth-wrap {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 40px 24px;
+    }
+    .auth-card {
+      width: 100%;
+      max-width: 420px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 36px;
+    }
+    .auth-logo {
+      display: flex; align-items: center; justify-content: center;
+      gap: 10px; margin-bottom: 28px;
+    }
+    .auth-logo .icon {
+      width: 42px; height: 42px;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      border-radius: 11px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 20px;
+    }
+    .auth-logo span { font-size: 18px; font-weight: 800; }
+    .auth-title { font-size: 22px; font-weight: 800; margin-bottom: 6px; }
+    .auth-sub { color: var(--text-muted); font-size: 14px; margin-bottom: 28px; }
+    .auth-footer { margin-top: 22px; text-align: center; font-size: 14px; color: var(--text-muted); }
+    .auth-footer a { color: var(--accent); font-weight: 600; }
+    .auth-footer a:hover { text-decoration: underline; }
+    .btn-submit {
+      width: 100%; background: var(--accent2); color: #000;
+      padding: 13px; border-radius: 8px; font-size: 15px; font-weight: 700;
+      cursor: pointer; border: none; transition: box-shadow 0.2s;
+      margin-top: 4px;
+    }
+    .btn-submit:hover:not(:disabled) { box-shadow: 0 0 20px rgba(0,212,170,0.4); }
+    .btn-submit:disabled { opacity: 0.4; cursor: not-allowed; }
+    .pass-hint { font-size: 12px; color: var(--text-muted); margin-top: 5px; }
+    .perks {
+      background: var(--accent-glow);
+      border: 1px solid rgba(108,99,255,0.2);
+      border-radius: 8px;
+      padding: 12px 16px;
+      margin-bottom: 24px;
+    }
+    .perk { display: flex; align-items: center; gap: 8px; font-size: 13px; color: #a8a4ff; padding: 3px 0; }
+  </style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="/" class="nav-logo">
+      <div class="icon">🎙️</div>
+      Interview Coach
+    </a>
+    <div class="nav-links">
+      <a href="/about.html" class="nav-link">About</a>
+      <a href="/pricing.html" class="nav-link">Pricing</a>
+      <a href="/login.html" class="btn-nav-outline">Sign In</a>
+    </div>
+  </div>
+</nav>
+
+<div class="auth-wrap">
+  <div class="auth-card">
+    <div class="auth-logo">
+      <div class="icon">🎙️</div>
+      <span>Interview Coach</span>
+    </div>
+
+    <div class="auth-title">Create your account</div>
+    <div class="auth-sub">Start practicing interviews with AI — free forever</div>
+
+    <div class="perks">
+      <div class="perk">✓ Voice-powered AI answers in real time</div>
+      <div class="perk">✓ Upload resume PDF + job description</div>
+      <div class="perk">✓ No credit card required</div>
+    </div>
+
+    <div class="form-error" id="error-msg"></div>
+    <div class="form-success" id="success-msg"></div>
+
+    <form id="register-form" onsubmit="handleRegister(event)">
+      <div class="form-group">
+        <label class="form-label" for="username">Username</label>
+        <input class="form-input" id="username" type="text" placeholder="Choose a username" autocomplete="username" required />
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="email">Email Address</label>
+        <input class="form-input" id="email" type="email" placeholder="you@example.com" autocomplete="email" required />
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="password">Password</label>
+        <input class="form-input" id="password" type="password" placeholder="At least 8 characters" autocomplete="new-password" required />
+        <div class="pass-hint">Minimum 8 characters</div>
+      </div>
+      <button class="btn-submit" id="submit-btn" type="submit">Create Account →</button>
+    </form>
+
+    <div class="auth-footer">
+      Already have an account? <a href="/login.html">Sign in</a>
+    </div>
+  </div>
+</div>
+
+<footer class="footer">
+  <div>© 2026 Interview Coach</div>
+</footer>
+
+<script src="/auth.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    Auth.ensureAdmin();
+    if (Auth.getSession()) window.location.href = '/interview/';
+  });
+
+  async function handleRegister(e) {
+    e.preventDefault();
+    const btn = document.getElementById('submit-btn');
+    const err = document.getElementById('error-msg');
+    const succ = document.getElementById('success-msg');
+    const username = document.getElementById('username').value;
+    const email    = document.getElementById('email').value;
+    const password = document.getElementById('password').value;
+
+    err.style.display = 'none';
+    succ.style.display = 'none';
+    btn.disabled = true;
+    btn.textContent = 'Creating account…';
+
+    const result = await Auth.register(username, email, password);
+
+    if (result.error) {
+      err.textContent = result.error;
+      err.style.display = 'block';
+      btn.disabled = false;
+      btn.textContent = 'Create Account →';
+    } else {
+      // Auto-login after registration
+      const loginResult = await Auth.login(username, password);
+      if (loginResult.session) {
+        succ.textContent = 'Account created! Redirecting…';
+        succ.style.display = 'block';
+        setTimeout(() => window.location.href = '/interview/', 800);
+      } else {
+        succ.textContent = 'Account created! Please sign in.';
+        succ.style.display = 'block';
+        setTimeout(() => window.location.href = '/login.html', 1200);
+      }
+    }
+  }
+</script>
+</body>
+</html>

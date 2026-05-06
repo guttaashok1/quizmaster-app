@@ -1,0 +1,767 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Interview Coach — AI-Powered Interview Practice</title>
+  <link rel="stylesheet" href="/styles.css" />
+  <style>
+    body { background: #07070f; background-image: none; }
+
+    /* ════════════════════════════════════════
+       HERO — full-bleed cinematic, text on left
+    ════════════════════════════════════════ */
+    .hero {
+      position: relative;
+      min-height: 88vh;
+      display: flex;
+      align-items: center;
+      overflow: hidden;
+      border-bottom: 1px solid rgba(255,255,255,0.07);
+    }
+
+    /* ── Background scene (the "image") ── */
+    .hero-scene {
+      position: absolute;
+      inset: 0;
+      background: #07070f;
+    }
+    /* Main ambient glow — right side */
+    .hero-scene::before {
+      content: '';
+      position: absolute;
+      right: -100px; top: 50%;
+      transform: translateY(-50%);
+      width: 900px; height: 900px;
+      background: radial-gradient(circle, rgba(37,99,235,0.22) 0%, rgba(37,99,235,0.06) 40%, transparent 70%);
+    }
+    /* Secondary glow — top right corner */
+    .hero-scene::after {
+      content: '';
+      position: absolute;
+      right: 80px; top: -60px;
+      width: 500px; height: 500px;
+      background: radial-gradient(circle, rgba(56,189,248,0.12) 0%, transparent 65%);
+    }
+
+    /* ── Left-side readability gradient ── */
+    .hero-overlay {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(
+        90deg,
+        rgba(7,7,15,0.98) 0%,
+        rgba(7,7,15,0.92) 30%,
+        rgba(7,7,15,0.65) 55%,
+        rgba(7,7,15,0.15) 80%,
+        transparent 100%
+      );
+      z-index: 1;
+    }
+
+    /* ── Background waveform art ── */
+    .hero-art {
+      position: absolute;
+      right: 0; top: 0; bottom: 0;
+      width: 65%;
+      z-index: 0;
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      padding-right: 48px;
+    }
+    .waveform-art {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      opacity: 0.18;
+    }
+    .wf-col {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 5px;
+    }
+    .wf-bar {
+      width: 5px;
+      border-radius: 3px;
+      background: linear-gradient(to top, #1d4ed8, #38bdf8);
+    }
+
+    /* floating UI cards in hero art area */
+    .hero-ui-card {
+      position: absolute;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.10);
+      backdrop-filter: blur(12px);
+      border-radius: 12px;
+      padding: 14px 18px;
+      z-index: 2;
+    }
+    .hui-card-1 {
+      top: 18%; right: 8%;
+      width: 260px;
+    }
+    .hui-card-2 {
+      top: 50%; right: 3%;
+      transform: translateY(-50%);
+      width: 300px;
+    }
+    .hui-card-3 {
+      bottom: 18%; right: 12%;
+      width: 240px;
+    }
+    .hui-label {
+      font-size: 10px; font-weight: 700; letter-spacing: 1px;
+      text-transform: uppercase; color: #60a5fa; margin-bottom: 8px;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .hui-pulse { width: 6px; height: 6px; border-radius: 50%; background: #60a5fa; animation: huipulse 1.6s ease-in-out infinite; }
+    @keyframes huipulse { 0%,100%{opacity:1} 50%{opacity:0.2} }
+    .hui-text { font-size: 13px; color: rgba(255,255,255,0.75); line-height: 1.55; }
+    .hui-line { height: 7px; border-radius: 4px; background: rgba(255,255,255,0.08); margin-bottom: 6px; }
+    .hui-mini-bars {
+      display: flex; align-items: flex-end; gap: 3px; height: 32px; margin-top: 8px;
+    }
+    .hui-mini-bar { width: 6px; border-radius: 3px; background: linear-gradient(to top, #1d4ed8, #60a5fa); }
+    .hui-bullet { display: flex; gap: 7px; font-size: 12px; color: rgba(255,255,255,0.65); margin-bottom: 5px; line-height: 1.5; }
+    .hui-bullet::before { content: '→'; color: #60a5fa; flex-shrink: 0; font-weight: 700; }
+
+    /* ── Hero text content ── */
+    .hero-content {
+      position: relative;
+      z-index: 10;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 48px;
+      width: 100%;
+    }
+    .hero-eyebrow {
+      font-size: 12px; font-weight: 700;
+      letter-spacing: 1.8px; text-transform: uppercase;
+      color: #60a5fa; margin-bottom: 20px;
+    }
+    .hero h1 {
+      font-size: clamp(40px, 5.5vw, 72px);
+      font-weight: 900;
+      letter-spacing: -2px;
+      line-height: 1.02;
+      margin-bottom: 22px;
+      max-width: 580px;
+      color: #fff;
+    }
+    .hero h1 .accent {
+      color: #60a5fa;
+    }
+    .hero-sub {
+      font-size: 17px;
+      color: rgba(255,255,255,0.5);
+      line-height: 1.75;
+      max-width: 460px;
+      margin-bottom: 36px;
+    }
+    .hero-cta-row { display: flex; gap: 14px; align-items: center; }
+    .btn-hero-primary {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: #2563eb; color: #fff;
+      padding: 14px 32px; border-radius: 6px;
+      font-size: 15px; font-weight: 700;
+      cursor: pointer; border: none; transition: background 0.2s, box-shadow 0.2s;
+      font-family: var(--font); text-decoration: none;
+    }
+    .btn-hero-primary:hover { background: #1d4ed8; box-shadow: 0 0 28px rgba(37,99,235,0.45); }
+    .btn-hero-outline {
+      display: inline-flex; align-items: center;
+      background: transparent; color: #fff;
+      padding: 13px 32px; border-radius: 6px;
+      font-size: 15px; font-weight: 600;
+      border: 1.5px solid rgba(255,255,255,0.3);
+      cursor: pointer; transition: border-color 0.2s, color 0.2s;
+      font-family: var(--font); text-decoration: none;
+    }
+    .btn-hero-outline:hover { border-color: #fff; }
+
+    /* ════════════════════════════════════════
+       CATEGORY CARDS — horizontal scroll
+    ════════════════════════════════════════ */
+    .categories {
+      border-bottom: 1px solid rgba(255,255,255,0.07);
+      padding: 48px 0 48px 48px;
+      background: rgba(255,255,255,0.01);
+    }
+    .categories-header {
+      max-width: 1200px; margin: 0 auto 28px;
+      padding-right: 48px;
+      display: flex; justify-content: space-between; align-items: baseline;
+    }
+    .categories-header h2 { font-size: 22px; font-weight: 800; }
+    .categories-header a { font-size: 13px; color: #60a5fa; font-weight: 600; }
+    .cat-scroll {
+      display: flex;
+      gap: 16px;
+      overflow-x: auto;
+      scrollbar-width: none;
+      padding-right: 48px;
+      padding-bottom: 4px;
+    }
+    .cat-scroll::-webkit-scrollbar { display: none; }
+    .cat-card {
+      flex-shrink: 0;
+      width: 220px;
+      height: 160px;
+      border-radius: 10px;
+      overflow: hidden;
+      position: relative;
+      cursor: pointer;
+      transition: transform 0.2s;
+      border: 1px solid rgba(255,255,255,0.08);
+    }
+    .cat-card:hover { transform: translateY(-3px); }
+    .cat-bg {
+      position: absolute; inset: 0;
+    }
+    .cat-card-1 .cat-bg { background: linear-gradient(135deg, #0f1f3d 0%, #1e3a5f 100%); }
+    .cat-card-2 .cat-bg { background: linear-gradient(135deg, #0a1628 0%, #0f2640 100%); }
+    .cat-card-3 .cat-bg { background: linear-gradient(135deg, #0a1e1a 0%, #0d2e28 100%); }
+    .cat-card-4 .cat-bg { background: linear-gradient(135deg, #1a0f2e 0%, #2a1850 100%); }
+    .cat-card-5 .cat-bg { background: linear-gradient(135deg, #1a1000 0%, #2e1e00 100%); }
+    .cat-card-6 .cat-bg { background: linear-gradient(135deg, #001a1a 0%, #002a2a 100%); }
+    /* accent glow per card */
+    .cat-card-1 .cat-bg::after { content:''; position:absolute; inset:0; background: radial-gradient(circle at 80% 30%, rgba(37,99,235,0.3) 0%, transparent 60%); }
+    .cat-card-2 .cat-bg::after { content:''; position:absolute; inset:0; background: radial-gradient(circle at 80% 30%, rgba(56,189,248,0.25) 0%, transparent 60%); }
+    .cat-card-3 .cat-bg::after { content:''; position:absolute; inset:0; background: radial-gradient(circle at 80% 30%, rgba(16,185,129,0.25) 0%, transparent 60%); }
+    .cat-card-4 .cat-bg::after { content:''; position:absolute; inset:0; background: radial-gradient(circle at 80% 30%, rgba(139,92,246,0.25) 0%, transparent 60%); }
+    .cat-card-5 .cat-bg::after { content:''; position:absolute; inset:0; background: radial-gradient(circle at 80% 30%, rgba(245,158,11,0.25) 0%, transparent 60%); }
+    .cat-card-6 .cat-bg::after { content:''; position:absolute; inset:0; background: radial-gradient(circle at 80% 30%, rgba(20,184,166,0.25) 0%, transparent 60%); }
+    .cat-icon {
+      position: absolute; top: 20px; right: 20px;
+      font-size: 32px; opacity: 0.7;
+    }
+    .cat-label {
+      position: absolute; bottom: 0; left: 0; right: 0;
+      padding: 12px 16px;
+      background: linear-gradient(to top, rgba(0,0,0,0.7) 0%, transparent 100%);
+      font-size: 14px; font-weight: 700; color: #fff;
+    }
+    .cat-count { font-size: 11px; color: rgba(255,255,255,0.45); font-weight: 400; margin-top: 2px; }
+
+    /* ════════════════════════════════════════
+       FEATURE SECTIONS — alternating
+    ════════════════════════════════════════ */
+    .feature-section {
+      padding: 96px 48px;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+    .feature-section:nth-child(even) { background: rgba(255,255,255,0.015); }
+    .feature-inner {
+      max-width: 1200px; margin: 0 auto;
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 80px; align-items: center;
+    }
+    .feature-inner.reverse { direction: rtl; }
+    .feature-inner.reverse > * { direction: ltr; }
+    .feature-eyebrow {
+      font-size: 11px; font-weight: 700; letter-spacing: 1.5px;
+      text-transform: uppercase; color: #60a5fa; margin-bottom: 16px;
+    }
+    .feature-section h2 {
+      font-size: clamp(26px, 3vw, 38px);
+      font-weight: 900; letter-spacing: -0.8px;
+      line-height: 1.15; margin-bottom: 18px;
+    }
+    .feature-section p {
+      font-size: 16px; color: rgba(255,255,255,0.55);
+      line-height: 1.75; margin-bottom: 28px;
+    }
+    .feature-link {
+      display: inline-flex; align-items: center; gap: 8px;
+      font-size: 14px; font-weight: 700; color: #60a5fa;
+      transition: gap 0.2s;
+    }
+    .feature-link:hover { gap: 14px; }
+
+    /* ── Feature visuals ── */
+    .voice-illustration {
+      padding: 40px 32px;
+      background: linear-gradient(135deg, #0d1a3a 0%, #0a0f1e 100%);
+      border: 1px solid rgba(37,99,235,0.15);
+      border-radius: 14px;
+      position: relative; overflow: hidden;
+      min-height: 320px;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+    }
+    .voice-illustration::before {
+      content: ''; position: absolute; inset: 0;
+      background: radial-gradient(circle at 50% 40%, rgba(37,99,235,0.18) 0%, transparent 60%);
+    }
+    .mic-sonar {
+      position: relative; width: 100px; height: 100px;
+      display: flex; align-items: center; justify-content: center;
+      margin-bottom: 28px; z-index: 1;
+    }
+    .sonar-ring {
+      position: absolute; border-radius: 50%;
+      border: 1.5px solid rgba(37,99,235,0.4);
+      animation: sonar 2.4s ease-out infinite;
+    }
+    .sonar-ring:nth-child(1) { width: 110px; height: 110px; animation-delay: 0s; }
+    .sonar-ring:nth-child(2) { width: 155px; height: 155px; animation-delay: 0.8s; }
+    .sonar-ring:nth-child(3) { width: 200px; height: 200px; animation-delay: 1.6s; }
+    @keyframes sonar { 0%{opacity:.8;transform:scale(.7)} 100%{opacity:0;transform:scale(1.1)} }
+    .mic-btn {
+      width: 72px; height: 72px; border-radius: 50%;
+      background: linear-gradient(135deg, #1d4ed8, #2563eb);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 30px; position: relative; z-index: 2;
+      box-shadow: 0 0 40px rgba(37,99,235,0.5);
+    }
+    .voice-bars { display: flex; align-items: center; gap: 4px; height: 48px; margin-bottom: 24px; z-index: 1; }
+    .vbar { width: 4px; border-radius: 4px; background: linear-gradient(to top, #1d4ed8, #60a5fa); animation: vwave 1.2s ease-in-out infinite; }
+    .vbar:nth-child(1){height:14px;animation-delay:.0s} .vbar:nth-child(2){height:28px;animation-delay:.1s}
+    .vbar:nth-child(3){height:40px;animation-delay:.2s} .vbar:nth-child(4){height:48px;animation-delay:.15s}
+    .vbar:nth-child(5){height:36px;animation-delay:.25s} .vbar:nth-child(6){height:44px;animation-delay:.05s}
+    .vbar:nth-child(7){height:32px;animation-delay:.3s}  .vbar:nth-child(8){height:20px;animation-delay:.1s}
+    .vbar:nth-child(9){height:12px;animation-delay:.2s}
+    @keyframes vwave { 0%,100%{transform:scaleY(1)} 50%{transform:scaleY(0.35)} }
+    .voice-q-bubble {
+      background: rgba(37,99,235,0.12); border: 1px solid rgba(37,99,235,0.25);
+      border-radius: 12px; padding: 14px 18px;
+      font-size: 13px; color: rgba(255,255,255,0.75);
+      line-height: 1.6; font-style: italic; text-align: center; z-index: 1; max-width: 340px;
+    }
+    .rec-pill {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: rgba(239,68,68,0.12); border: 1px solid rgba(239,68,68,0.25);
+      border-radius: 999px; padding: 4px 12px;
+      font-size: 11px; font-weight: 700; color: #fca5a5; margin-bottom: 20px; z-index: 1;
+    }
+    .rec-dot { width: 7px; height: 7px; border-radius: 50%; background: #ef4444; animation: blink2 1s infinite; }
+    @keyframes blink2 { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+    /* Resume visual */
+    .resume-illustration {
+      padding: 28px; background: linear-gradient(135deg, #0a0f1e 0%, #0d1a2e 100%);
+      border: 1px solid rgba(255,255,255,0.08); border-radius: 14px; min-height: 320px;
+    }
+    .resume-upload-row {
+      display: flex; align-items: center; gap: 10px;
+      background: rgba(37,99,235,0.08); border: 1px solid rgba(37,99,235,0.2);
+      border-radius: 8px; padding: 10px 14px; margin-bottom: 14px;
+    }
+    .resume-filename { font-size: 13px; font-weight: 600; color: #fff; }
+    .resume-meta { font-size: 11px; color: rgba(255,255,255,0.4); }
+    .resume-progress { background: rgba(255,255,255,0.06); border-radius: 4px; height: 4px; overflow: hidden; margin-bottom: 6px; }
+    .resume-fill { height: 100%; background: linear-gradient(90deg, #1d4ed8, #38bdf8); border-radius: 4px; }
+    .resume-doc {
+      background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.10);
+      border-radius: 10px; padding: 18px;
+    }
+    .resume-doc-header {
+      display: flex; align-items: center; gap: 10px; margin-bottom: 16px;
+      padding-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,0.07);
+    }
+    .resume-avatar {
+      width: 36px; height: 36px; border-radius: 50%;
+      background: linear-gradient(135deg, #1d4ed8, #38bdf8);
+      display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0;
+    }
+    .resume-name { font-size: 14px; font-weight: 700; color: #fff; }
+    .resume-role-txt { font-size: 11px; color: rgba(255,255,255,0.4); margin-top: 1px; }
+    .resume-section-title { font-size: 10px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: #60a5fa; margin-bottom: 8px; }
+    .resume-line { height: 7px; border-radius: 4px; background: rgba(255,255,255,0.08); margin-bottom: 6px; }
+    .resume-highlight { background: rgba(37,99,235,0.3); }
+    .resume-tags { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 12px; }
+    .resume-tag { background: rgba(37,99,235,0.12); border: 1px solid rgba(37,99,235,0.25); border-radius: 999px; padding: 3px 10px; font-size: 11px; font-weight: 600; color: #93c5fd; }
+
+    /* Answer visual */
+    .answer-illustration {
+      background: linear-gradient(135deg, #050d1a 0%, #0a0f1e 100%);
+      border: 1px solid rgba(255,255,255,0.08); border-radius: 14px; overflow: hidden; min-height: 320px;
+    }
+    .answer-terminal-bar {
+      background: rgba(255,255,255,0.04); border-bottom: 1px solid rgba(255,255,255,0.07);
+      padding: 10px 16px; display: flex; align-items: center; gap: 8px;
+    }
+    .terminal-dot { width: 10px; height: 10px; border-radius: 50%; }
+    .answer-terminal-body { padding: 20px; }
+    .answer-q-row { display: flex; gap: 10px; margin-bottom: 16px; align-items: flex-start; }
+    .q-icon { width: 28px; height: 28px; border-radius: 50%; background: rgba(255,255,255,0.08); display: flex; align-items: center; justify-content: center; font-size: 13px; flex-shrink: 0; margin-top: 2px; }
+    .q-bubble { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08); border-radius: 0 10px 10px 10px; padding: 10px 14px; font-size: 13px; color: rgba(255,255,255,0.7); line-height: 1.5; }
+    .answer-a-row { display: flex; gap: 10px; align-items: flex-start; }
+    .a-icon { width: 28px; height: 28px; border-radius: 50%; background: linear-gradient(135deg, #1d4ed8, #2563eb); display: flex; align-items: center; justify-content: center; font-size: 13px; flex-shrink: 0; margin-top: 2px; box-shadow: 0 0 12px rgba(37,99,235,0.4); }
+    .a-bubble { background: rgba(37,99,235,0.1); border: 1px solid rgba(37,99,235,0.22); border-radius: 0 10px 10px 10px; padding: 12px 14px; flex: 1; }
+    .a-label { font-size: 10px; font-weight: 700; letter-spacing: 0.8px; text-transform: uppercase; color: #60a5fa; margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }
+    .a-pulse { width: 6px; height: 6px; border-radius: 50%; background: #60a5fa; animation: apulse 1.5s ease-in-out infinite; }
+    @keyframes apulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+    .a-bullet { display: flex; gap: 8px; font-size: 12px; color: rgba(255,255,255,0.72); margin-bottom: 7px; line-height: 1.5; align-items: flex-start; }
+    .a-bullet::before { content: '→'; color: #60a5fa; flex-shrink: 0; font-weight: 700; }
+
+    /* ════════════════════════════════════════
+       STATS
+    ════════════════════════════════════════ */
+    .stats-section {
+      padding: 80px 48px;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+    .stats-inner {
+      max-width: 1200px; margin: 0 auto;
+      display: grid; grid-template-columns: repeat(3, 1fr);
+      gap: 1px; background: rgba(255,255,255,0.07);
+      border: 1px solid rgba(255,255,255,0.07); border-radius: 14px; overflow: hidden;
+    }
+    .stat-item { padding: 40px 48px; background: #07070f; }
+    .stat-num {
+      font-size: 56px; font-weight: 900; letter-spacing: -2px; line-height: 1;
+      color: #fff; margin-bottom: 10px;
+    }
+    .stat-num span { color: #60a5fa; }
+    .stat-label { font-size: 15px; color: rgba(255,255,255,0.45); font-weight: 500; }
+
+    /* ════════════════════════════════════════
+       CTA
+    ════════════════════════════════════════ */
+    .cta-section {
+      padding: 100px 48px;
+      text-align: center;
+      background: linear-gradient(180deg, #07070f 0%, #0d1830 100%);
+      position: relative; overflow: hidden;
+    }
+    .cta-section::before {
+      content: ''; position: absolute; inset: 0;
+      background: radial-gradient(ellipse at 50% 100%, rgba(37,99,235,0.22) 0%, transparent 60%);
+      pointer-events: none;
+    }
+    .cta-section h2 { font-size: clamp(32px, 4vw, 52px); font-weight: 900; letter-spacing: -1px; margin-bottom: 16px; }
+    .cta-section p { font-size: 17px; color: rgba(255,255,255,0.5); margin-bottom: 36px; }
+
+    /* ════════════════════════════════════════
+       FOOTER
+    ════════════════════════════════════════ */
+    .site-footer {
+      background: #030307;
+      border-top: 1px solid rgba(255,255,255,0.07);
+      padding: 60px 48px 36px;
+    }
+    .footer-grid {
+      max-width: 1200px; margin: 0 auto;
+      display: grid; grid-template-columns: 2fr 1fr 1fr 1fr;
+      gap: 48px; margin-bottom: 48px;
+    }
+    .footer-brand .nav-logo { display: inline-flex; margin-bottom: 16px; }
+    .footer-brand p { font-size: 14px; color: rgba(255,255,255,0.35); line-height: 1.7; max-width: 280px; }
+    .footer-col h4 { font-size: 12px; font-weight: 700; letter-spacing: 0.8px; text-transform: uppercase; color: rgba(255,255,255,0.6); margin-bottom: 16px; }
+    .footer-col a { display: block; font-size: 14px; color: rgba(255,255,255,0.4); margin-bottom: 10px; transition: color 0.2s; }
+    .footer-col a:hover { color: rgba(255,255,255,0.85); }
+    .footer-bottom {
+      max-width: 1200px; margin: 0 auto;
+      padding-top: 28px; border-top: 1px solid rgba(255,255,255,0.06);
+      display: flex; justify-content: space-between; align-items: center;
+      font-size: 13px; color: rgba(255,255,255,0.25); flex-wrap: wrap; gap: 12px;
+    }
+
+    /* ════════════════════════════════════════
+       RESPONSIVE
+    ════════════════════════════════════════ */
+    @media (max-width: 1024px) {
+      .hui-card-1, .hui-card-2, .hui-card-3 { display: none; }
+    }
+    @media (max-width: 900px) {
+      .hero { min-height: auto; }
+      .hero-content { padding: 72px 32px; }
+      .feature-inner { grid-template-columns: 1fr; gap: 40px; }
+      .feature-inner.reverse { direction: ltr; }
+      .stats-inner { grid-template-columns: 1fr; }
+      .stat-item { padding: 28px 32px; }
+      .footer-grid { grid-template-columns: 1fr 1fr; }
+      .categories { padding: 36px 0 36px 24px; }
+    }
+    @media (max-width: 640px) {
+      .hero-content, .feature-section, .stats-section, .cta-section { padding-left: 20px; padding-right: 20px; }
+      .hero h1 { font-size: 38px; letter-spacing: -1px; }
+      .site-footer { padding: 40px 20px 24px; }
+      .footer-grid { grid-template-columns: 1fr; gap: 28px; }
+      .footer-bottom { flex-direction: column; text-align: center; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- Nav -->
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="/" class="nav-logo">
+      <div class="icon">🎙️</div>
+      Interview Coach
+    </a>
+    <div class="nav-links">
+      <a href="/#features" class="nav-link">Features</a>
+      <a href="/about.html" class="nav-link">About</a>
+      <a href="/pricing.html" class="nav-link">Pricing</a>
+      <div id="nav-auth" style="display:flex;align-items:center;gap:8px"></div>
+    </div>
+  </div>
+</nav>
+
+<!-- ═══ HERO — Full-bleed cinematic ═══ -->
+<section class="hero">
+  <div class="hero-scene"></div>
+  <div class="hero-overlay"></div>
+
+  <!-- Background art: floating UI cards + waveform -->
+  <div class="hero-art">
+    <!-- Floating card 1: Resume scan -->
+    <div class="hero-ui-card hui-card-1">
+      <div class="hui-label">Resume Parsed</div>
+      <div class="hui-line" style="width:88%"></div>
+      <div class="hui-line" style="width:70%"></div>
+      <div class="hui-line" style="width:80%"></div>
+      <div style="display:flex;gap:6px;margin-top:8px">
+        <span style="background:rgba(37,99,235,0.15);border:1px solid rgba(37,99,235,0.3);border-radius:999px;padding:3px 10px;font-size:11px;color:#93c5fd">Python</span>
+        <span style="background:rgba(37,99,235,0.15);border:1px solid rgba(37,99,235,0.3);border-radius:999px;padding:3px 10px;font-size:11px;color:#93c5fd">AWS</span>
+        <span style="background:rgba(37,99,235,0.15);border:1px solid rgba(37,99,235,0.3);border-radius:999px;padding:3px 10px;font-size:11px;color:#93c5fd">Team Lead</span>
+      </div>
+    </div>
+
+    <!-- Floating card 2: Live answer streaming -->
+    <div class="hero-ui-card hui-card-2">
+      <div class="hui-label"><div class="hui-pulse"></div> Streaming answer</div>
+      <div class="hui-bullet">Led team of 5 engineers through critical migration</div>
+      <div class="hui-bullet">Reduced deployment time by 60% in 3 months</div>
+      <div class="hui-bullet">Zero production incidents post-launch</div>
+      <div class="hui-mini-bars">
+        <div class="hui-mini-bar" style="height:20px"></div>
+        <div class="hui-mini-bar" style="height:28px"></div>
+        <div class="hui-mini-bar" style="height:32px;animation:vwave 1s .1s ease-in-out infinite"></div>
+        <div class="hui-mini-bar" style="height:26px"></div>
+        <div class="hui-mini-bar" style="height:18px"></div>
+      </div>
+    </div>
+
+    <!-- Floating card 3: Question detected -->
+    <div class="hero-ui-card hui-card-3">
+      <div class="hui-label">Question Detected</div>
+      <div class="hui-text">"Tell me about a time you led a team under pressure…"</div>
+    </div>
+  </div>
+
+  <!-- Hero copy -->
+  <div class="hero-content">
+    <div class="hero-eyebrow">AI-Powered Interview Practice</div>
+    <h1>Practice your way<br>to the <span class="accent">right job.</span></h1>
+    <p class="hero-sub">Upload your resume, paste a job description, and speak any interview question aloud — get real-time, tailored AI coaching word by word.</p>
+    <div class="hero-cta-row">
+      <a href="/register.html" class="btn-hero-primary">Get Started Free</a>
+      <a href="/about.html" class="btn-hero-outline">See How It Works</a>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ CATEGORY CARDS ═══ -->
+<div class="categories" id="features">
+  <div class="categories-header">
+    <h2>Prepare for any interview</h2>
+    <a href="/register.html">Browse all →</a>
+  </div>
+  <div class="cat-scroll">
+    <div class="cat-card cat-card-1">
+      <div class="cat-bg"></div>
+      <div class="cat-icon">🗣️</div>
+      <div class="cat-label">Behavioral Questions<div class="cat-count">Tell me about a time…</div></div>
+    </div>
+    <div class="cat-card cat-card-2">
+      <div class="cat-bg"></div>
+      <div class="cat-icon">💻</div>
+      <div class="cat-label">Technical Interviews<div class="cat-count">System design · Coding</div></div>
+    </div>
+    <div class="cat-card cat-card-3">
+      <div class="cat-bg"></div>
+      <div class="cat-icon">👥</div>
+      <div class="cat-label">Leadership Roles<div class="cat-count">Management · Strategy</div></div>
+    </div>
+    <div class="cat-card cat-card-4">
+      <div class="cat-bg"></div>
+      <div class="cat-icon">📊</div>
+      <div class="cat-label">Product Management<div class="cat-count">Roadmap · Prioritization</div></div>
+    </div>
+    <div class="cat-card cat-card-5">
+      <div class="cat-bg"></div>
+      <div class="cat-icon">🤝</div>
+      <div class="cat-label">Sales & Business Dev<div class="cat-count">Discovery · Closing</div></div>
+    </div>
+    <div class="cat-card cat-card-6">
+      <div class="cat-bg"></div>
+      <div class="cat-icon">📈</div>
+      <div class="cat-label">Finance & Consulting<div class="cat-count">Case studies · Modeling</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ FEATURE 1: Voice ═══ -->
+<section class="feature-section">
+  <div class="feature-inner">
+    <div>
+      <div class="feature-eyebrow">Voice Recognition</div>
+      <h2>Just speak — no buttons, no scripts</h2>
+      <p>Interview Coach listens continuously through your browser's microphone. Ask any question naturally, exactly the way you would in a real interview room. The moment you pause, the AI responds.</p>
+      <a href="/register.html" class="feature-link">Start practicing free →</a>
+    </div>
+    <div class="voice-illustration">
+      <div class="rec-pill"><div class="rec-dot"></div> Listening…</div>
+      <div class="mic-sonar">
+        <div class="sonar-ring"></div><div class="sonar-ring"></div><div class="sonar-ring"></div>
+        <div class="mic-btn">🎙️</div>
+      </div>
+      <div class="voice-bars">
+        <div class="vbar"></div><div class="vbar"></div><div class="vbar"></div>
+        <div class="vbar"></div><div class="vbar"></div><div class="vbar"></div>
+        <div class="vbar"></div><div class="vbar"></div><div class="vbar"></div>
+      </div>
+      <div class="voice-q-bubble">"Walk me through a time you had to work cross-functionally under a tight deadline…"</div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ FEATURE 2: Resume ═══ -->
+<section class="feature-section">
+  <div class="feature-inner reverse">
+    <div>
+      <div class="feature-eyebrow">Resume Intelligence</div>
+      <h2>Answers built around your real experience</h2>
+      <p>Upload your resume as a PDF and every answer is grounded in your actual skills, projects, and accomplishments — not generic templates. The AI knows who you are before you say a word.</p>
+      <a href="/register.html" class="feature-link">Upload your resume →</a>
+    </div>
+    <div class="resume-illustration">
+      <div class="resume-upload-row">
+        <span style="font-size:20px">📄</span>
+        <div>
+          <div class="resume-filename">resume_2026.pdf</div>
+          <div class="resume-meta">248 KB · Uploaded just now</div>
+        </div>
+      </div>
+      <div class="resume-progress"><div class="resume-fill" style="width:100%"></div></div>
+      <div style="font-size:11px;color:#60a5fa;text-align:right;margin:6px 0 14px">Parsed ✓</div>
+      <div class="resume-doc">
+        <div class="resume-doc-header">
+          <div class="resume-avatar">👤</div>
+          <div>
+            <div class="resume-name">Alex Johnson</div>
+            <div class="resume-role-txt">Senior Software Engineer · 5 years</div>
+          </div>
+        </div>
+        <div class="resume-section-title">Experience</div>
+        <div class="resume-line resume-highlight" style="width:90%"></div>
+        <div class="resume-line" style="width:75%"></div>
+        <div class="resume-line resume-highlight" style="width:82%"></div>
+        <div class="resume-line" style="width:60%"></div>
+        <div class="resume-tags">
+          <span class="resume-tag">Python</span>
+          <span class="resume-tag">Team Lead</span>
+          <span class="resume-tag">AWS</span>
+          <span class="resume-tag">Microservices</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ FEATURE 3: AI Answers ═══ -->
+<section class="feature-section">
+  <div class="feature-inner">
+    <div>
+      <div class="feature-eyebrow">Real-Time AI Coaching</div>
+      <h2>Confident answers, streamed word by word</h2>
+      <p>Watch your tailored answer appear in real time using the STAR method — condensed into punchy bullet points you can scan in seconds and say out loud with confidence.</p>
+      <a href="/register.html" class="feature-link">Try a question now →</a>
+    </div>
+    <div class="answer-illustration">
+      <div class="answer-terminal-bar">
+        <div class="terminal-dot" style="background:#ff5f57"></div>
+        <div class="terminal-dot" style="background:#febc2e"></div>
+        <div class="terminal-dot" style="background:#28c840"></div>
+        <span style="font-size:12px;color:rgba(255,255,255,0.3);margin-left:8px">Interview Coach · AI Session</span>
+      </div>
+      <div class="answer-terminal-body">
+        <div class="answer-q-row">
+          <div class="q-icon">🧑</div>
+          <div class="q-bubble">"Describe a time you significantly improved a process."</div>
+        </div>
+        <div class="answer-a-row">
+          <div class="a-icon">🤖</div>
+          <div class="a-bubble">
+            <div class="a-label"><div class="a-pulse"></div> Streaming answer</div>
+            <div class="a-bullet">Identified 3-day manual QA cycle blocking weekly releases</div>
+            <div class="a-bullet">Designed automated test suite covering 94% of critical paths</div>
+            <div class="a-bullet">Release cadence: weekly → daily; bug escapes dropped 80%</div>
+            <div class="a-bullet">Rolled out to 2 more teams after VP Eng review</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ STATS ═══ -->
+<section class="stats-section">
+  <div class="stats-inner">
+    <div class="stat-item">
+      <div class="stat-num">60<span>+</span></div>
+      <div class="stat-label">Interview question types covered</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-num" style="color:#60a5fa">Free</div>
+      <div class="stat-label">No credit card, no trial period</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-num">&lt;<span>1s</span></div>
+      <div class="stat-label">Time to first AI answer word</div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ CTA ═══ -->
+<section class="cta-section">
+  <h2>Ready to practice smarter?</h2>
+  <p>Create your free account and start your first session in under 60 seconds.</p>
+  <a href="/register.html" class="btn-hero-primary" style="margin:0 auto">Get Started — It's Free</a>
+</section>
+
+<!-- ═══ FOOTER ═══ -->
+<footer class="site-footer">
+  <div class="footer-grid">
+    <div class="footer-brand">
+      <a href="/" class="nav-logo"><div class="icon">🎙️</div>Interview Coach</a>
+      <p>AI-powered interview practice that adapts to your resume and the role you're targeting. Built for candidates who want to show up confident.</p>
+    </div>
+    <div class="footer-col">
+      <h4>Product</h4>
+      <a href="/#features">Features</a>
+      <a href="/pricing.html">Pricing</a>
+      <a href="/register.html">Get Started</a>
+      <a href="/interview/">Practice Now</a>
+    </div>
+    <div class="footer-col">
+      <h4>Company</h4>
+      <a href="/about.html">About</a>
+      <a href="/about.html#privacy">Privacy</a>
+    </div>
+    <div class="footer-col">
+      <h4>Account</h4>
+      <a href="/login.html">Sign In</a>
+      <a href="/register.html">Create Account</a>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <span>© 2026 Interview Coach. Powered by Claude AI (Anthropic).</span>
+    <span>Made for job seekers everywhere.</span>
+  </div>
+</footer>
+
+<script src="/auth.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    Auth.ensureAdmin();
+    Auth.renderNav();
+  });
+</script>
+</body>
+</html>

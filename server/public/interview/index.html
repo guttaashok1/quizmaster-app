@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Interview Coach — AI-Powered Practice</title>
+  <script src="/auth.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -35,22 +36,44 @@
 
     header {
       width: 100%;
-      padding: 18px 32px;
+      padding: 0 32px;
+      height: 62px;
       display: flex;
       align-items: center;
       gap: 12px;
       border-bottom: 1px solid var(--border);
-      background: var(--surface);
+      background: rgba(15,15,19,0.85);
+      backdrop-filter: blur(12px);
+      position: sticky; top: 0; z-index: 50;
     }
     .logo {
-      width: 36px; height: 36px;
+      width: 34px; height: 34px;
       background: linear-gradient(135deg, var(--accent), var(--accent2));
-      border-radius: 10px;
+      border-radius: 9px;
       display: flex; align-items: center; justify-content: center;
-      font-size: 18px;
+      font-size: 16px;
     }
-    header h1 { font-size: 18px; font-weight: 700; }
+    header h1 { font-size: 17px; font-weight: 700; }
     header span { font-size: 13px; color: var(--text-muted); margin-left: 4px; }
+    .header-right { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+    .header-user { font-size: 13px; color: var(--text-muted); }
+    .header-quota { font-size: 12px; color: var(--text-muted); }
+    .header-quota.warn { color: var(--danger); }
+    .header-home { font-size: 13px; color: var(--text-muted); text-decoration: none; }
+    .header-home:hover { color: var(--text); }
+    .btn-nav-filled {
+      background: var(--accent); color: #fff;
+      border-radius: 7px; font-size: 14px; font-weight: 600;
+      cursor: pointer; border: none; transition: box-shadow 0.2s;
+      text-decoration: none;
+    }
+    .btn-nav-filled:hover { box-shadow: 0 0 16px rgba(108,99,255,0.45); }
+    .btn-logout {
+      padding: 6px 14px; border-radius: 7px; font-size: 13px; font-weight: 600;
+      background: transparent; border: 1px solid var(--border); color: var(--text-muted);
+      cursor: pointer; transition: border-color 0.2s, color 0.2s;
+    }
+    .btn-logout:hover { border-color: var(--danger); color: var(--danger); }
 
     .container {
       width: 100%;
@@ -251,6 +274,14 @@
   <div class="logo">🎙️</div>
   <h1>Interview Coach</h1>
   <span>AI-powered practice</span>
+  <div class="header-right">
+    <a href="/" class="header-home">← Home</a>
+    <a href="/admin.html" id="admin-link" class="header-home" style="display:none">⚙️ Admin</a>
+    <span class="header-user" id="header-user"></span>
+    <span class="header-quota" id="header-quota"></span>
+    <a href="/pricing.html" id="upgrade-btn" class="btn-nav-filled" style="display:none;font-size:12px;padding:5px 12px">⚡ Upgrade</a>
+    <button class="btn-logout" onclick="Auth.logout()">Log out</button>
+  </div>
 </header>
 
 <div class="container">
@@ -364,6 +395,31 @@
 </div>
 
 <script>
+  // ── Auth guard ─────────────────────────────────────────────────────────────
+  const _session = Auth.requireAuth();
+  if (_session) {
+    document.getElementById('header-user').textContent = '👤 ' + _session.username;
+  }
+
+  if (_session && _session.role === 'admin') {
+    document.getElementById('admin-link').style.display = '';
+  }
+
+  function updateQuota() {
+    const el = document.getElementById('header-quota');
+    if (!el) return;
+    const rem = Auth.getRemainingQuestions();
+    if (rem === Infinity) { el.textContent = ''; return; }
+    el.textContent = rem + ' questions left today';
+    el.className = 'header-quota' + (rem <= 3 ? ' warn' : '');
+  }
+  updateQuota();
+
+  const upgradeBtn = document.getElementById('upgrade-btn');
+  if (upgradeBtn && _session && _session.role !== 'admin' && _session.plan !== 'pro') {
+    upgradeBtn.style.display = '';
+  }
+
   // ── State ──────────────────────────────────────────────────────────────────
   let resumeText = '';
   let recognition = null;
@@ -567,6 +623,20 @@
 
   // ── Streaming answer ───────────────────────────────────────────────────────
   async function triggerAnswer() {
+    if (!Auth.canAskQuestion()) {
+      showTranscript('');
+      setStatus('', 'Daily limit reached — upgrade to Pro for unlimited questions');
+      const card = document.getElementById('answer-card');
+      card.style.display = 'block';
+      document.getElementById('answer-text').textContent = '⚠️ You\'ve used all 10 free questions for today. Upgrade to Pro for unlimited access.';
+      document.getElementById('answer-actions').style.display = 'none';
+      document.getElementById('cursor').className = 'cursor hidden';
+      document.getElementById('answer-box').className = 'answer-box';
+      return;
+    }
+    Auth.incrementQuestionCount();
+    updateQuota();
+
     clearTimeout(debounceTimer);
     const question = currentQuestion.trim();
     if (!question || !contextReady()) return;

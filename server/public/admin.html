@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Dashboard — Interview Coach</title>
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="/" class="nav-logo">
+      <div class="icon">🎙️</div>
+      Interview Coach
+    </a>
+    <div class="nav-links">
+      <a href="/" class="nav-link">Home</a>
+      <a href="/pricing.html" class="nav-link">Pricing</a>
+      <div id="nav-auth" style="display:flex;align-items:center;gap:8px"></div>
+    </div>
+  </div>
+</nav>
+
+<div class="page-wide">
+  <div style="margin-bottom:32px">
+    <h1 class="section-title">Admin Dashboard</h1>
+    <p class="section-sub">Manage users and monitor platform activity</p>
+  </div>
+
+  <!-- Metrics -->
+  <div class="metrics-grid">
+    <div class="metric-card">
+      <div class="metric-value" id="m-total">—</div>
+      <div class="metric-label">Total Users</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-value" id="m-pro">—</div>
+      <div class="metric-label">Pro Users</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-value" id="m-free">—</div>
+      <div class="metric-label">Free Users</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-value" id="m-questions">—</div>
+      <div class="metric-label">Questions Today</div>
+    </div>
+  </div>
+
+  <!-- Setup banner -->
+  <div class="setup-card" id="setup-banner">
+    <h3>⚡ Setup Supabase for full analytics</h3>
+    <p style="font-size:14px;color:var(--text-muted);margin-bottom:16px">Metrics below are approximate — based on this browser's localStorage only. Connect Supabase + Stripe for real server-side analytics and payments.</p>
+    <ol class="setup-steps">
+      <li>Go to <strong>supabase.com</strong> → create a project → copy the Project URL and anon key</li>
+      <li>Go to <strong>stripe.com</strong> → create an account → get your publishable key and secret key</li>
+      <li>Add to <strong>Vercel env vars</strong>: <code>SUPABASE_URL</code>, <code>SUPABASE_ANON_KEY</code>, <code>STRIPE_PUBLISHABLE_KEY</code>, <code>STRIPE_SECRET_KEY</code></li>
+      <li>Come back to <strong>redeploy</strong> — full analytics and payment webhooks will be live</li>
+    </ol>
+  </div>
+
+  <!-- Recent Registrations -->
+  <div class="admin-section">
+    <div class="admin-section-title">Recent Registrations</div>
+    <table class="users-table">
+      <thead>
+        <tr>
+          <th>Username</th>
+          <th>Email</th>
+          <th>Plan</th>
+          <th>Role</th>
+          <th>Joined</th>
+        </tr>
+      </thead>
+      <tbody id="users-tbody">
+        <tr><td colspan="5" style="color:var(--text-muted);font-style:italic;padding:20px 16px">Loading…</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Supabase + Stripe setup instructions -->
+  <div class="admin-section">
+    <div class="admin-section-title">Supabase + Stripe Setup</div>
+    <ol class="setup-steps" style="list-style:none;counter-reset:setup-counter">
+      <li>Go to <strong style="color:var(--text)">supabase.com</strong> → create project → copy URL and anon key from Project Settings → API</li>
+      <li>Go to <strong style="color:var(--text)">stripe.com</strong> → create account → get publishable key and secret key from Developers → API keys</li>
+      <li>In <strong style="color:var(--text)">Vercel</strong>: Settings → Environment Variables → add <code>SUPABASE_URL</code>, <code>SUPABASE_ANON_KEY</code>, <code>STRIPE_PUBLISHABLE_KEY</code>, <code>STRIPE_SECRET_KEY</code></li>
+      <li>Redeploy from Vercel dashboard — Stripe webhooks and Supabase user sync will be active</li>
+    </ol>
+  </div>
+</div>
+
+<footer class="footer">
+  <div>© 2026 Interview Coach. Powered by Claude AI.</div>
+  <div class="footer-links">
+    <a href="/">Home</a>
+    <a href="/pricing.html">Pricing</a>
+  </div>
+</footer>
+
+<script src="/auth.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    Auth.ensureAdmin();
+
+    // Auth guard — must be logged in AND admin
+    const session = Auth.requireAuth();
+    if (!session) return; // requireAuth redirects to login
+    if (session.role !== 'admin') {
+      window.location.href = '/';
+      return;
+    }
+
+    Auth.renderNav();
+    populateDashboard();
+  });
+
+  function populateDashboard() {
+    const raw = localStorage.getItem('ic_users');
+    const users = raw ? JSON.parse(raw) : [];
+
+    const total = users.length;
+    const proCount = users.filter(u => u.plan === 'pro').length;
+    const freeCount = total - proCount;
+
+    // Questions today — read from localStorage for this browser
+    const todayKey = 'ic_q_' + new Date().toISOString().slice(0, 10);
+    const questionsToday = parseInt(localStorage.getItem(todayKey) || '0');
+
+    document.getElementById('m-total').textContent = total;
+    document.getElementById('m-pro').textContent = proCount;
+    document.getElementById('m-free').textContent = freeCount;
+    document.getElementById('m-questions').textContent = questionsToday;
+
+    // Populate users table — most recent first
+    const tbody = document.getElementById('users-tbody');
+    if (users.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="5" style="color:var(--text-muted);font-style:italic;padding:20px 16px">No users found.</td></tr>';
+      return;
+    }
+
+    const sorted = [...users].reverse();
+    tbody.innerHTML = sorted.map(u => {
+      const plan = u.plan || 'free';
+      const role = u.role || 'user';
+      const joined = u.createdAt ? new Date(u.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : '—';
+      return `
+        <tr>
+          <td><strong>${escHtml(u.username)}</strong></td>
+          <td style="color:var(--text-muted)">${escHtml(u.email || '—')}</td>
+          <td><span class="plan-badge ${plan}">${plan}</span></td>
+          <td><span class="role-badge ${role}">${role}</span></td>
+          <td style="color:var(--text-muted)">${joined}</td>
+        </tr>
+      `;
+    }).join('');
+  }
+
+  function escHtml(str) {
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+</script>
+</body>
+</html>
