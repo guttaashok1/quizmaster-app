@@ -154,6 +154,46 @@
     }
     .file-badge button { background: none; border: none; color: var(--accent2); cursor: pointer; font-size: 16px; }
 
+    /* ── Voice mode toggle ── */
+    .mode-toggle {
+      display: flex; gap: 4px; background: var(--surface2);
+      border-radius: 8px; padding: 4px; margin-bottom: 4px;
+    }
+    .mode-btn {
+      flex: 1; padding: 8px 10px; border: none; border-radius: 6px;
+      background: transparent; color: var(--text-muted); font-size: 13px;
+      font-weight: 500; cursor: pointer; transition: background 0.2s, color 0.2s;
+      display: flex; align-items: center; justify-content: center; gap: 6px;
+    }
+    .mode-btn.active { background: var(--surface); color: var(--text); box-shadow: 0 1px 3px rgba(0,0,0,0.3); }
+    .sys-audio-info {
+      background: rgba(108,99,255,0.08); border: 1px solid rgba(108,99,255,0.2);
+      border-radius: 8px; padding: 10px 14px; font-size: 13px; color: #a8a4ff; line-height: 1.5;
+      display: none;
+    }
+    .sys-audio-info.visible { display: block; }
+    .sysaudio-panel { display: none; }
+    .sysaudio-panel.visible { display: flex; flex-direction: column; gap: 12px; }
+    .btn-sysaudio {
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      background: linear-gradient(135deg, #6c63ff, #00d4aa); color: #fff;
+      padding: 12px 24px; border-radius: 8px; font-size: 14px; font-weight: 700;
+      border: none; cursor: pointer; transition: opacity 0.2s; width: 100%;
+    }
+    .btn-sysaudio:hover { opacity: 0.88; }
+    .btn-sysaudio:disabled { opacity: 0.4; cursor: not-allowed; }
+    .vad-indicator {
+      display: flex; align-items: center; gap: 8px;
+      font-size: 13px; color: var(--text-muted);
+    }
+    .vad-dot {
+      width: 8px; height: 8px; border-radius: 50%; background: var(--border);
+      transition: background 0.2s;
+    }
+    .vad-dot.speaking { background: #00d4aa; box-shadow: 0 0 8px rgba(0,212,170,0.6); }
+    .vad-dot.recording { background: var(--danger); box-shadow: 0 0 8px rgba(255,79,79,0.6); animation: pulse 0.8s ease-in-out infinite; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
     /* ── Voice section ── */
     .voice-section { display: flex; flex-direction: column; gap: 16px; }
 
@@ -339,15 +379,20 @@
       <div class="card-title">Ask by Voice</div>
     </div>
 
-    <div id="no-support-msg" class="no-support" style="display:none">
-      Voice recognition isn't supported in this browser. Try Chrome or Edge.
+    <!-- Mode toggle -->
+    <div class="mode-toggle">
+      <button class="mode-btn active" id="mode-mic" onclick="setVoiceMode('mic')">🎙️ Microphone</button>
+      <button class="mode-btn" id="mode-sys" onclick="setVoiceMode('system')">🖥️ System Audio</button>
     </div>
 
-    <div id="mic-tip" class="mic-tip" style="display:none" onclick="this.style.display='none'">
-      💡 <strong>Mac users:</strong> If Chrome is using your iPhone's mic instead, go to <strong>System Settings → Sound → Input</strong> and select <em>Built-in Microphone</em>. (Tap to dismiss)
-    </div>
-
-    <div class="voice-section">
+    <!-- Mic mode UI -->
+    <div id="mic-panel" class="voice-section">
+      <div id="no-support-msg" class="no-support" style="display:none">
+        Voice recognition isn't supported in this browser. Try Chrome or Edge.
+      </div>
+      <div id="mic-tip" class="mic-tip" style="display:none" onclick="this.style.display='none'">
+        💡 <strong>Mac users:</strong> If Chrome is using your iPhone's mic instead, go to <strong>System Settings → Sound → Input</strong> and select <em>Built-in Microphone</em>. (Tap to dismiss)
+      </div>
       <div>
         <div class="status-row" id="status-row">
           <div class="status-dot" id="status-dot"></div>
@@ -357,19 +402,39 @@
           </div>
         </div>
       </div>
-
       <div class="transcript-wrap">
         <div class="transcript-box" id="transcript">
           <span class="transcript-placeholder" id="transcript-placeholder">Your spoken question will appear here…</span>
         </div>
       </div>
-
       <div class="rec-buttons">
-        <button class="btn btn-start" id="start-btn" onclick="startRecording()" disabled>
-          🎙️ Start Recording
+        <button class="btn btn-start" id="start-btn" onclick="startRecording()" disabled>🎙️ Start Recording</button>
+        <button class="btn btn-stop" id="stop-btn" onclick="stopRecording()" disabled>⏹ Stop Recording</button>
+      </div>
+    </div>
+
+    <!-- System Audio mode UI -->
+    <div id="sysaudio-panel" class="sysaudio-panel">
+      <div class="sys-audio-info visible">
+        📺 <strong>For video call interviews (Zoom, Meet, Teams):</strong> Click the button below, then share the tab or window where your interview is running. The app will listen to the interviewer's voice only and generate your answer automatically.
+      </div>
+      <div>
+        <div class="status-row" id="sys-status-row">
+          <div class="vad-dot" id="vad-dot"></div>
+          <span id="sys-status-text">Select System Audio to start</span>
+        </div>
+      </div>
+      <div class="transcript-wrap">
+        <div class="transcript-box" id="sys-transcript">
+          <span class="transcript-placeholder" id="sys-transcript-placeholder">Interviewer's question will appear here…</span>
+        </div>
+      </div>
+      <div class="rec-buttons">
+        <button class="btn-sysaudio" id="sys-start-btn" onclick="startSystemAudio()" disabled>
+          🖥️ Share Interview Tab Audio
         </button>
-        <button class="btn btn-stop" id="stop-btn" onclick="stopRecording()" disabled>
-          ⏹ Stop Recording
+        <button class="btn btn-stop" id="sys-stop-btn" onclick="stopSystemAudio()" disabled style="display:none">
+          ⏹ Stop Listening
         </button>
       </div>
     </div>
@@ -429,6 +494,19 @@
   let streamController = null; // AbortController for in-flight stream
   let fullAnswer = '';
   let utterance = null;
+  let voiceMode = 'mic'; // 'mic' | 'system'
+
+  // System audio state
+  let sysStream = null;       // MediaStream from getDisplayMedia
+  let sysAudioCtx = null;     // AudioContext
+  let sysAnalyser = null;     // AnalyserNode for VAD
+  let sysRecorder = null;     // MediaRecorder
+  let sysChunks = [];         // accumulated audio chunks
+  let sysVadTimer = null;     // silence debounce
+  let sysIsSpeaking = false;  // is interviewer currently speaking
+  let sysIsCapturing = false; // is system capture active
+  const VAD_THRESHOLD = 18;   // RMS floor to consider as speech
+  const SILENCE_MS = 1800;    // ms of silence before sending for transcription
 
   // ── Init ───────────────────────────────────────────────────────────────────
   document.addEventListener('DOMContentLoaded', () => {
@@ -436,6 +514,254 @@
     initDragDrop();
     document.getElementById('resume-file').addEventListener('change', onFileSelect);
   });
+
+  // ── Voice mode toggle ─────────────────────────────────────────────────────
+  function setVoiceMode(mode) {
+    voiceMode = mode;
+    document.getElementById('mode-mic').className = 'mode-btn' + (mode === 'mic' ? ' active' : '');
+    document.getElementById('mode-sys').className = 'mode-btn' + (mode === 'system' ? ' active' : '');
+    document.getElementById('mic-panel').style.display = mode === 'mic' ? '' : 'none';
+    document.getElementById('sysaudio-panel').className = mode === 'system' ? 'sysaudio-panel visible' : 'sysaudio-panel';
+    if (mode === 'system') {
+      // Enable the start button only if context is ready
+      document.getElementById('sys-start-btn').disabled = !contextReady();
+      // Stop mic if it was running
+      if (isRecording) stopRecording();
+    } else {
+      // Stop system audio if it was running
+      if (sysIsCapturing) stopSystemAudio();
+      updateStartBtn();
+    }
+  }
+
+  // ── System Audio capture ──────────────────────────────────────────────────
+  async function startSystemAudio() {
+    if (!contextReady()) return;
+    const btn = document.getElementById('sys-start-btn');
+    btn.disabled = true;
+    btn.textContent = '⌛ Requesting access…';
+
+    try {
+      // Request system audio — Chrome shows a tab/window picker
+      sysStream = await navigator.mediaDevices.getDisplayMedia({
+        video: { displaySurface: 'browser' },
+        audio: { echoCancellation: false, noiseSuppression: false, sampleRate: 16000 },
+      });
+
+      // If user chose a source without audio, bail gracefully
+      const audioTrack = sysStream.getAudioTracks()[0];
+      if (!audioTrack) {
+        setSysStatus('idle', '⚠️ No audio track found — make sure to check "Share tab audio"');
+        btn.disabled = false;
+        btn.textContent = '🖥️ Share Interview Tab Audio';
+        sysStream.getTracks().forEach(t => t.stop());
+        return;
+      }
+
+      // Mute the video track so we don't see a preview
+      sysStream.getVideoTracks().forEach(t => { t.enabled = false; });
+
+      // Set up AudioContext for VAD
+      sysAudioCtx = new AudioContext({ sampleRate: 16000 });
+      const source = sysAudioCtx.createMediaStreamSource(sysStream);
+      sysAnalyser = sysAudioCtx.createAnalyser();
+      sysAnalyser.fftSize = 512;
+      source.connect(sysAnalyser);
+
+      // Set up MediaRecorder using only the audio track
+      const audioOnlyStream = new MediaStream([audioTrack]);
+      const mimeType = MediaRecorder.isTypeSupported('audio/webm;codecs=opus')
+        ? 'audio/webm;codecs=opus'
+        : 'audio/webm';
+      sysRecorder = new MediaRecorder(audioOnlyStream, { mimeType });
+      sysRecorder.ondataavailable = e => { if (e.data.size > 0) sysChunks.push(e.data); };
+      sysRecorder.onstop = () => sendChunkForTranscription(mimeType);
+
+      // Handle user stopping the share from Chrome's built-in UI
+      audioTrack.onended = () => stopSystemAudio();
+
+      sysIsCapturing = true;
+      sysIsSpeaking = false;
+      sysChunks = [];
+
+      btn.style.display = 'none';
+      document.getElementById('sys-stop-btn').style.display = '';
+      document.getElementById('sys-stop-btn').disabled = false;
+      setSysStatus('listening', '👂 Listening to system audio…');
+
+      // Start VAD polling loop
+      vadLoop();
+
+    } catch (err) {
+      if (err.name === 'NotAllowedError') {
+        setSysStatus('idle', 'Screen share cancelled');
+      } else {
+        setSysStatus('idle', '⚠️ ' + err.message);
+      }
+      btn.disabled = false;
+      btn.textContent = '🖥️ Share Interview Tab Audio';
+    }
+  }
+
+  function stopSystemAudio() {
+    sysIsCapturing = false;
+    clearTimeout(sysVadTimer);
+    if (sysRecorder && sysRecorder.state !== 'inactive') sysRecorder.stop();
+    if (sysStream) sysStream.getTracks().forEach(t => t.stop());
+    if (sysAudioCtx) sysAudioCtx.close();
+    sysStream = null; sysAudioCtx = null; sysAnalyser = null;
+    sysRecorder = null; sysChunks = [];
+    const btn = document.getElementById('sys-start-btn');
+    btn.disabled = !contextReady();
+    btn.textContent = '🖥️ Share Interview Tab Audio';
+    btn.style.display = '';
+    document.getElementById('sys-stop-btn').style.display = 'none';
+    setSysStatus('idle', 'Stopped — click above to start again');
+    setVadDot('idle');
+  }
+
+  // VAD polling: check audio levels every 80ms
+  function vadLoop() {
+    if (!sysIsCapturing || !sysAnalyser) return;
+    const data = new Uint8Array(sysAnalyser.frequencyBinCount);
+    sysAnalyser.getByteFrequencyData(data);
+    const rms = Math.sqrt(data.reduce((s, v) => s + v * v, 0) / data.length);
+    const isSpeech = rms > VAD_THRESHOLD;
+
+    if (isSpeech) {
+      clearTimeout(sysVadTimer);
+      if (!sysIsSpeaking) {
+        // Speech started — begin recording
+        sysIsSpeaking = true;
+        sysChunks = [];
+        try { sysRecorder.start(100); } catch (_) {}
+        setVadDot('speaking');
+        setSysStatus('listening', '🎤 Interviewer speaking…');
+      }
+    } else if (sysIsSpeaking) {
+      // Silence after speech — debounce before sending
+      clearTimeout(sysVadTimer);
+      sysVadTimer = setTimeout(() => {
+        sysIsSpeaking = false;
+        setVadDot('recording');
+        setSysStatus('transcribing', '⌛ Transcribing question…');
+        if (sysRecorder && sysRecorder.state === 'recording') sysRecorder.stop();
+      }, SILENCE_MS);
+    }
+    requestAnimationFrame(vadLoop);
+  }
+
+  async function sendChunkForTranscription(mimeType) {
+    if (sysChunks.length === 0) {
+      if (sysIsCapturing) { setSysStatus('listening', '👂 Listening to system audio…'); setVadDot('idle'); }
+      return;
+    }
+    const blob = new Blob(sysChunks, { type: mimeType });
+    sysChunks = [];
+
+    // Skip very short clips (< 0.5s worth of data at 16kHz)
+    if (blob.size < 4000) {
+      if (sysIsCapturing) { setSysStatus('listening', '👂 Listening to system audio…'); setVadDot('idle'); }
+      // Resume recording if still capturing
+      if (sysIsCapturing) try { sysRecorder.start(100); } catch (_) {}
+      return;
+    }
+
+    try {
+      const form = new FormData();
+      form.append('audio', blob, 'audio.webm');
+      const res = await fetch('/api/interview/transcribe', { method: 'POST', body: form });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || 'Transcription failed');
+      const transcript = (data.transcript || '').trim();
+      if (transcript.length > 3) {
+        showSysTranscript(transcript);
+        triggerAnswerFromText(transcript);
+      } else {
+        if (sysIsCapturing) { setSysStatus('listening', '👂 Listening to system audio…'); setVadDot('idle'); }
+      }
+    } catch (err) {
+      setSysStatus('error', '⚠️ ' + err.message);
+      setVadDot('idle');
+    }
+    // Resume recording loop
+    if (sysIsCapturing) try { sysRecorder.start(100); } catch (_) {}
+  }
+
+  function setSysStatus(mode, text) {
+    document.getElementById('sys-status-text').textContent = text;
+  }
+
+  function setVadDot(state) {
+    const dot = document.getElementById('vad-dot');
+    dot.className = 'vad-dot' + (state === 'idle' ? '' : ' ' + state);
+  }
+
+  function showSysTranscript(text) {
+    const box = document.getElementById('sys-transcript');
+    const ph = document.getElementById('sys-transcript-placeholder');
+    ph.style.display = 'none';
+    box.childNodes.forEach(n => { if (n !== ph) n.remove(); });
+    box.insertBefore(document.createTextNode(text), ph);
+    box.className = 'transcript-box has-text';
+  }
+
+  // triggerAnswer but accepts text directly (for system audio mode)
+  async function triggerAnswerFromText(question) {
+    if (!Auth.canAskQuestion()) {
+      setSysStatus('error', 'Daily limit reached — upgrade to Pro');
+      return;
+    }
+    if (streamController) streamController.abort();
+    streamController = new AbortController();
+    const jd = document.getElementById('jd-text').value.trim();
+    setSysStatus('streaming', '✨ Generating answer…');
+    setVadDot('idle');
+    Auth.recordQuestion();
+    updateQuota();
+    const answerCard = document.getElementById('answer-card');
+    const answerBox = document.getElementById('answer-box');
+    const answerText = document.getElementById('answer-text');
+    const cursor = document.getElementById('cursor');
+    const answerActions = document.getElementById('answer-actions');
+    answerCard.style.display = '';
+    answerText.textContent = '';
+    cursor.className = 'cursor';
+    answerActions.style.display = 'none';
+    fullAnswer = '';
+    try {
+      const resp = await fetch('/api/interview/answer-stream', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ resume: resumeText, jobDescription: jd, question }),
+        signal: streamController.signal,
+      });
+      const reader = resp.body.getReader();
+      const decoder = new TextDecoder();
+      let buf = '';
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buf += decoder.decode(value, { stream: true });
+        const lines = buf.split('\n');
+        buf = lines.pop();
+        for (const line of lines) {
+          if (!line.startsWith('data:')) continue;
+          const raw = line.slice(5).trim();
+          if (raw === '[DONE]') { cursor.className = 'cursor hidden'; answerActions.style.display = ''; break; }
+          try {
+            const d = JSON.parse(raw);
+            if (d.text) { fullAnswer += d.text; answerText.textContent = fullAnswer; answerBox.scrollTop = answerBox.scrollHeight; }
+            if (d.error) { answerText.textContent = '⚠️ ' + d.error; cursor.className = 'cursor hidden'; break; }
+          } catch (_) {}
+        }
+      }
+    } catch (err) {
+      if (err.name !== 'AbortError') answerText.textContent = '⚠️ ' + err.message;
+      cursor.className = 'cursor hidden';
+    }
+    if (sysIsCapturing) setSysStatus('listening', '👂 Listening to system audio…');
+  }
 
   // ── Resume ─────────────────────────────────────────────────────────────────
   function switchTab(mode) {
@@ -515,10 +841,13 @@
   function updateStartBtn() {
     const ok = contextReady();
     document.getElementById('start-btn').disabled = !ok || isRecording;
+    // Also update system audio button
+    if (!sysIsCapturing) document.getElementById('sys-start-btn').disabled = !ok;
     if (ok && !isRecording) {
       setStatus('', 'Ready — click Start Recording and speak your question');
     } else if (!ok) {
       setStatus('', 'Ready — fill in Resume and Job Description first');
+      if (!sysIsCapturing) setSysStatus('idle', 'Fill in Resume and Job Description first');
     }
   }
 

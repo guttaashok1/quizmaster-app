@@ -2,6 +2,7 @@ import { Router, Request, Response } from 'express';
 import multer from 'multer';
 import { z } from 'zod';
 import { getClient } from '../services/claudeService';
+import OpenAI, { toFile } from 'openai';
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const pdfParse: (buffer: Buffer) => Promise<{ text: string }> = require('pdf-parse');
 
@@ -83,6 +84,34 @@ router.post('/answer-stream', async (req: Request, res: Response) => {
       res.write(`data: ${JSON.stringify({ error: msg })}\n\n`);
     }
     res.end();
+  }
+});
+
+// POST /api/interview/transcribe — converts audio blob to text via Whisper
+router.post('/transcribe', upload.single('audio'), async (req: Request, res: Response) => {
+  if (!req.file) {
+    res.status(400).json({ message: 'No audio file', code: 'NO_FILE' });
+    return;
+  }
+  const apiKey = process.env.OPENAI_API_KEY;
+  if (!apiKey) {
+    res.status(503).json({ message: 'Transcription not configured — add OPENAI_API_KEY', code: 'NO_KEY' });
+    return;
+  }
+  try {
+    const openai = new OpenAI({ apiKey });
+    const mimeType = req.file.mimetype || 'audio/webm';
+    const file = await toFile(req.file.buffer, 'audio.webm', { type: mimeType });
+    const result = await openai.audio.transcriptions.create({
+      file,
+      model: 'whisper-1',
+      language: 'en',
+    });
+    res.json({ transcript: result.text.trim() });
+  } catch (err) {
+    console.error('Transcription error:', err);
+    const msg = err instanceof Error ? err.message : 'Transcription failed';
+    res.status(500).json({ message: msg, code: 'TRANSCRIBE_ERROR' });
   }
 });
 
