@@ -194,6 +194,24 @@
     .vad-dot.recording { background: var(--danger); box-shadow: 0 0 8px rgba(255,79,79,0.6); animation: pulse 0.8s ease-in-out infinite; }
     @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
 
+    /* ── Whisper model loading bar ── */
+    .model-bar {
+      background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.09);
+      border-radius: 8px; padding: 10px 14px;
+      display: flex; align-items: center; gap: 12px; font-size: 13px;
+    }
+    .model-bar-text { color: var(--text-muted); flex-shrink: 0; }
+    .model-progress {
+      flex: 1; height: 4px; background: rgba(255,255,255,0.08);
+      border-radius: 2px; overflow: hidden;
+    }
+    .model-progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #6c63ff, #00d4aa);
+      border-radius: 2px; width: 0%;
+      transition: width 0.3s ease;
+    }
+
     /* ── Voice section ── */
     .voice-section { display: flex; flex-direction: column; gap: 16px; }
 
@@ -416,7 +434,13 @@
     <!-- System Audio mode UI -->
     <div id="sysaudio-panel" class="sysaudio-panel">
       <div class="sys-audio-info visible">
-        📺 <strong>For video call interviews (Zoom, Meet, Teams):</strong> Click the button below, then share the tab or window where your interview is running. The app will listen to the interviewer's voice only and generate your answer automatically.
+        📺 <strong>For video call interviews (Zoom, Meet, Teams):</strong> Share the tab where your call is running. The app captures only what plays through your speakers — your voice is never recorded. Whisper AI transcribes locally in your browser (no API key needed).
+      </div>
+
+      <!-- Whisper model download progress (shown on first use) -->
+      <div class="model-bar" id="model-bar" style="display:none">
+        <span class="model-bar-text" id="model-bar-text">⏳ Loading Whisper…</span>
+        <div class="model-progress"><div class="model-progress-fill" id="model-progress-fill"></div></div>
       </div>
       <div>
         <div class="status-row" id="sys-status-row">
@@ -523,15 +547,42 @@
     document.getElementById('mic-panel').style.display = mode === 'mic' ? '' : 'none';
     document.getElementById('sysaudio-panel').className = mode === 'system' ? 'sysaudio-panel visible' : 'sysaudio-panel';
     if (mode === 'system') {
-      // Enable the start button only if context is ready
       document.getElementById('sys-start-btn').disabled = !contextReady();
-      // Stop mic if it was running
       if (isRecording) stopRecording();
+      // Pre-load Whisper model in the background so it's ready when the user starts
+      preloadWhisper();
     } else {
-      // Stop system audio if it was running
       if (sysIsCapturing) stopSystemAudio();
       updateStartBtn();
     }
+  }
+
+  // ── Whisper model pre-loader ──────────────────────────────────────────────
+  function preloadWhisper() {
+    if (!window.__whisper || window.__whisper.ready) return;
+    const bar     = document.getElementById('model-bar');
+    const barText = document.getElementById('model-bar-text');
+    const fill    = document.getElementById('model-progress-fill');
+    bar.style.display = '';
+    barText.textContent = '⏳ Loading Whisper AI (first time only, ~75 MB)…';
+    fill.style.width = '2%';
+
+    window.__whisper.load(progress => {
+      if (progress.status === 'downloading') {
+        const pct = progress.total ? Math.round((progress.loaded / progress.total) * 100) : 0;
+        fill.style.width = pct + '%';
+        barText.textContent = `⬇️ Downloading Whisper… ${pct}%`;
+      } else if (progress.status === 'loading') {
+        fill.style.width = '95%';
+        barText.textContent = '⚙️ Compiling model…';
+      }
+    }).then(() => {
+      fill.style.width = '100%';
+      barText.textContent = '✅ Whisper ready — speak into your call';
+      setTimeout(() => { bar.style.display = 'none'; }, 2500);
+    }).catch(err => {
+      barText.textContent = '⚠️ Failed to load Whisper: ' + err.message;
+    });
   }
 
   // ── System Audio capture ──────────────────────────────────────────────────
@@ -654,36 +705,42 @@
   async function sendChunkForTranscription(mimeType) {
     if (sysChunks.length === 0) {
       if (sysIsCapturing) { setSysStatus('listening', '👂 Listening to system audio…'); setVadDot('idle'); }
+      if (sysIsCapturing) try { sysRecorder.start(100); } catch (_) {}
       return;
     }
     const blob = new Blob(sysChunks, { type: mimeType });
     sysChunks = [];
 
-    // Skip very short clips (< 0.5s worth of data at 16kHz)
-    if (blob.size < 4000) {
+    // Skip very short clips (likely noise, not a real sentence)
+    if (blob.size < 6000) {
       if (sysIsCapturing) { setSysStatus('listening', '👂 Listening to system audio…'); setVadDot('idle'); }
-      // Resume recording if still capturing
       if (sysIsCapturing) try { sysRecorder.start(100); } catch (_) {}
       return;
     }
 
+    // Ensure Whisper is loaded
+    if (!window.__whisper || !window.__whisper.ready) {
+      setSysStatus('loading', '⏳ Whisper model still loading — please wait…');
+      try { await window.__whisper.load(() => {}); }
+      catch (err) { setSysStatus('error', '⚠️ Could not load Whisper: ' + err.message); return; }
+    }
+
+    setSysStatus('transcribing', '⌛ Transcribing…');
+    setVadDot('recording');
+
     try {
-      const form = new FormData();
-      form.append('audio', blob, 'audio.webm');
-      const res = await fetch('/api/interview/transcribe', { method: 'POST', body: form });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message || 'Transcription failed');
-      const transcript = (data.transcript || '').trim();
-      if (transcript.length > 3) {
+      const transcript = await window.__whisper.transcribe(blob);
+      if (transcript && transcript.length > 3) {
         showSysTranscript(transcript);
         triggerAnswerFromText(transcript);
       } else {
         if (sysIsCapturing) { setSysStatus('listening', '👂 Listening to system audio…'); setVadDot('idle'); }
       }
     } catch (err) {
-      setSysStatus('error', '⚠️ ' + err.message);
+      setSysStatus('error', '⚠️ Transcription error: ' + err.message);
       setVadDot('idle');
     }
+
     // Resume recording loop
     if (sysIsCapturing) try { sysRecorder.start(100); } catch (_) {}
   }
@@ -1088,6 +1145,52 @@
       setTimeout(() => btn.textContent = orig, 2000);
     });
   }
+</script>
+
+<!-- Whisper (transformers.js) — runs entirely in the browser, no API key needed -->
+<script type="module">
+  import { pipeline, env } from 'https://cdn.jsdelivr.net/npm/@xenova/transformers@2.17.2';
+
+  // Use Hugging Face CDN for model weights; disable local model lookup
+  env.allowLocalModels = false;
+
+  let _pipe = null;
+  let _loading = false;
+  let _loadPromise = null;
+
+  window.__whisper = {
+    /** Start downloading + compiling the model. Safe to call multiple times. */
+    async load(onProgress) {
+      if (_pipe) return _pipe;
+      if (_loadPromise) return _loadPromise;
+      _loading = true;
+      _loadPromise = pipeline(
+        'automatic-speech-recognition',
+        'Xenova/whisper-tiny.en',
+        { progress_callback: onProgress }
+      ).then(p => { _pipe = p; _loading = false; return p; });
+      return _loadPromise;
+    },
+
+    /** Transcribe an audio Blob → plain text string. */
+    async transcribe(blob) {
+      if (!_pipe) throw new Error('Whisper model not ready');
+      const url = URL.createObjectURL(blob);
+      try {
+        const out = await _pipe(url, {
+          language: 'english',
+          task: 'transcribe',
+          chunk_length_s: 30,
+        });
+        return (out.text || '').trim();
+      } finally {
+        URL.revokeObjectURL(url);
+      }
+    },
+
+    get ready() { return !!_pipe; },
+    get loading() { return _loading; },
+  };
 </script>
 </body>
 </html>
