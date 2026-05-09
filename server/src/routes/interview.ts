@@ -59,7 +59,8 @@ router.post('/answer-stream', async (req: Request, res: Response) => {
     const stream = client.messages.stream({
       model: 'claude-sonnet-4-6',
       max_tokens: 512,
-      system: SYSTEM_PROMPT,
+      // Cache the system prompt — saves ~80% on input token costs after the first call
+      system: [{ type: 'text', text: SYSTEM_PROMPT, cache_control: { type: 'ephemeral' } }],
       messages: [
         {
           role: 'user',

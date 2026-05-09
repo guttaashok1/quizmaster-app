@@ -1,5 +1,7 @@
 window.Auth = (() => {
   const SALT = 'ic-salt-2026';
+  const SESSION_KEY = 'ic_session';
+  const SESSION_TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
 
   async function sha256(str) {
     const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
@@ -32,9 +34,29 @@ window.Auth = (() => {
     saveUsers(users);
   }
 
+  // ── Session (localStorage + expiry) ───────────────────────────────────────
   function getSession() {
-    const s = sessionStorage.getItem('ic_session');
-    return s ? JSON.parse(s) : null;
+    const raw = localStorage.getItem(SESSION_KEY);
+    if (!raw) return null;
+    try {
+      const s = JSON.parse(raw);
+      // Expire after TTL
+      if (s.expiresAt && Date.now() > s.expiresAt) {
+        localStorage.removeItem(SESSION_KEY);
+        return null;
+      }
+      return s;
+    } catch {
+      localStorage.removeItem(SESSION_KEY);
+      return null;
+    }
+  }
+
+  function saveSession(session) {
+    localStorage.setItem(SESSION_KEY, JSON.stringify({
+      ...session,
+      expiresAt: Date.now() + SESSION_TTL_MS,
+    }));
   }
 
   function requireAuth() {
@@ -47,15 +69,16 @@ window.Auth = (() => {
   }
 
   function logout() {
-    sessionStorage.removeItem('ic_session');
+    localStorage.removeItem(SESSION_KEY);
     window.location.href = '/';
   }
 
   async function login(identifier, password) {
     await ensureAdmin();
+    if (!identifier || !password) return { error: 'Please enter your username and password' };
     const hash = await hashPassword(password);
     const user = getUsers().find(
-      u => (u.username === identifier || u.email === identifier) && u.passwordHash === hash
+      u => (u.username === identifier.trim() || u.email === identifier.trim().toLowerCase()) && u.passwordHash === hash
     );
     if (!user) return { error: 'Invalid username or password' };
     const session = {
@@ -65,15 +88,17 @@ window.Auth = (() => {
       plan: user.plan || 'free',
       token: crypto.randomUUID(),
     };
-    sessionStorage.setItem('ic_session', JSON.stringify(session));
+    saveSession(session);
     return { session };
   }
 
   async function register(username, email, password) {
     await ensureAdmin();
     if (!username || username.trim().length < 3) return { error: 'Username must be at least 3 characters' };
-    if (!email || !email.includes('@')) return { error: 'Please enter a valid email address' };
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) return { error: 'Please enter a valid email address' };
     if (!password || password.length < 8) return { error: 'Password must be at least 8 characters' };
+    if (!/[A-Z]/.test(password)) return { error: 'Password must contain at least one uppercase letter' };
+    if (!/[0-9]/.test(password)) return { error: 'Password must contain at least one number' };
     const users = getUsers();
     if (users.find(u => u.username.toLowerCase() === username.trim().toLowerCase()))
       return { error: 'Username already taken' };
@@ -92,17 +117,19 @@ window.Auth = (() => {
     return { success: true };
   }
 
-  // ── Question limit helpers ──────────────────────────────────────────────────
+  // ── Question limit helpers ────────────────────────────────────────────────
   function getTodayKey() {
     return 'ic_q_' + new Date().toISOString().slice(0, 10);
   }
   function getQuestionsUsedToday() {
     return parseInt(localStorage.getItem(getTodayKey()) || '0');
   }
-  function incrementQuestionCount() {
-    const key = getTodayKey();
-    localStorage.setItem(key, String(getQuestionsUsedToday() + 1));
+  function recordQuestion() {
+    localStorage.setItem(getTodayKey(), String(getQuestionsUsedToday() + 1));
   }
+  // Legacy alias
+  function incrementQuestionCount() { recordQuestion(); }
+
   function canAskQuestion() {
     const session = getSession();
     if (!session) return false;
@@ -116,7 +143,7 @@ window.Auth = (() => {
     return Math.max(0, 10 - getQuestionsUsedToday());
   }
 
-  // Renders auth nav links into an element with id="nav-auth"
+  // ── Nav renderer ──────────────────────────────────────────────────────────
   function renderNav() {
     const el = document.getElementById('nav-auth');
     if (!el) return;
@@ -136,7 +163,9 @@ window.Auth = (() => {
   }
 
   return {
-    ensureAdmin, login, logout, register, getSession, requireAuth, renderNav,
-    canAskQuestion, getRemainingQuestions, incrementQuestionCount,
+    ensureAdmin, login, logout, register,
+    getSession, requireAuth, renderNav,
+    canAskQuestion, getRemainingQuestions,
+    recordQuestion, incrementQuestionCount,
   };
 })();
