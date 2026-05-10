@@ -538,10 +538,10 @@
     document.getElementById('admin-link').style.display = '';
   }
 
-  function updateQuota() {
+  async function updateQuota() {
     const el = document.getElementById('header-quota');
     if (!el) return;
-    const rem = Auth.getRemainingQuestions();
+    const rem = await Auth.getRemainingQuestions();
     if (rem === Infinity) { el.textContent = ''; return; }
     el.textContent = rem + ' questions left today';
     el.className = 'header-quota' + (rem <= 3 ? ' warn' : '');
@@ -897,7 +897,7 @@
 
   // triggerAnswer but accepts text directly (for system audio mode)
   async function triggerAnswerFromText(question) {
-    if (!Auth.canAskQuestion()) {
+    if (!await Auth.canAskQuestion()) {
       setSysStatus('error', 'Daily limit reached — upgrade to Pro');
       return;
     }
@@ -906,7 +906,7 @@
     const jd = document.getElementById('jd-text').value.trim();
     setSysStatus('streaming', '✨ Generating answer…');
     setVadDot('idle');
-    Auth.recordQuestion();
+    await Auth.recordQuestion();
     updateQuota();
     const answerCard = document.getElementById('answer-card');
     const answerBox = document.getElementById('answer-box');
@@ -1142,7 +1142,7 @@
 
   // ── Streaming answer ───────────────────────────────────────────────────────
   async function triggerAnswer() {
-    if (!Auth.canAskQuestion()) {
+    if (!await Auth.canAskQuestion()) {
       showTranscript('');
       setStatus('', 'Daily limit reached — upgrade to Pro for unlimited questions');
       const card = document.getElementById('answer-card');
@@ -1153,7 +1153,7 @@
       document.getElementById('answer-box').className = 'answer-box';
       return;
     }
-    Auth.incrementQuestionCount();
+    await Auth.incrementQuestionCount();
     updateQuota();
 
     clearTimeout(debounceTimer);

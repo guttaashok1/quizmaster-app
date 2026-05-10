@@ -111,7 +111,6 @@
 <script src="/auth.js"></script>
 <script>
   document.addEventListener('DOMContentLoaded', () => {
-    Auth.ensureAdmin();
     // Redirect if already logged in
     if (Auth.getSession()) window.location.href = '/interview/';
   });

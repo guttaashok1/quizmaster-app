@@ -1,62 +1,55 @@
+/**
+ * Client-side auth helper — all credentials are handled server-side.
+ * Only a signed JWT is stored in localStorage; passwords never touch the browser storage.
+ */
 window.Auth = (() => {
-  const SALT = 'ic-salt-2026';
-  const SESSION_KEY = 'ic_session';
-  const SESSION_TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
+  const TOKEN_KEY = 'ic_jwt';
+  const API = '/api/interview-auth';
 
-  async function sha256(str) {
-    const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
-    return [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2, '0')).join('');
+  // ── Token helpers ──────────────────────────────────────────────────────────
+  function getToken() {
+    return localStorage.getItem(TOKEN_KEY);
   }
 
-  async function hashPassword(pwd) {
-    return sha256(pwd + SALT);
+  function saveToken(token) {
+    localStorage.setItem(TOKEN_KEY, token);
   }
 
-  function getUsers() {
-    return JSON.parse(localStorage.getItem('ic_users') || '[]');
+  function clearToken() {
+    localStorage.removeItem(TOKEN_KEY);
   }
 
-  function saveUsers(users) {
-    localStorage.setItem('ic_users', JSON.stringify(users));
-  }
-
-  async function ensureAdmin() {
-    const users = getUsers();
-    if (users.find(u => u.username === 'admin')) return;
-    const hash = await hashPassword('Admin@2026');
-    users.unshift({
-      username: 'admin',
-      email: 'admin@interviewcoach.ai',
-      passwordHash: hash,
-      role: 'admin',
-      createdAt: new Date().toISOString(),
-    });
-    saveUsers(users);
-  }
-
-  // ── Session (localStorage + expiry) ───────────────────────────────────────
-  function getSession() {
-    const raw = localStorage.getItem(SESSION_KEY);
-    if (!raw) return null;
+  /**
+   * Decode JWT payload WITHOUT verifying the signature (display only).
+   * Real verification happens server-side on every API call.
+   */
+  function decodePayload(token) {
     try {
-      const s = JSON.parse(raw);
-      // Expire after TTL
-      if (s.expiresAt && Date.now() > s.expiresAt) {
-        localStorage.removeItem(SESSION_KEY);
-        return null;
-      }
-      return s;
+      const base64 = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
+      return JSON.parse(atob(base64));
     } catch {
-      localStorage.removeItem(SESSION_KEY);
       return null;
     }
   }
 
-  function saveSession(session) {
-    localStorage.setItem(SESSION_KEY, JSON.stringify({
-      ...session,
-      expiresAt: Date.now() + SESSION_TTL_MS,
-    }));
+  // ── Session (reads from stored JWT) ───────────────────────────────────────
+  function getSession() {
+    const token = getToken();
+    if (!token) return null;
+    const payload = decodePayload(token);
+    if (!payload) { clearToken(); return null; }
+    // Check JWT expiry (exp is unix seconds)
+    if (payload.exp && Date.now() / 1000 > payload.exp) {
+      clearToken();
+      return null;
+    }
+    return {
+      token,
+      username: payload.username,
+      email: payload.email,
+      role: payload.role,
+      plan: payload.plan,
+    };
   }
 
   function requireAuth() {
@@ -69,78 +62,103 @@ window.Auth = (() => {
   }
 
   function logout() {
-    localStorage.removeItem(SESSION_KEY);
+    clearToken();
     window.location.href = '/';
   }
 
+  // ── Auth header helper ─────────────────────────────────────────────────────
+  function authHeaders() {
+    const token = getToken();
+    return token ? { Authorization: `Bearer ${token}` } : {};
+  }
+
+  // ── login ──────────────────────────────────────────────────────────────────
   async function login(identifier, password) {
-    await ensureAdmin();
-    if (!identifier || !password) return { error: 'Please enter your username and password' };
-    const hash = await hashPassword(password);
-    const user = getUsers().find(
-      u => (u.username === identifier.trim() || u.email === identifier.trim().toLowerCase()) && u.passwordHash === hash
-    );
-    if (!user) return { error: 'Invalid username or password' };
-    const session = {
-      username: user.username,
-      email: user.email,
-      role: user.role,
-      plan: user.plan || 'free',
-      token: crypto.randomUUID(),
-    };
-    saveSession(session);
-    return { session };
+    if (!identifier || !password)
+      return { error: 'Please enter your username and password' };
+    try {
+      const res = await fetch(`${API}/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ identifier, password }),
+      });
+      const data = await res.json();
+      if (!res.ok) return { error: data.error || 'Login failed' };
+      saveToken(data.token);
+      return { session: { token: data.token, username: data.username, role: data.role, plan: data.plan } };
+    } catch {
+      return { error: 'Network error — please try again' };
+    }
   }
 
+  // ── register ───────────────────────────────────────────────────────────────
   async function register(username, email, password) {
-    await ensureAdmin();
-    if (!username || username.trim().length < 3) return { error: 'Username must be at least 3 characters' };
-    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) return { error: 'Please enter a valid email address' };
-    if (!password || password.length < 8) return { error: 'Password must be at least 8 characters' };
-    if (!/[A-Z]/.test(password)) return { error: 'Password must contain at least one uppercase letter' };
-    if (!/[0-9]/.test(password)) return { error: 'Password must contain at least one number' };
-    const users = getUsers();
-    if (users.find(u => u.username.toLowerCase() === username.trim().toLowerCase()))
-      return { error: 'Username already taken' };
-    if (users.find(u => u.email.toLowerCase() === email.trim().toLowerCase()))
-      return { error: 'Email already registered' };
-    const hash = await hashPassword(password);
-    users.push({
-      username: username.trim(),
-      email: email.trim().toLowerCase(),
-      passwordHash: hash,
-      role: 'user',
-      plan: 'free',
-      createdAt: new Date().toISOString(),
-    });
-    saveUsers(users);
-    return { success: true };
+    // Client-side pre-validation mirrors server rules for instant feedback
+    if (!username || username.trim().length < 3)
+      return { error: 'Username must be at least 3 characters' };
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim()))
+      return { error: 'Please enter a valid email address' };
+    if (!password || password.length < 8)
+      return { error: 'Password must be at least 8 characters' };
+    if (!/[A-Z]/.test(password))
+      return { error: 'Password must contain at least one uppercase letter' };
+    if (!/[0-9]/.test(password))
+      return { error: 'Password must contain at least one number' };
+
+    try {
+      const res = await fetch(`${API}/register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: username.trim(), email: email.trim(), password }),
+      });
+      const data = await res.json();
+      if (!res.ok) return { error: data.error || 'Registration failed' };
+      saveToken(data.token);
+      return { success: true };
+    } catch {
+      return { error: 'Network error — please try again' };
+    }
   }
 
-  // ── Question limit helpers ────────────────────────────────────────────────
-  function getTodayKey() {
-    return 'ic_q_' + new Date().toISOString().slice(0, 10);
+  // ── Question quota ─────────────────────────────────────────────────────────
+  async function recordQuestion() {
+    const token = getToken();
+    if (!token) return;
+    try {
+      await fetch(`${API}/question-used`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...authHeaders() },
+      });
+    } catch { /* non-fatal */ }
   }
-  function getQuestionsUsedToday() {
-    return parseInt(localStorage.getItem(getTodayKey()) || '0');
-  }
-  function recordQuestion() {
-    localStorage.setItem(getTodayKey(), String(getQuestionsUsedToday() + 1));
-  }
+
   // Legacy alias
-  function incrementQuestionCount() { recordQuestion(); }
+  function incrementQuestionCount() { return recordQuestion(); }
 
-  function canAskQuestion() {
+  async function getQuota() {
+    const token = getToken();
+    if (!token) return { used: 0, remaining: 0, unlimited: false };
+    try {
+      const res = await fetch(`${API}/quota`, { headers: authHeaders() });
+      if (!res.ok) return { used: 0, remaining: 0, unlimited: false };
+      return await res.json();
+    } catch {
+      return { used: 0, remaining: 0, unlimited: false };
+    }
+  }
+
+  async function canAskQuestion() {
     const session = getSession();
     if (!session) return false;
-    if (session.role === 'admin' || session.plan === 'pro') return true;
-    return getQuestionsUsedToday() < 10;
+    const q = await getQuota();
+    return q.unlimited || q.remaining > 0;
   }
-  function getRemainingQuestions() {
+
+  async function getRemainingQuestions() {
     const session = getSession();
     if (!session) return 0;
-    if (session.role === 'admin' || session.plan === 'pro') return Infinity;
-    return Math.max(0, 10 - getQuestionsUsedToday());
+    const q = await getQuota();
+    return q.unlimited ? Infinity : q.remaining;
   }
 
   // ── Nav renderer ──────────────────────────────────────────────────────────
@@ -163,9 +181,10 @@ window.Auth = (() => {
   }
 
   return {
-    ensureAdmin, login, logout, register,
+    login, logout, register,
     getSession, requireAuth, renderNav,
     canAskQuestion, getRemainingQuestions,
     recordQuestion, incrementQuestionCount,
+    getQuota, authHeaders,
   };
 })();

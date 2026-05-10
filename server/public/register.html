@@ -125,7 +125,6 @@
 <script src="/auth.js"></script>
 <script>
   document.addEventListener('DOMContentLoaded', () => {
-    Auth.ensureAdmin();
     if (Auth.getSession()) window.location.href = '/interview/';
   });
 
@@ -151,17 +150,10 @@
       btn.disabled = false;
       btn.textContent = 'Create Account →';
     } else {
-      // Auto-login after registration
-      const loginResult = await Auth.login(username, password);
-      if (loginResult.session) {
-        succ.textContent = 'Account created! Redirecting…';
-        succ.style.display = 'block';
-        setTimeout(() => window.location.href = '/interview/', 800);
-      } else {
-        succ.textContent = 'Account created! Please sign in.';
-        succ.style.display = 'block';
-        setTimeout(() => window.location.href = '/login.html', 1200);
-      }
+      // register() already stored the token — redirect directly
+      succ.textContent = 'Account created! Redirecting…';
+      succ.style.display = 'block';
+      setTimeout(() => window.location.href = '/interview/', 800);
     }
   }
 </script>

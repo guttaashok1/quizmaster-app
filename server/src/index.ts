@@ -10,6 +10,7 @@ import quizRouter from './routes/quiz';
 import challengeRouter from './routes/challenge';
 import authRouter from './routes/auth';
 import interviewRouter from './routes/interview';
+import interviewAuthRouter from './routes/interviewAuth';
 import { initDatabase } from './services/database';
 
 const app = express();
@@ -107,6 +108,7 @@ app.use('/api/quiz', quizRouter);
 app.use('/api/challenge', challengeRouter);
 app.use('/api/auth', authRouter);
 app.use('/api/interview', interviewRouter);
+app.use('/api/interview-auth', interviewAuthRouter);
 
 // ── 404 fallback for unknown API routes ───────────────────────────────────
 app.use('/api/*', (_req, res) => {
