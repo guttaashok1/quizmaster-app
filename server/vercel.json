@@ -3,13 +3,18 @@
   "builds": [
     {
       "src": "src/index.ts",
-      "use": "@vercel/node",
-      "config": {
-        "includeFiles": ["public/**"]
-      }
+      "use": "@vercel/node"
+    },
+    {
+      "src": "public/**/*",
+      "use": "@vercel/static"
     }
   ],
   "routes": [
-    { "src": "/(.*)", "dest": "src/index.ts" }
+    { "src": "/api/(.*)", "dest": "src/index.ts" },
+    { "src": "/interview$", "dest": "public/interview/index.html" },
+    { "src": "/interview/$", "dest": "public/interview/index.html" },
+    { "src": "/interview/(.*)", "dest": "public/interview/$1" },
+    { "src": "/(.*)", "dest": "public/$1" }
   ]
 }
