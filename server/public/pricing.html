@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pricing — Interview Coach</title>
+  <meta name="description" content="Interview Coach is free forever for 10 questions/day. Upgrade to Pro for unlimited AI-powered interview practice." />
+  <meta name="robots" content="index, follow" />
+  <link rel="canonical" href="https://interview-coach-seven-lovat.vercel.app/pricing.html" />
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="Pricing — Interview Coach" />
+  <meta property="og:description" content="Free forever for casual practice. Upgrade to Pro for unlimited questions and priority answers." />
+  <meta name="twitter:card" content="summary" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎙️</text></svg>" />
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="/" class="nav-logo">
+      <div class="icon">🎙️</div>
+      Interview Coach
+    </a>
+    <div class="nav-links">
+      <a href="/" class="nav-link">Home</a>
+      <a href="/about.html" class="nav-link">About</a>
+      <a href="/pricing.html" class="nav-link">Pricing</a>
+      <div id="nav-auth" style="display:flex;align-items:center;gap:8px"></div>
+    </div>
+  </div>
+</nav>
+
+<section class="pricing-hero">
+  <div class="hero-pill" style="display:inline-block;background:var(--accent-glow);border:1px solid rgba(108,99,255,0.35);color:#a8a4ff;padding:5px 16px;border-radius:999px;font-size:13px;font-weight:600;margin-bottom:22px">Simple, honest pricing</div>
+  <h1>Start free.<br><span class="gradient-text">Upgrade when ready.</span></h1>
+  <p>Practice as much as you need with the free plan. Go unlimited with Pro when interviews get serious.</p>
+</section>
+
+<div class="pricing-grid">
+  <!-- Free tier -->
+  <div class="pricing-card">
+    <div class="pricing-tier">Free</div>
+    <div class="pricing-price">$0</div>
+    <div class="pricing-period">forever</div>
+    <ul class="pricing-features">
+      <li><span class="check">✓</span><span>10 questions per day</span></li>
+      <li><span class="check">✓</span><span>Voice recognition</span></li>
+      <li><span class="check">✓</span><span>Resume PDF upload</span></li>
+      <li><span class="check">✓</span><span>Job description context</span></li>
+      <li><span class="check">✓</span><span>Basic AI answers</span></li>
+    </ul>
+    <div class="pricing-btns">
+      <a href="/register.html" class="pricing-btn-free">Get Started Free</a>
+    </div>
+  </div>
+
+  <!-- Pro tier -->
+  <div class="pricing-card featured">
+    <div class="pricing-badge">Most Popular</div>
+    <div class="pricing-tier">Pro</div>
+    <div class="pricing-price">$12<span>/mo</span></div>
+    <div class="pricing-period">or $79 one-time lifetime access</div>
+    <ul class="pricing-features">
+      <li><span class="check">✓</span><span>Unlimited questions</span></li>
+      <li><span class="check">✓</span><span>Voice recognition</span></li>
+      <li><span class="check">✓</span><span>Resume PDF upload</span></li>
+      <li><span class="check">✓</span><span>Job description context</span></li>
+      <li><span class="check">✓</span><span>Priority AI responses</span></li>
+      <li><span class="check">✓</span><span>Read aloud answers</span></li>
+    </ul>
+    <div class="pricing-btns">
+      <a href="#" id="stripe-monthly-btn" class="pricing-btn-primary">Subscribe Monthly — $12/mo</a>
+      <a href="#" id="stripe-lifetime-btn" class="pricing-btn-outline">Buy Lifetime — $79</a>
+    </div>
+  </div>
+</div>
+
+<!-- FAQ -->
+<div class="faq-section">
+  <h2>Frequently Asked Questions</h2>
+
+  <div class="faq-item">
+    <div class="faq-q">Can I cancel anytime?</div>
+    <div class="faq-a">Yes, monthly subscriptions cancel instantly. You keep Pro access until the end of your billing period with no questions asked.</div>
+  </div>
+
+  <div class="faq-item">
+    <div class="faq-q">What counts as a question?</div>
+    <div class="faq-a">Each time you speak and get an AI answer counts as one question. Stopping and re-starting the recording before an answer is generated does not count.</div>
+  </div>
+
+  <div class="faq-item">
+    <div class="faq-q">Is my data safe?</div>
+    <div class="faq-a">Resume and job description text are only sent during your active session to generate answers — never stored on our servers. Your account data lives in your browser's local storage.</div>
+  </div>
+</div>
+
+<footer class="footer">
+  <div>© 2026 Interview Coach. Powered by Claude AI.</div>
+  <div class="footer-links">
+    <a href="/">Home</a>
+    <a href="/about.html">About</a>
+    <a href="/login.html">Sign In</a>
+    <a href="/register.html">Register</a>
+  </div>
+</footer>
+
+<script src="/auth.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    Auth.ensureAdmin();
+    Auth.renderNav();
+  });
+</script>
+</body>
+</html>

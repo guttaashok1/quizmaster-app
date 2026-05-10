@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Interview Coach — AI-Powered Practice</title>
+  <script src="/auth.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -35,22 +36,44 @@
 
     header {
       width: 100%;
-      padding: 18px 32px;
+      padding: 0 32px;
+      height: 62px;
       display: flex;
       align-items: center;
       gap: 12px;
       border-bottom: 1px solid var(--border);
-      background: var(--surface);
+      background: rgba(15,15,19,0.85);
+      backdrop-filter: blur(12px);
+      position: sticky; top: 0; z-index: 50;
     }
     .logo {
-      width: 36px; height: 36px;
+      width: 34px; height: 34px;
       background: linear-gradient(135deg, var(--accent), var(--accent2));
-      border-radius: 10px;
+      border-radius: 9px;
       display: flex; align-items: center; justify-content: center;
-      font-size: 18px;
+      font-size: 16px;
     }
-    header h1 { font-size: 18px; font-weight: 700; }
+    header h1 { font-size: 17px; font-weight: 700; }
     header span { font-size: 13px; color: var(--text-muted); margin-left: 4px; }
+    .header-right { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+    .header-user { font-size: 13px; color: var(--text-muted); }
+    .header-quota { font-size: 12px; color: var(--text-muted); }
+    .header-quota.warn { color: var(--danger); }
+    .header-home { font-size: 13px; color: var(--text-muted); text-decoration: none; }
+    .header-home:hover { color: var(--text); }
+    .btn-nav-filled {
+      background: var(--accent); color: #fff;
+      border-radius: 7px; font-size: 14px; font-weight: 600;
+      cursor: pointer; border: none; transition: box-shadow 0.2s;
+      text-decoration: none;
+    }
+    .btn-nav-filled:hover { box-shadow: 0 0 16px rgba(108,99,255,0.45); }
+    .btn-logout {
+      padding: 6px 14px; border-radius: 7px; font-size: 13px; font-weight: 600;
+      background: transparent; border: 1px solid var(--border); color: var(--text-muted);
+      cursor: pointer; transition: border-color 0.2s, color 0.2s;
+    }
+    .btn-logout:hover { border-color: var(--danger); color: var(--danger); }
 
     .container {
       width: 100%;
@@ -130,6 +153,87 @@
       color: var(--accent2); border-radius: 6px; padding: 6px 12px; font-size: 13px; margin-top: 10px;
     }
     .file-badge button { background: none; border: none; color: var(--accent2); cursor: pointer; font-size: 16px; }
+
+    /* ── Supporting Documents ── */
+    .docs-drop-zone {
+      border: 2px dashed var(--border); border-radius: 8px; padding: 18px 20px;
+      text-align: center; cursor: pointer; transition: border-color 0.2s, background 0.2s;
+      position: relative;
+    }
+    .docs-drop-zone:hover, .docs-drop-zone.drag-over { border-color: var(--accent); background: var(--accent-glow); }
+    .docs-drop-zone input[type="file"] { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
+    .docs-list { display: flex; flex-direction: column; gap: 6px; margin-top: 10px; }
+    .doc-item {
+      display: flex; align-items: center; gap: 10px;
+      background: var(--surface2); border: 1px solid var(--border);
+      border-radius: 8px; padding: 9px 12px; font-size: 13px;
+    }
+    .doc-item .doc-icon { font-size: 16px; flex-shrink: 0; }
+    .doc-item .doc-name { flex: 1; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .doc-item .doc-status { font-size: 11px; color: var(--text-muted); flex-shrink: 0; }
+    .doc-item .doc-status.ready { color: #00d4aa; }
+    .doc-item .doc-status.error { color: var(--danger); }
+    .doc-item .doc-remove { background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 15px; padding: 0 2px; flex-shrink: 0; }
+    .doc-item .doc-remove:hover { color: var(--danger); }
+    .docs-count { font-size: 12px; color: var(--text-muted); margin-top: 6px; }
+
+    /* ── Voice mode toggle ── */
+    .mode-toggle {
+      display: flex; gap: 4px; background: var(--surface2);
+      border-radius: 8px; padding: 4px; margin-bottom: 4px;
+    }
+    .mode-btn {
+      flex: 1; padding: 8px 10px; border: none; border-radius: 6px;
+      background: transparent; color: var(--text-muted); font-size: 13px;
+      font-weight: 500; cursor: pointer; transition: background 0.2s, color 0.2s;
+      display: flex; align-items: center; justify-content: center; gap: 6px;
+    }
+    .mode-btn.active { background: var(--surface); color: var(--text); box-shadow: 0 1px 3px rgba(0,0,0,0.3); }
+    .sys-audio-info {
+      background: rgba(108,99,255,0.08); border: 1px solid rgba(108,99,255,0.2);
+      border-radius: 8px; padding: 10px 14px; font-size: 13px; color: #a8a4ff; line-height: 1.5;
+      display: none;
+    }
+    .sys-audio-info.visible { display: block; }
+    .sysaudio-panel { display: none; }
+    .sysaudio-panel.visible { display: flex; flex-direction: column; gap: 12px; }
+    .btn-sysaudio {
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      background: linear-gradient(135deg, #6c63ff, #00d4aa); color: #fff;
+      padding: 12px 24px; border-radius: 8px; font-size: 14px; font-weight: 700;
+      border: none; cursor: pointer; transition: opacity 0.2s; width: 100%;
+    }
+    .btn-sysaudio:hover { opacity: 0.88; }
+    .btn-sysaudio:disabled { opacity: 0.4; cursor: not-allowed; }
+    .vad-indicator {
+      display: flex; align-items: center; gap: 8px;
+      font-size: 13px; color: var(--text-muted);
+    }
+    .vad-dot {
+      width: 8px; height: 8px; border-radius: 50%; background: var(--border);
+      transition: background 0.2s;
+    }
+    .vad-dot.speaking { background: #00d4aa; box-shadow: 0 0 8px rgba(0,212,170,0.6); }
+    .vad-dot.recording { background: var(--danger); box-shadow: 0 0 8px rgba(255,79,79,0.6); animation: pulse 0.8s ease-in-out infinite; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+    /* ── Whisper model loading bar ── */
+    .model-bar {
+      background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.09);
+      border-radius: 8px; padding: 10px 14px;
+      display: flex; align-items: center; gap: 12px; font-size: 13px;
+    }
+    .model-bar-text { color: var(--text-muted); flex-shrink: 0; }
+    .model-progress {
+      flex: 1; height: 4px; background: rgba(255,255,255,0.08);
+      border-radius: 2px; overflow: hidden;
+    }
+    .model-progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #6c63ff, #00d4aa);
+      border-radius: 2px; width: 0%;
+      transition: width 0.3s ease;
+    }
 
     /* ── Voice section ── */
     .voice-section { display: flex; flex-direction: column; gap: 16px; }
@@ -251,6 +355,14 @@
   <div class="logo">🎙️</div>
   <h1>Interview Coach</h1>
   <span>AI-powered practice</span>
+  <div class="header-right">
+    <a href="/" class="header-home">← Home</a>
+    <a href="/admin.html" id="admin-link" class="header-home" style="display:none">⚙️ Admin</a>
+    <span class="header-user" id="header-user"></span>
+    <span class="header-quota" id="header-quota"></span>
+    <a href="/pricing.html" id="upgrade-btn" class="btn-nav-filled" style="display:none;font-size:12px;padding:5px 12px">⚡ Upgrade</a>
+    <button class="btn-logout" onclick="Auth.logout()">Log out</button>
+  </div>
 </header>
 
 <div class="container">
@@ -301,6 +413,27 @@
     <textarea id="jd-text" rows="5" placeholder="Copy and paste the job description from the company's careers page…" oninput="onJdInput()"></textarea>
   </div>
 
+  <!-- Step 2b: Supporting Documents (optional) -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-num" style="background:var(--surface2);color:var(--text-muted);font-size:13px">+</div>
+      <div class="card-title">Supporting Documents <span style="font-size:12px;color:var(--text-muted);font-weight:400">(optional)</span></div>
+      <div class="card-badge" id="docs-badge"></div>
+    </div>
+    <p style="font-size:13px;color:var(--text-muted);margin-bottom:12px;line-height:1.6">
+      Upload any extra context the AI should know — portfolio, cover letter, certifications, company research, or notes. Supports multiple PDFs.
+    </p>
+
+    <div class="docs-drop-zone" id="docs-drop-zone">
+      <input type="file" id="docs-file-input" accept="application/pdf" multiple />
+      <div style="font-size:22px;margin-bottom:6px">📎</div>
+      <div style="font-size:14px;color:var(--text-muted)"><strong style="color:var(--text)">Click to upload</strong> or drag & drop — multiple PDFs allowed</div>
+    </div>
+
+    <div class="docs-list" id="docs-list"></div>
+    <div class="docs-count" id="docs-count"></div>
+  </div>
+
   <!-- Step 3: Voice -->
   <div class="card">
     <div class="card-header">
@@ -308,15 +441,20 @@
       <div class="card-title">Ask by Voice</div>
     </div>
 
-    <div id="no-support-msg" class="no-support" style="display:none">
-      Voice recognition isn't supported in this browser. Try Chrome or Edge.
+    <!-- Mode toggle -->
+    <div class="mode-toggle">
+      <button class="mode-btn active" id="mode-mic" onclick="setVoiceMode('mic')">🎙️ Microphone</button>
+      <button class="mode-btn" id="mode-sys" onclick="setVoiceMode('system')">🖥️ System Audio</button>
     </div>
 
-    <div id="mic-tip" class="mic-tip" style="display:none" onclick="this.style.display='none'">
-      💡 <strong>Mac users:</strong> If Chrome is using your iPhone's mic instead, go to <strong>System Settings → Sound → Input</strong> and select <em>Built-in Microphone</em>. (Tap to dismiss)
-    </div>
-
-    <div class="voice-section">
+    <!-- Mic mode UI -->
+    <div id="mic-panel" class="voice-section">
+      <div id="no-support-msg" class="no-support" style="display:none">
+        Voice recognition isn't supported in this browser. Try Chrome or Edge.
+      </div>
+      <div id="mic-tip" class="mic-tip" style="display:none" onclick="this.style.display='none'">
+        💡 <strong>Mac users:</strong> If Chrome is using your iPhone's mic instead, go to <strong>System Settings → Sound → Input</strong> and select <em>Built-in Microphone</em>. (Tap to dismiss)
+      </div>
       <div>
         <div class="status-row" id="status-row">
           <div class="status-dot" id="status-dot"></div>
@@ -326,19 +464,45 @@
           </div>
         </div>
       </div>
-
       <div class="transcript-wrap">
         <div class="transcript-box" id="transcript">
           <span class="transcript-placeholder" id="transcript-placeholder">Your spoken question will appear here…</span>
         </div>
       </div>
-
       <div class="rec-buttons">
-        <button class="btn btn-start" id="start-btn" onclick="startRecording()" disabled>
-          🎙️ Start Recording
+        <button class="btn btn-start" id="start-btn" onclick="startRecording()" disabled>🎙️ Start Recording</button>
+        <button class="btn btn-stop" id="stop-btn" onclick="stopRecording()" disabled>⏹ Stop Recording</button>
+      </div>
+    </div>
+
+    <!-- System Audio mode UI -->
+    <div id="sysaudio-panel" class="sysaudio-panel">
+      <div class="sys-audio-info visible">
+        📺 <strong>For video call interviews (Zoom, Meet, Teams):</strong> Share the tab where your call is running. The app captures only what plays through your speakers — your voice is never recorded. Whisper AI transcribes locally in your browser (no API key needed).
+      </div>
+
+      <!-- Whisper model download progress (shown on first use) -->
+      <div class="model-bar" id="model-bar" style="display:none">
+        <span class="model-bar-text" id="model-bar-text">⏳ Loading Whisper…</span>
+        <div class="model-progress"><div class="model-progress-fill" id="model-progress-fill"></div></div>
+      </div>
+      <div>
+        <div class="status-row" id="sys-status-row">
+          <div class="vad-dot" id="vad-dot"></div>
+          <span id="sys-status-text">Select System Audio to start</span>
+        </div>
+      </div>
+      <div class="transcript-wrap">
+        <div class="transcript-box" id="sys-transcript">
+          <span class="transcript-placeholder" id="sys-transcript-placeholder">Interviewer's question will appear here…</span>
+        </div>
+      </div>
+      <div class="rec-buttons">
+        <button class="btn-sysaudio" id="sys-start-btn" onclick="startSystemAudio()" disabled>
+          🖥️ Share Interview Tab Audio
         </button>
-        <button class="btn btn-stop" id="stop-btn" onclick="stopRecording()" disabled>
-          ⏹ Stop Recording
+        <button class="btn btn-stop" id="sys-stop-btn" onclick="stopSystemAudio()" disabled style="display:none">
+          ⏹ Stop Listening
         </button>
       </div>
     </div>
@@ -364,6 +528,31 @@
 </div>
 
 <script>
+  // ── Auth guard ─────────────────────────────────────────────────────────────
+  const _session = Auth.requireAuth();
+  if (_session) {
+    document.getElementById('header-user').textContent = '👤 ' + _session.username;
+  }
+
+  if (_session && _session.role === 'admin') {
+    document.getElementById('admin-link').style.display = '';
+  }
+
+  async function updateQuota() {
+    const el = document.getElementById('header-quota');
+    if (!el) return;
+    const rem = await Auth.getRemainingQuestions();
+    if (rem === Infinity) { el.textContent = ''; return; }
+    el.textContent = rem + ' questions left today';
+    el.className = 'header-quota' + (rem <= 3 ? ' warn' : '');
+  }
+  updateQuota();
+
+  const upgradeBtn = document.getElementById('upgrade-btn');
+  if (upgradeBtn && _session && _session.role !== 'admin' && _session.plan !== 'pro') {
+    upgradeBtn.style.display = '';
+  }
+
   // ── State ──────────────────────────────────────────────────────────────────
   let resumeText = '';
   let recognition = null;
@@ -373,13 +562,396 @@
   let streamController = null; // AbortController for in-flight stream
   let fullAnswer = '';
   let utterance = null;
+  let voiceMode = 'mic'; // 'mic' | 'system'
+
+  // Supporting documents: array of { id, name, text, status }
+  let supportingDocs = [];
+
+  // System audio state
+  let sysStream = null;       // MediaStream from getDisplayMedia
+  let sysAudioCtx = null;     // AudioContext
+  let sysAnalyser = null;     // AnalyserNode for VAD
+  let sysRecorder = null;     // MediaRecorder
+  let sysChunks = [];         // accumulated audio chunks
+  let sysVadTimer = null;     // silence debounce
+  let sysIsSpeaking = false;  // is interviewer currently speaking
+  let sysIsCapturing = false; // is system capture active
+  const VAD_THRESHOLD = 18;   // RMS floor to consider as speech
+  const SILENCE_MS = 1800;    // ms of silence before sending for transcription
 
   // ── Init ───────────────────────────────────────────────────────────────────
   document.addEventListener('DOMContentLoaded', () => {
     initVoice();
     initDragDrop();
+    initSupportingDocs();
     document.getElementById('resume-file').addEventListener('change', onFileSelect);
   });
+
+  // ── Supporting Documents ──────────────────────────────────────────────────
+  function initSupportingDocs() {
+    const input = document.getElementById('docs-file-input');
+    const zone  = document.getElementById('docs-drop-zone');
+    input.addEventListener('change', e => handleDocFiles([...e.target.files]));
+    zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('drag-over'); });
+    zone.addEventListener('dragleave', () => zone.classList.remove('drag-over'));
+    zone.addEventListener('drop', e => {
+      e.preventDefault(); zone.classList.remove('drag-over');
+      const files = [...e.dataTransfer.files].filter(f => f.type === 'application/pdf');
+      if (files.length) handleDocFiles(files);
+    });
+  }
+
+  async function handleDocFiles(files) {
+    for (const file of files) {
+      if (file.type !== 'application/pdf') continue;
+      // Deduplicate by name
+      if (supportingDocs.find(d => d.name === file.name)) continue;
+      const id = crypto.randomUUID();
+      const doc = { id, name: file.name, text: '', status: 'parsing' };
+      supportingDocs.push(doc);
+      renderDocsList();
+      try {
+        const form = new FormData();
+        form.append('resume', file);
+        const res = await fetch('/api/interview/parse-resume', { method: 'POST', body: form });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.message || 'Parse failed');
+        doc.text = data.text;
+        doc.status = 'ready';
+      } catch (err) {
+        doc.status = 'error';
+        doc.errorMsg = err.message;
+      }
+      renderDocsList();
+    }
+    // Reset file input so same file can be re-added after removal
+    document.getElementById('docs-file-input').value = '';
+  }
+
+  function removeDoc(id) {
+    supportingDocs = supportingDocs.filter(d => d.id !== id);
+    renderDocsList();
+  }
+
+  function renderDocsList() {
+    const list  = document.getElementById('docs-list');
+    const count = document.getElementById('docs-count');
+    const badge = document.getElementById('docs-badge');
+    list.innerHTML = '';
+    supportingDocs.forEach(doc => {
+      const el = document.createElement('div');
+      el.className = 'doc-item';
+      const statusText = doc.status === 'parsing' ? '⏳ Parsing…'
+                       : doc.status === 'ready'   ? '✓ Ready'
+                       : `⚠️ ${doc.errorMsg || 'Error'}`;
+      const statusClass = doc.status === 'ready' ? 'ready' : doc.status === 'error' ? 'error' : '';
+      el.innerHTML = `
+        <span class="doc-icon">📄</span>
+        <span class="doc-name" title="${doc.name}">${doc.name}</span>
+        <span class="doc-status ${statusClass}">${statusText}</span>
+        <button class="doc-remove" onclick="removeDoc('${doc.id}')" title="Remove">✕</button>
+      `;
+      list.appendChild(el);
+    });
+    const readyCount = supportingDocs.filter(d => d.status === 'ready').length;
+    if (supportingDocs.length === 0) {
+      count.textContent = '';
+      badge.innerHTML = '';
+    } else {
+      count.textContent = `${readyCount} of ${supportingDocs.length} document${supportingDocs.length > 1 ? 's' : ''} ready`;
+      badge.innerHTML = readyCount > 0
+        ? `<span class="badge badge-ready">✓ ${readyCount} doc${readyCount > 1 ? 's' : ''}</span>`
+        : `<span class="badge badge-missing">Parsing…</span>`;
+    }
+  }
+
+  function getSupportingDocsText() {
+    const ready = supportingDocs.filter(d => d.status === 'ready' && d.text);
+    if (!ready.length) return '';
+    return ready.map(d => `--- ${d.name} ---\n${d.text}`).join('\n\n');
+  }
+
+  // ── Voice mode toggle ─────────────────────────────────────────────────────
+  function setVoiceMode(mode) {
+    voiceMode = mode;
+    document.getElementById('mode-mic').className = 'mode-btn' + (mode === 'mic' ? ' active' : '');
+    document.getElementById('mode-sys').className = 'mode-btn' + (mode === 'system' ? ' active' : '');
+    document.getElementById('mic-panel').style.display = mode === 'mic' ? '' : 'none';
+    document.getElementById('sysaudio-panel').className = mode === 'system' ? 'sysaudio-panel visible' : 'sysaudio-panel';
+    if (mode === 'system') {
+      document.getElementById('sys-start-btn').disabled = !contextReady();
+      if (isRecording) stopRecording();
+      // Pre-load Whisper model in the background so it's ready when the user starts
+      preloadWhisper();
+    } else {
+      if (sysIsCapturing) stopSystemAudio();
+      updateStartBtn();
+    }
+  }
+
+  // ── Whisper model pre-loader ──────────────────────────────────────────────
+  function preloadWhisper() {
+    if (!window.__whisper || window.__whisper.ready) return;
+    const bar     = document.getElementById('model-bar');
+    const barText = document.getElementById('model-bar-text');
+    const fill    = document.getElementById('model-progress-fill');
+    bar.style.display = '';
+    barText.textContent = '⏳ Loading Whisper AI (first time only, ~75 MB)…';
+    fill.style.width = '2%';
+
+    window.__whisper.load(progress => {
+      if (progress.status === 'downloading') {
+        const pct = progress.total ? Math.round((progress.loaded / progress.total) * 100) : 0;
+        fill.style.width = pct + '%';
+        barText.textContent = `⬇️ Downloading Whisper… ${pct}%`;
+      } else if (progress.status === 'loading') {
+        fill.style.width = '95%';
+        barText.textContent = '⚙️ Compiling model…';
+      }
+    }).then(() => {
+      fill.style.width = '100%';
+      barText.textContent = '✅ Whisper ready — speak into your call';
+      setTimeout(() => { bar.style.display = 'none'; }, 2500);
+    }).catch(err => {
+      barText.textContent = '⚠️ Failed to load Whisper: ' + err.message;
+    });
+  }
+
+  // ── System Audio capture ──────────────────────────────────────────────────
+  async function startSystemAudio() {
+    if (!contextReady()) return;
+    const btn = document.getElementById('sys-start-btn');
+    btn.disabled = true;
+    btn.textContent = '⌛ Requesting access…';
+
+    try {
+      // Request system audio — Chrome shows a tab/window picker
+      sysStream = await navigator.mediaDevices.getDisplayMedia({
+        video: { displaySurface: 'browser' },
+        audio: { echoCancellation: false, noiseSuppression: false, sampleRate: 16000 },
+      });
+
+      // If user chose a source without audio, bail gracefully
+      const audioTrack = sysStream.getAudioTracks()[0];
+      if (!audioTrack) {
+        setSysStatus('idle', '⚠️ No audio track found — make sure to check "Share tab audio"');
+        btn.disabled = false;
+        btn.textContent = '🖥️ Share Interview Tab Audio';
+        sysStream.getTracks().forEach(t => t.stop());
+        return;
+      }
+
+      // Mute the video track so we don't see a preview
+      sysStream.getVideoTracks().forEach(t => { t.enabled = false; });
+
+      // Set up AudioContext for VAD
+      sysAudioCtx = new AudioContext({ sampleRate: 16000 });
+      const source = sysAudioCtx.createMediaStreamSource(sysStream);
+      sysAnalyser = sysAudioCtx.createAnalyser();
+      sysAnalyser.fftSize = 512;
+      source.connect(sysAnalyser);
+
+      // Set up MediaRecorder using only the audio track
+      const audioOnlyStream = new MediaStream([audioTrack]);
+      const mimeType = MediaRecorder.isTypeSupported('audio/webm;codecs=opus')
+        ? 'audio/webm;codecs=opus'
+        : 'audio/webm';
+      sysRecorder = new MediaRecorder(audioOnlyStream, { mimeType });
+      sysRecorder.ondataavailable = e => { if (e.data.size > 0) sysChunks.push(e.data); };
+      sysRecorder.onstop = () => sendChunkForTranscription(mimeType);
+
+      // Handle user stopping the share from Chrome's built-in UI
+      audioTrack.onended = () => stopSystemAudio();
+
+      sysIsCapturing = true;
+      sysIsSpeaking = false;
+      sysChunks = [];
+
+      btn.style.display = 'none';
+      document.getElementById('sys-stop-btn').style.display = '';
+      document.getElementById('sys-stop-btn').disabled = false;
+      setSysStatus('listening', '👂 Listening to system audio…');
+
+      // Start VAD polling loop
+      vadLoop();
+
+    } catch (err) {
+      if (err.name === 'NotAllowedError') {
+        setSysStatus('idle', 'Screen share cancelled');
+      } else {
+        setSysStatus('idle', '⚠️ ' + err.message);
+      }
+      btn.disabled = false;
+      btn.textContent = '🖥️ Share Interview Tab Audio';
+    }
+  }
+
+  function stopSystemAudio() {
+    sysIsCapturing = false;
+    clearTimeout(sysVadTimer);
+    if (sysRecorder && sysRecorder.state !== 'inactive') sysRecorder.stop();
+    if (sysStream) sysStream.getTracks().forEach(t => t.stop());
+    if (sysAudioCtx) sysAudioCtx.close();
+    sysStream = null; sysAudioCtx = null; sysAnalyser = null;
+    sysRecorder = null; sysChunks = [];
+    const btn = document.getElementById('sys-start-btn');
+    btn.disabled = !contextReady();
+    btn.textContent = '🖥️ Share Interview Tab Audio';
+    btn.style.display = '';
+    document.getElementById('sys-stop-btn').style.display = 'none';
+    setSysStatus('idle', 'Stopped — click above to start again');
+    setVadDot('idle');
+  }
+
+  // VAD polling: check audio levels every 80ms
+  function vadLoop() {
+    if (!sysIsCapturing || !sysAnalyser) return;
+    const data = new Uint8Array(sysAnalyser.frequencyBinCount);
+    sysAnalyser.getByteFrequencyData(data);
+    const rms = Math.sqrt(data.reduce((s, v) => s + v * v, 0) / data.length);
+    const isSpeech = rms > VAD_THRESHOLD;
+
+    if (isSpeech) {
+      clearTimeout(sysVadTimer);
+      if (!sysIsSpeaking) {
+        // Speech started — begin recording
+        sysIsSpeaking = true;
+        sysChunks = [];
+        try { sysRecorder.start(100); } catch (_) {}
+        setVadDot('speaking');
+        setSysStatus('listening', '🎤 Interviewer speaking…');
+      }
+    } else if (sysIsSpeaking) {
+      // Silence after speech — debounce before sending
+      clearTimeout(sysVadTimer);
+      sysVadTimer = setTimeout(() => {
+        sysIsSpeaking = false;
+        setVadDot('recording');
+        setSysStatus('transcribing', '⌛ Transcribing question…');
+        if (sysRecorder && sysRecorder.state === 'recording') sysRecorder.stop();
+      }, SILENCE_MS);
+    }
+    requestAnimationFrame(vadLoop);
+  }
+
+  async function sendChunkForTranscription(mimeType) {
+    if (sysChunks.length === 0) {
+      if (sysIsCapturing) { setSysStatus('listening', '👂 Listening to system audio…'); setVadDot('idle'); }
+      if (sysIsCapturing) try { sysRecorder.start(100); } catch (_) {}
+      return;
+    }
+    const blob = new Blob(sysChunks, { type: mimeType });
+    sysChunks = [];
+
+    // Skip very short clips (likely noise, not a real sentence)
+    if (blob.size < 6000) {
+      if (sysIsCapturing) { setSysStatus('listening', '👂 Listening to system audio…'); setVadDot('idle'); }
+      if (sysIsCapturing) try { sysRecorder.start(100); } catch (_) {}
+      return;
+    }
+
+    // Ensure Whisper is loaded
+    if (!window.__whisper || !window.__whisper.ready) {
+      setSysStatus('loading', '⏳ Whisper model still loading — please wait…');
+      try { await window.__whisper.load(() => {}); }
+      catch (err) { setSysStatus('error', '⚠️ Could not load Whisper: ' + err.message); return; }
+    }
+
+    setSysStatus('transcribing', '⌛ Transcribing…');
+    setVadDot('recording');
+
+    try {
+      const transcript = await window.__whisper.transcribe(blob);
+      if (transcript && transcript.length > 3) {
+        showSysTranscript(transcript);
+        triggerAnswerFromText(transcript);
+      } else {
+        if (sysIsCapturing) { setSysStatus('listening', '👂 Listening to system audio…'); setVadDot('idle'); }
+      }
+    } catch (err) {
+      setSysStatus('error', '⚠️ Transcription error: ' + err.message);
+      setVadDot('idle');
+    }
+
+    // Resume recording loop
+    if (sysIsCapturing) try { sysRecorder.start(100); } catch (_) {}
+  }
+
+  function setSysStatus(mode, text) {
+    document.getElementById('sys-status-text').textContent = text;
+  }
+
+  function setVadDot(state) {
+    const dot = document.getElementById('vad-dot');
+    dot.className = 'vad-dot' + (state === 'idle' ? '' : ' ' + state);
+  }
+
+  function showSysTranscript(text) {
+    const box = document.getElementById('sys-transcript');
+    const ph = document.getElementById('sys-transcript-placeholder');
+    ph.style.display = 'none';
+    box.childNodes.forEach(n => { if (n !== ph) n.remove(); });
+    box.insertBefore(document.createTextNode(text), ph);
+    box.className = 'transcript-box has-text';
+  }
+
+  // triggerAnswer but accepts text directly (for system audio mode)
+  async function triggerAnswerFromText(question) {
+    if (!await Auth.canAskQuestion()) {
+      setSysStatus('error', 'Daily limit reached — upgrade to Pro');
+      return;
+    }
+    if (streamController) streamController.abort();
+    streamController = new AbortController();
+    const jd = document.getElementById('jd-text').value.trim();
+    setSysStatus('streaming', '✨ Generating answer…');
+    setVadDot('idle');
+    await Auth.recordQuestion();
+    updateQuota();
+    const answerCard = document.getElementById('answer-card');
+    const answerBox = document.getElementById('answer-box');
+    const answerText = document.getElementById('answer-text');
+    const cursor = document.getElementById('cursor');
+    const answerActions = document.getElementById('answer-actions');
+    answerCard.style.display = '';
+    answerText.textContent = '';
+    cursor.className = 'cursor';
+    answerActions.style.display = 'none';
+    fullAnswer = '';
+    try {
+      const docsText = getSupportingDocsText();
+      const resp = await fetch('/api/interview/answer-stream', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ resume: resumeText, jobDescription: jd, question, supportingDocs: docsText }),
+        signal: streamController.signal,
+      });
+      const reader = resp.body.getReader();
+      const decoder = new TextDecoder();
+      let buf = '';
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buf += decoder.decode(value, { stream: true });
+        const lines = buf.split('\n');
+        buf = lines.pop();
+        for (const line of lines) {
+          if (!line.startsWith('data:')) continue;
+          const raw = line.slice(5).trim();
+          if (raw === '[DONE]') { cursor.className = 'cursor hidden'; answerActions.style.display = ''; break; }
+          try {
+            const d = JSON.parse(raw);
+            if (d.text) { fullAnswer += d.text; answerText.textContent = fullAnswer; answerBox.scrollTop = answerBox.scrollHeight; }
+            if (d.error) { answerText.textContent = '⚠️ ' + d.error; cursor.className = 'cursor hidden'; break; }
+          } catch (_) {}
+        }
+      }
+    } catch (err) {
+      if (err.name !== 'AbortError') answerText.textContent = '⚠️ ' + err.message;
+      cursor.className = 'cursor hidden';
+    }
+    if (sysIsCapturing) setSysStatus('listening', '👂 Listening to system audio…');
+  }
 
   // ── Resume ─────────────────────────────────────────────────────────────────
   function switchTab(mode) {
@@ -459,10 +1031,13 @@
   function updateStartBtn() {
     const ok = contextReady();
     document.getElementById('start-btn').disabled = !ok || isRecording;
+    // Also update system audio button
+    if (!sysIsCapturing) document.getElementById('sys-start-btn').disabled = !ok;
     if (ok && !isRecording) {
       setStatus('', 'Ready — click Start Recording and speak your question');
     } else if (!ok) {
       setStatus('', 'Ready — fill in Resume and Job Description first');
+      if (!sysIsCapturing) setSysStatus('idle', 'Fill in Resume and Job Description first');
     }
   }
 
@@ -567,6 +1142,20 @@
 
   // ── Streaming answer ───────────────────────────────────────────────────────
   async function triggerAnswer() {
+    if (!await Auth.canAskQuestion()) {
+      showTranscript('');
+      setStatus('', 'Daily limit reached — upgrade to Pro for unlimited questions');
+      const card = document.getElementById('answer-card');
+      card.style.display = 'block';
+      document.getElementById('answer-text').textContent = '⚠️ You\'ve used all 10 free questions for today. Upgrade to Pro for unlimited access.';
+      document.getElementById('answer-actions').style.display = 'none';
+      document.getElementById('cursor').className = 'cursor hidden';
+      document.getElementById('answer-box').className = 'answer-box';
+      return;
+    }
+    await Auth.incrementQuestionCount();
+    updateQuota();
+
     clearTimeout(debounceTimer);
     const question = currentQuestion.trim();
     if (!question || !contextReady()) return;
@@ -602,10 +1191,11 @@
     streamController = new AbortController();
 
     try {
+      const docsText = getSupportingDocsText();
       const res = await fetch('/api/interview/answer-stream', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ resume: resumeText, jobDescription: jd, question }),
+        body: JSON.stringify({ resume: resumeText, jobDescription: jd, question, supportingDocs: docsText }),
         signal: streamController.signal,
       });
 
@@ -689,6 +1279,52 @@
       setTimeout(() => btn.textContent = orig, 2000);
     });
   }
+</script>
+
+<!-- Whisper (transformers.js) — runs entirely in the browser, no API key needed -->
+<script type="module">
+  import { pipeline, env } from 'https://cdn.jsdelivr.net/npm/@xenova/transformers@2.17.2';
+
+  // Use Hugging Face CDN for model weights; disable local model lookup
+  env.allowLocalModels = false;
+
+  let _pipe = null;
+  let _loading = false;
+  let _loadPromise = null;
+
+  window.__whisper = {
+    /** Start downloading + compiling the model. Safe to call multiple times. */
+    async load(onProgress) {
+      if (_pipe) return _pipe;
+      if (_loadPromise) return _loadPromise;
+      _loading = true;
+      _loadPromise = pipeline(
+        'automatic-speech-recognition',
+        'Xenova/whisper-tiny.en',
+        { progress_callback: onProgress }
+      ).then(p => { _pipe = p; _loading = false; return p; });
+      return _loadPromise;
+    },
+
+    /** Transcribe an audio Blob → plain text string. */
+    async transcribe(blob) {
+      if (!_pipe) throw new Error('Whisper model not ready');
+      const url = URL.createObjectURL(blob);
+      try {
+        const out = await _pipe(url, {
+          language: 'english',
+          task: 'transcribe',
+          chunk_length_s: 30,
+        });
+        return (out.text || '').trim();
+      } finally {
+        URL.revokeObjectURL(url);
+      }
+    },
+
+    get ready() { return !!_pipe; },
+    get loading() { return _loading; },
+  };
 </script>
 </body>
 </html>

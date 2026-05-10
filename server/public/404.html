@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Page Not Found — Interview Coach</title>
+  <meta name="robots" content="noindex, nofollow" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎙️</text></svg>" />
+  <link rel="stylesheet" href="/styles.css" />
+  <style>
+    body { display: flex; flex-direction: column; min-height: 100vh; }
+    .not-found {
+      flex: 1; display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      text-align: center; padding: 60px 24px;
+    }
+    .not-found-code {
+      font-size: clamp(80px, 15vw, 140px); font-weight: 900;
+      letter-spacing: -4px; line-height: 1;
+      background: linear-gradient(135deg, #2563eb, #38bdf8);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text; margin-bottom: 16px;
+    }
+    .not-found h1 { font-size: 24px; font-weight: 800; margin-bottom: 12px; }
+    .not-found p { color: var(--text-muted); font-size: 16px; max-width: 400px; line-height: 1.7; margin-bottom: 36px; }
+    .not-found-links { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; }
+  </style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="/" class="nav-logo">
+      <div class="icon">🎙️</div>
+      Interview Coach
+    </a>
+    <div class="nav-links">
+      <a href="/about.html" class="nav-link">About</a>
+      <a href="/pricing.html" class="nav-link">Pricing</a>
+      <div id="nav-auth" style="display:flex;align-items:center;gap:8px"></div>
+    </div>
+  </div>
+</nav>
+
+<div class="not-found">
+  <div class="not-found-code">404</div>
+  <h1>Page not found</h1>
+  <p>The page you're looking for doesn't exist or may have been moved. Let's get you back on track.</p>
+  <div class="not-found-links">
+    <a href="/" class="btn btn-primary">← Back to Home</a>
+    <a href="/interview/" class="btn btn-outline">Open Coach</a>
+  </div>
+</div>
+
+<footer class="footer">
+  <div>© 2026 Interview Coach. Powered by Claude AI.</div>
+</footer>
+
+<script src="/auth.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    Auth.ensureAdmin();
+    Auth.renderNav();
+  });
+</script>
+</body>
+</html>

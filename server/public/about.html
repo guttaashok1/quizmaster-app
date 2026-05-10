@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>About — Interview Coach</title>
+  <meta name="description" content="Learn how Interview Coach uses Claude AI and Web Speech API to give you real-time, resume-aware interview coaching — free forever." />
+  <meta name="robots" content="index, follow" />
+  <link rel="canonical" href="https://interview-coach-seven-lovat.vercel.app/about.html" />
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="About Interview Coach — AI-Powered Practice" />
+  <meta property="og:description" content="Built with Claude AI and browser speech recognition. Practice interview questions free forever." />
+  <meta name="twitter:card" content="summary" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎙️</text></svg>" />
+  <link rel="stylesheet" href="/styles.css" />
+  <style>
+    .about-hero {
+      text-align: center;
+      padding: 80px 24px 60px;
+      max-width: 680px;
+      margin: 0 auto;
+    }
+    .about-hero h1 { font-size: 42px; font-weight: 900; letter-spacing: -0.5px; margin-bottom: 16px; }
+    .about-hero p { font-size: 17px; color: var(--text-muted); line-height: 1.75; }
+
+    .content-section {
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 0 24px 80px;
+    }
+    .content-section h2 {
+      font-size: 22px; font-weight: 800; margin: 48px 0 14px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--border);
+    }
+    .content-section p {
+      font-size: 15px; color: var(--text-muted); line-height: 1.8; margin-bottom: 14px;
+    }
+    .content-section p strong { color: var(--text); }
+
+    .tech-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 14px;
+      margin-top: 20px;
+    }
+    .tech-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 18px;
+    }
+    .tech-card .icon { font-size: 24px; margin-bottom: 10px; }
+    .tech-card h3 { font-size: 14px; font-weight: 700; margin-bottom: 5px; }
+    .tech-card p { font-size: 13px; color: var(--text-muted); }
+
+    .team-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 24px;
+      display: flex;
+      gap: 20px;
+      align-items: flex-start;
+      margin-top: 20px;
+    }
+    .team-avatar {
+      width: 54px; height: 54px; flex-shrink: 0;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 22px;
+    }
+    .team-name { font-size: 16px; font-weight: 700; margin-bottom: 4px; }
+    .team-role { font-size: 13px; color: var(--accent2); margin-bottom: 8px; }
+    .team-bio { font-size: 14px; color: var(--text-muted); line-height: 1.65; }
+
+    .cta-row { margin-top: 48px; display: flex; gap: 12px; flex-wrap: wrap; }
+  </style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="/" class="nav-logo">
+      <div class="icon">🎙️</div>
+      Interview Coach
+    </a>
+    <div class="nav-links">
+      <a href="/" class="nav-link">Home</a>
+      <a href="/pricing.html" class="nav-link">Pricing</a>
+      <div id="nav-auth" style="display:flex;align-items:center;gap:8px"></div>
+    </div>
+  </div>
+</nav>
+
+<section class="about-hero">
+  <h1>About <span class="gradient-text">Interview Coach</span></h1>
+  <p>A free, AI-powered tool that helps job seekers practice answering interview questions out loud — with real-time, resume-aware coaching.</p>
+</section>
+
+<div class="content-section">
+
+  <h2>What is Interview Coach?</h2>
+  <p>
+    Interview Coach is a browser-based application that combines <strong>voice recognition</strong> with <strong>Claude AI</strong> to deliver live, spoken interview coaching. You upload your resume, paste a job description, and simply speak any interview question aloud — the AI responds with a tailored, confident answer in real time, word by word.
+  </p>
+  <p>
+    Unlike static Q&A lists or scripted mock interviews, Interview Coach adapts every answer to <strong>your actual experience</strong> and the <strong>specific role you're applying for</strong>. It uses the STAR method (Situation, Task, Action, Result) for behavioral questions and keeps answers concise and natural — the way you'd actually say them in a room.
+  </p>
+
+  <h2>Why we built it</h2>
+  <p>
+    Interviews are one of the highest-stakes moments in a career, yet most people prepare by reading bullet points or watching YouTube videos. <strong>The gap between knowing an answer and being able to say it confidently</strong> is huge — and the only way to close that gap is to practice speaking out loud.
+  </p>
+  <p>
+    We built Interview Coach to make that kind of practice accessible to everyone. No expensive coaching sessions, no scheduling conflicts, no embarrassment. Just you, your mic, and an AI that knows your resume.
+  </p>
+
+  <h2>The technology</h2>
+  <div class="tech-grid">
+    <div class="tech-card">
+      <div class="icon">🤖</div>
+      <h3>Claude AI (Anthropic)</h3>
+      <p>Powers the answer generation with context-aware, streaming responses.</p>
+    </div>
+    <div class="tech-card">
+      <div class="icon">🎙️</div>
+      <h3>Web Speech API</h3>
+      <p>Continuous microphone input — no plugins, no installs, built into your browser.</p>
+    </div>
+    <div class="tech-card">
+      <div class="icon">⚡</div>
+      <h3>Server-Sent Events</h3>
+      <p>Streams answers word-by-word from the server so you see responses as they're generated.</p>
+    </div>
+    <div class="tech-card">
+      <div class="icon">🔒</div>
+      <h3>Client-Side Privacy</h3>
+      <p>Your resume and job description are only sent when you ask a question — never stored.</p>
+    </div>
+  </div>
+
+  <h2>About us</h2>
+  <div class="team-card">
+    <div class="team-avatar">👤</div>
+    <div>
+      <div class="team-name">Ashok Kumar Gutta</div>
+      <div class="team-role">Creator & Developer</div>
+      <div class="team-bio">
+        Built Interview Coach to help candidates practice smarter. Passionate about using AI to lower the barriers between people and opportunities.
+      </div>
+    </div>
+  </div>
+
+  <h2>Privacy</h2>
+  <p>
+    We take privacy seriously. Your resume text and job description are <strong>only transmitted to our server when you ask a question</strong>, and they are <strong>never stored</strong> — they exist only for the duration of your browser session. Account data (username, email, hashed password) is stored locally in your browser.
+  </p>
+  <p>
+    Answers are generated via the Anthropic Claude API. No personally identifiable information is retained by us or shared with third parties beyond what's necessary to generate the response.
+  </p>
+
+  <div class="cta-row">
+    <a href="/register.html" class="btn btn-primary">Get Started Free →</a>
+    <a href="/" class="btn btn-outline">← Back to Home</a>
+  </div>
+</div>
+
+<footer class="footer">
+  <div>© 2026 Interview Coach. Powered by Claude AI.</div>
+  <div class="footer-links">
+    <a href="/">Home</a>
+    <a href="/login.html">Sign In</a>
+    <a href="/register.html">Register</a>
+  </div>
+</footer>
+
+<script src="/auth.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    Auth.ensureAdmin();
+    Auth.renderNav();
+  });
+</script>
+</body>
+</html>

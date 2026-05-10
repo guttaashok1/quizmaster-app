@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+Disallow: /interview/
+Disallow: /admin.html
+Disallow: /api/
+
+Sitemap: https://interview-coach-seven-lovat.vercel.app/sitemap.xml
