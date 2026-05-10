@@ -43,6 +43,7 @@ const AnswerSchema = z.object({
   resume: z.string().min(10, 'Resume text is too short'),
   jobDescription: z.string().min(10, 'Job description is too short'),
   question: z.string().min(3, 'Question is too short'),
+  supportingDocs: z.string().optional(), // extracted text from extra uploaded PDFs
 });
 
 // POST /api/interview/answer-stream — streams a spoken interview answer via SSE
@@ -53,8 +54,12 @@ router.post('/answer-stream', async (req: Request, res: Response) => {
   res.flushHeaders();
 
   try {
-    const { resume, jobDescription, question } = AnswerSchema.parse(req.body);
+    const { resume, jobDescription, question, supportingDocs } = AnswerSchema.parse(req.body);
     const client = getClient();
+
+    const docsSection = supportingDocs && supportingDocs.trim()
+      ? `\n\nSUPPORTING DOCUMENTS (portfolio, cover letter, certifications, etc.):\n${supportingDocs}`
+      : '';
 
     const stream = client.messages.stream({
       model: 'claude-sonnet-4-6',
@@ -64,7 +69,7 @@ router.post('/answer-stream', async (req: Request, res: Response) => {
       messages: [
         {
           role: 'user',
-          content: `RESUME:\n${resume}\n\nJOB DESCRIPTION:\n${jobDescription}\n\nINTERVIEW QUESTION: ${question}`,
+          content: `RESUME:\n${resume}\n\nJOB DESCRIPTION:\n${jobDescription}${docsSection}\n\nINTERVIEW QUESTION: ${question}`,
         },
       ],
     });
