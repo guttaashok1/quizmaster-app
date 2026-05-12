@@ -478,29 +478,13 @@
     <!-- System Audio mode UI -->
     <div id="sysaudio-panel" class="sysaudio-panel">
       <div class="sys-audio-info visible">
-        🎧 <strong>Pick your audio input — no sharing required</strong>
+        🎤 <strong>Mic listens for the interviewer — no sharing or install needed</strong>
         <div style="margin-top:6px;font-size:13px;color:var(--text-muted)">
-          Select the device your interviewer's voice comes through. On most setups this is your headset or speakers. For silent capture of only the remote audio, install a virtual cable first:
-          <span style="color:var(--accent)">BlackHole</span> (Mac) &nbsp;·&nbsp; <span style="color:var(--accent)">VB-Audio Cable</span> (Windows)
+          Keep your mic open during the call. When the interviewer finishes speaking, the question is auto-detected and an answer is generated instantly.
+          Works with Teams, Zoom, Meet, or any call platform.
         </div>
       </div>
 
-      <!-- Audio device selector -->
-      <div id="device-row" style="display:flex;align-items:center;gap:8px;margin:10px 0;flex-wrap:wrap">
-        <select id="audio-device-select"
-          onchange="selectedDeviceId = this.value"
-          style="flex:1;min-width:0;background:var(--surface2);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:8px 10px;font-size:13px;cursor:pointer">
-          <option value="">⏳ Loading devices…</option>
-        </select>
-        <button onclick="loadAudioDevices()" title="Refresh device list"
-          style="padding:8px 10px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text-muted);cursor:pointer;font-size:15px">↻</button>
-      </div>
-
-      <!-- Whisper model download progress (shown on first use) -->
-      <div class="model-bar" id="model-bar" style="display:none">
-        <span class="model-bar-text" id="model-bar-text">⏳ Loading Whisper…</span>
-        <div class="model-progress"><div class="model-progress-fill" id="model-progress-fill"></div></div>
-      </div>
       <div>
         <div class="status-row" id="sys-status-row">
           <div class="vad-dot" id="vad-dot"></div>
@@ -516,8 +500,11 @@
         <button class="btn-sysaudio" id="sys-start-btn" onclick="startSystemAudio()" disabled>
           🎙️ Start Listening
         </button>
+        <button class="btn btn-ghost" id="sys-answer-btn" onclick="sysForceAnswer()" style="display:none">
+          ✨ Answer this
+        </button>
         <button class="btn btn-stop" id="sys-stop-btn" onclick="stopSystemAudio()" disabled style="display:none">
-          ⏹ Stop Listening
+          ⏹ Stop
         </button>
       </div>
     </div>
@@ -582,18 +569,13 @@
   // Supporting documents: array of { id, name, text, status }
   let supportingDocs = [];
 
-  // System audio state
-  let selectedDeviceId = 'default'; // chosen audio input device
-  let sysStream = null;       // MediaStream from getUserMedia
-  let sysAudioCtx = null;     // AudioContext
-  let sysAnalyser = null;     // AnalyserNode for VAD
-  let sysRecorder = null;     // MediaRecorder
-  let sysChunks = [];         // accumulated audio chunks
-  let sysVadTimer = null;     // silence debounce
-  let sysIsSpeaking = false;  // is interviewer currently speaking
-  let sysIsCapturing = false; // is system capture active
-  const VAD_THRESHOLD = 18;   // RMS floor to consider as speech
-  const SILENCE_MS = 1800;    // ms of silence before sending for transcription
+  // System audio state (Web Speech API)
+  let sysRecognition = null;    // SpeechRecognition instance
+  let sysAccumulated = '';      // final transcript chunks accumulate here
+  let sysInterim = '';          // current interim (non-final) text
+  let sysQuestionTimer = null;  // auto-trigger timer on silence
+  let sysIsCapturing = false;   // is recognition active
+  const SYS_SILENCE_MS = 2500; // ms of silence before auto-answering
 
   // ── Init ───────────────────────────────────────────────────────────────────
   document.addEventListener('DOMContentLoaded', () => {
@@ -689,254 +671,105 @@
 
   // ── Voice mode toggle ─────────────────────────────────────────────────────
   // ── Audio device enumeration (no browser picker) ──────────────────────────
-  async function loadAudioDevices() {
-    const select = document.getElementById('audio-device-select');
-    if (!select) return;
-
-    // We need at least one getUserMedia call to unlock device labels
-    try {
-      const tmp = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
-      tmp.getTracks().forEach(t => t.stop());
-    } catch (_) { /* permission denied – labels may be empty */ }
-
-    const all = await navigator.mediaDevices.enumerateDevices();
-    const inputs = all.filter(d => d.kind === 'audioinput');
-
-    select.innerHTML = '';
-    // Virtual/loopback names to auto-prioritise
-    const LOOPBACK_RE = /stereo mix|virtual|blackhole|cable|loopback|what u hear|monitor of|pulse|soundflower/i;
-
-    let firstLoopback = null;
-
-    inputs.forEach((d, i) => {
-      const opt = document.createElement('option');
-      opt.value = d.deviceId;
-      const isLoopback = LOOPBACK_RE.test(d.label);
-      opt.textContent = (d.label || `Microphone ${i + 1}`) + (isLoopback ? ' ⭐' : '');
-      if (isLoopback && !firstLoopback) firstLoopback = d.deviceId;
-      select.appendChild(opt);
-    });
-
-    // Auto-select loopback if found; otherwise leave default
-    if (firstLoopback) {
-      select.value = firstLoopback;
-      selectedDeviceId = firstLoopback;
-    } else if (inputs.length > 0) {
-      selectedDeviceId = inputs[0].deviceId;
-    }
-
-    document.getElementById('sys-start-btn').disabled = !contextReady();
-  }
-
-  function setVoiceMode(mode) {
-    voiceMode = mode;
-    document.getElementById('mode-mic').className = 'mode-btn' + (mode === 'mic' ? ' active' : '');
-    document.getElementById('mode-sys').className = 'mode-btn' + (mode === 'system' ? ' active' : '');
-    document.getElementById('mic-panel').style.display = mode === 'mic' ? '' : 'none';
-    document.getElementById('sysaudio-panel').className = mode === 'system' ? 'sysaudio-panel visible' : 'sysaudio-panel';
-    if (mode === 'system') {
-      document.getElementById('sys-start-btn').disabled = true; // re-enabled after device load
-      if (isRecording) stopRecording();
-      // Enumerate audio devices and pre-load Whisper in parallel
-      loadAudioDevices();
-      preloadWhisper();
-    } else {
-      if (sysIsCapturing) stopSystemAudio();
-      updateStartBtn();
-    }
-  }
-
-  // ── Whisper model pre-loader ──────────────────────────────────────────────
-  function preloadWhisper() {
-    if (!window.__whisper || window.__whisper.ready) return;
-    const bar     = document.getElementById('model-bar');
-    const barText = document.getElementById('model-bar-text');
-    const fill    = document.getElementById('model-progress-fill');
-    bar.style.display = '';
-    barText.textContent = '⏳ Loading Whisper AI (first time only, ~75 MB)…';
-    fill.style.width = '2%';
-
-    window.__whisper.load(progress => {
-      if (progress.status === 'downloading') {
-        const pct = progress.total ? Math.round((progress.loaded / progress.total) * 100) : 0;
-        fill.style.width = pct + '%';
-        barText.textContent = `⬇️ Downloading Whisper… ${pct}%`;
-      } else if (progress.status === 'loading') {
-        fill.style.width = '95%';
-        barText.textContent = '⚙️ Compiling model…';
-      }
-    }).then(() => {
-      fill.style.width = '100%';
-      barText.textContent = '✅ Whisper ready — speak into your call';
-      setTimeout(() => { bar.style.display = 'none'; }, 2500);
-    }).catch(err => {
-      barText.textContent = '⚠️ Failed to load Whisper: ' + err.message;
-    });
-  }
-
-  // ── System Audio capture ──────────────────────────────────────────────────
+  // ── Web Speech API system audio (no sharing, no install) ──────────────────
   async function startSystemAudio() {
     if (!contextReady()) return;
     const btn = document.getElementById('sys-start-btn');
     btn.disabled = true;
-    btn.textContent = '⌛ Requesting access…';
+    btn.textContent = '⌛ Starting…';
 
-    try {
-      // Capture from the selected audio input device — no browser picker needed
-      sysStream = await navigator.mediaDevices.getUserMedia({
-        video: false,
-        audio: {
-          deviceId: selectedDeviceId ? { ideal: selectedDeviceId } : undefined,
-          echoCancellation: false,
-          noiseSuppression: false,
-          autoGainControl: false,
-          sampleRate: 16000,
-        },
-      });
-
-      const audioTrack = sysStream.getAudioTracks()[0];
-      if (!audioTrack) {
-        sysStream.getTracks().forEach(t => t.stop());
-        sysStream = null;
-        setSysStatus('idle', '⚠️ No audio track — try a different device.');
-        btn.disabled = false;
-        btn.textContent = '🎙️ Start Listening';
-        return;
-      }
-
-
-      // Set up AudioContext for VAD
-      sysAudioCtx = new AudioContext({ sampleRate: 16000 });
-      const source = sysAudioCtx.createMediaStreamSource(sysStream);
-      sysAnalyser = sysAudioCtx.createAnalyser();
-      sysAnalyser.fftSize = 512;
-      source.connect(sysAnalyser);
-
-      // Set up MediaRecorder using only the audio track
-      const audioOnlyStream = new MediaStream([audioTrack]);
-      const mimeType = MediaRecorder.isTypeSupported('audio/webm;codecs=opus')
-        ? 'audio/webm;codecs=opus'
-        : 'audio/webm';
-      sysRecorder = new MediaRecorder(audioOnlyStream, { mimeType });
-      sysRecorder.ondataavailable = e => { if (e.data.size > 0) sysChunks.push(e.data); };
-      sysRecorder.onstop = () => sendChunkForTranscription(mimeType);
-
-      // Handle device disconnection
-      audioTrack.onended = () => stopSystemAudio();
-
-      sysIsCapturing = true;
-      sysIsSpeaking = false;
-      sysChunks = [];
-
-      btn.style.display = 'none';
-      document.getElementById('sys-stop-btn').style.display = '';
-      document.getElementById('sys-stop-btn').disabled = false;
-      setSysStatus('listening', '👂 Listening — speak interviewer audio…');
-
-      // Start VAD polling loop
-      vadLoop();
-
-    } catch (err) {
-      if (err.name === 'NotAllowedError') {
-        setSysStatus('idle', '⚠️ Microphone permission denied — allow access and try again');
-      } else {
-        setSysStatus('idle', '⚠️ ' + err.message);
-      }
-      btn.disabled = false;
-      btn.textContent = '🎙️ Start Listening';
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SR) {
+      setSysStatus('idle', '⚠️ Speech recognition requires Chrome or Edge');
+      btn.disabled = false; btn.textContent = '🎙️ Start Listening'; return;
     }
+
+    sysRecognition = new SR();
+    sysRecognition.continuous = true;
+    sysRecognition.interimResults = true;
+    sysRecognition.lang = 'en-US';
+    sysRecognition.maxAlternatives = 1;
+    sysAccumulated = ''; sysInterim = '';
+
+    sysRecognition.onresult = (event) => {
+      sysInterim = '';
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        if (event.results[i].isFinal) {
+          sysAccumulated += event.results[i][0].transcript + ' ';
+          clearTimeout(sysQuestionTimer);
+          if (sysAccumulated.trim().split(/\s+/).length >= 6) {
+            sysQuestionTimer = setTimeout(sysAutoAnswer, SYS_SILENCE_MS);
+          }
+        } else {
+          sysInterim += event.results[i][0].transcript;
+        }
+      }
+      showSysTranscriptLive(sysAccumulated, sysInterim);
+      const hasText = (sysAccumulated + sysInterim).trim().length > 0;
+      document.getElementById('sys-answer-btn').style.display = hasText ? '' : 'none';
+    };
+
+    sysRecognition.onspeechstart = () => { setVadDot('speaking'); setSysStatus('listening', '🎤 Speaking detected…'); };
+    sysRecognition.onspeechend  = () => { setVadDot('idle'); setSysStatus('listening', '👂 Listening…'); };
+
+    sysRecognition.onerror = (e) => {
+      if (e.error === 'no-speech') return;
+      if (e.error === 'not-allowed') { setSysStatus('idle', '⚠️ Microphone permission denied'); stopSystemAudio(); }
+    };
+
+    sysRecognition.onend = () => {
+      if (sysIsCapturing) { try { sysRecognition.start(); } catch (_) {} }
+    };
+
+    try { sysRecognition.start(); }
+    catch (err) {
+      setSysStatus('idle', '⚠️ Could not start: ' + err.message);
+      btn.disabled = false; btn.textContent = '🎙️ Start Listening'; return;
+    }
+
+    sysIsCapturing = true;
+    btn.style.display = 'none';
+    document.getElementById('sys-stop-btn').style.display = '';
+    document.getElementById('sys-stop-btn').disabled = false;
+    document.getElementById('sys-answer-btn').style.display = 'none';
+    setSysStatus('listening', '👂 Listening — speak or let the interviewer speak…');
+    setVadDot('idle');
+  }
+
+  function sysAutoAnswer() {
+    const text = sysAccumulated.trim();
+    if (!text || text.split(/\s+/).length < 6) return;
+    sysAccumulated = ''; sysInterim = '';
+    showSysTranscriptLive('', '');
+    document.getElementById('sys-answer-btn').style.display = 'none';
+    triggerAnswerFromText(text);
+  }
+
+  function sysForceAnswer() {
+    clearTimeout(sysQuestionTimer);
+    const text = (sysAccumulated + ' ' + sysInterim).trim();
+    if (!text) return;
+    sysAccumulated = ''; sysInterim = '';
+    showSysTranscriptLive('', '');
+    document.getElementById('sys-answer-btn').style.display = 'none';
+    triggerAnswerFromText(text);
   }
 
   function stopSystemAudio() {
     sysIsCapturing = false;
-    clearTimeout(sysVadTimer);
-    if (sysRecorder && sysRecorder.state !== 'inactive') sysRecorder.stop();
-    if (sysStream) sysStream.getTracks().forEach(t => t.stop());
-    if (sysAudioCtx) sysAudioCtx.close();
-    sysStream = null; sysAudioCtx = null; sysAnalyser = null;
-    sysRecorder = null; sysChunks = [];
+    clearTimeout(sysQuestionTimer);
+    if (sysRecognition) { try { sysRecognition.stop(); } catch (_) {} sysRecognition = null; }
+    sysAccumulated = ''; sysInterim = '';
     const btn = document.getElementById('sys-start-btn');
     btn.disabled = !contextReady();
-    btn.textContent = '🖥️ Share Interview Tab Audio';
+    btn.textContent = '🎙️ Start Listening';
     btn.style.display = '';
     document.getElementById('sys-stop-btn').style.display = 'none';
+    document.getElementById('sys-answer-btn').style.display = 'none';
     setSysStatus('idle', 'Stopped — click above to start again');
     setVadDot('idle');
   }
 
-  // VAD polling: check audio levels every 80ms
-  function vadLoop() {
-    if (!sysIsCapturing || !sysAnalyser) return;
-    const data = new Uint8Array(sysAnalyser.frequencyBinCount);
-    sysAnalyser.getByteFrequencyData(data);
-    const rms = Math.sqrt(data.reduce((s, v) => s + v * v, 0) / data.length);
-    const isSpeech = rms > VAD_THRESHOLD;
-
-    if (isSpeech) {
-      clearTimeout(sysVadTimer);
-      if (!sysIsSpeaking) {
-        // Speech started — begin recording
-        sysIsSpeaking = true;
-        sysChunks = [];
-        try { sysRecorder.start(100); } catch (_) {}
-        setVadDot('speaking');
-        setSysStatus('listening', '🎤 Interviewer speaking…');
-      }
-    } else if (sysIsSpeaking) {
-      // Silence after speech — debounce before sending
-      clearTimeout(sysVadTimer);
-      sysVadTimer = setTimeout(() => {
-        sysIsSpeaking = false;
-        setVadDot('recording');
-        setSysStatus('transcribing', '⌛ Transcribing question…');
-        if (sysRecorder && sysRecorder.state === 'recording') sysRecorder.stop();
-      }, SILENCE_MS);
-    }
-    requestAnimationFrame(vadLoop);
-  }
-
-  async function sendChunkForTranscription(mimeType) {
-    if (sysChunks.length === 0) {
-      if (sysIsCapturing) { setSysStatus('listening', '👂 Listening to system audio…'); setVadDot('idle'); }
-      if (sysIsCapturing) try { sysRecorder.start(100); } catch (_) {}
-      return;
-    }
-    const blob = new Blob(sysChunks, { type: mimeType });
-    sysChunks = [];
-
-    // Skip very short clips (likely noise, not a real sentence)
-    if (blob.size < 6000) {
-      if (sysIsCapturing) { setSysStatus('listening', '👂 Listening to system audio…'); setVadDot('idle'); }
-      if (sysIsCapturing) try { sysRecorder.start(100); } catch (_) {}
-      return;
-    }
-
-    // Ensure Whisper is loaded
-    if (!window.__whisper || !window.__whisper.ready) {
-      setSysStatus('loading', '⏳ Whisper model still loading — please wait…');
-      try { await window.__whisper.load(() => {}); }
-      catch (err) { setSysStatus('error', '⚠️ Could not load Whisper: ' + err.message); return; }
-    }
-
-    setSysStatus('transcribing', '⌛ Transcribing…');
-    setVadDot('recording');
-
-    try {
-      const transcript = await window.__whisper.transcribe(blob);
-      if (transcript && transcript.length > 3) {
-        showSysTranscript(transcript);
-        triggerAnswerFromText(transcript);
-      } else {
-        if (sysIsCapturing) { setSysStatus('listening', '👂 Listening to system audio…'); setVadDot('idle'); }
-      }
-    } catch (err) {
-      setSysStatus('error', '⚠️ Transcription error: ' + err.message);
-      setVadDot('idle');
-    }
-
-    // Resume recording loop
-    if (sysIsCapturing) try { sysRecorder.start(100); } catch (_) {}
-  }
 
   function setSysStatus(mode, text) {
     document.getElementById('sys-status-text').textContent = text;
@@ -947,13 +780,24 @@
     dot.className = 'vad-dot' + (state === 'idle' ? '' : ' ' + state);
   }
 
-  function showSysTranscript(text) {
+  function showSysTranscriptLive(final, interim) {
     const box = document.getElementById('sys-transcript');
-    const ph = document.getElementById('sys-transcript-placeholder');
-    ph.style.display = 'none';
+    const ph  = document.getElementById('sys-transcript-placeholder');
+    const hasContent = (final + interim).trim().length > 0;
+    ph.style.display = hasContent ? 'none' : '';
     box.childNodes.forEach(n => { if (n !== ph) n.remove(); });
-    box.insertBefore(document.createTextNode(text), ph);
-    box.className = 'transcript-box has-text';
+    if (final) {
+      const f = document.createElement('span');
+      f.textContent = final;
+      box.insertBefore(f, ph);
+    }
+    if (interim) {
+      const it = document.createElement('span');
+      it.textContent = interim;
+      it.style.color = 'var(--text-muted)';
+      box.insertBefore(it, ph);
+    }
+    box.className = 'transcript-box' + (hasContent ? ' has-text' : '');
   }
 
   // triggerAnswer but accepts text directly (for system audio mode)
@@ -1011,7 +855,7 @@
       if (err.name !== 'AbortError') answerText.textContent = '⚠️ ' + err.message;
       cursor.className = 'cursor hidden';
     }
-    if (sysIsCapturing) setSysStatus('listening', '👂 Listening to system audio…');
+    if (sysIsCapturing) setSysStatus('listening', '👂 Listening — speak or let the interviewer speak…');
   }
 
   // ── Resume ─────────────────────────────────────────────────────────────────
