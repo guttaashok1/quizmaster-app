@@ -86,7 +86,22 @@ router.post('/answer-stream', async (req: Request, res: Response) => {
       res.write(`data: ${JSON.stringify({ error: 'Invalid request: ' + err.errors[0]?.message })}\n\n`);
     } else {
       console.error('Interview stream error:', err);
-      const msg = err instanceof Error ? err.message : 'Failed to generate answer';
+      // Parse Anthropic API error types into user-friendly messages
+      let msg = 'Failed to generate answer — please try again';
+      if (err instanceof Error) {
+        const raw = err.message;
+        if (raw.includes('overloaded_error') || raw.includes('Overloaded')) {
+          msg = 'overloaded'; // client will show retry UI
+        } else if (raw.includes('rate_limit')) {
+          msg = 'Rate limit reached — please wait a moment and try again';
+        } else if (raw.includes('invalid_api_key') || raw.includes('authentication')) {
+          msg = 'API configuration error — contact support';
+        } else if (raw.includes('context_length')) {
+          msg = 'Resume or job description is too long — try shortening it';
+        } else {
+          msg = 'Something went wrong — please try again';
+        }
+      }
       res.write(`data: ${JSON.stringify({ error: msg })}\n\n`);
     }
     res.end();

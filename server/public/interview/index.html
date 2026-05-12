@@ -869,7 +869,16 @@
           try {
             const d = JSON.parse(raw);
             if (d.text) { fullAnswer += d.text; answerText.textContent = fullAnswer; answerBox.scrollTop = answerBox.scrollHeight; }
-            if (d.error) { answerText.textContent = '⚠️ ' + d.error; cursor.className = 'cursor hidden'; break; }
+            if (d.error) {
+              if (d.error === 'overloaded') {
+                answerText.textContent = '⏳ Claude is busy — retrying in 5 seconds…';
+                setSysStatus('streaming', '⏳ Claude is busy — retrying…');
+                await new Promise(r => setTimeout(r, 5000));
+              } else {
+                answerText.textContent = '⚠️ ' + d.error;
+              }
+              cursor.className = 'cursor hidden'; break;
+            }
           } catch (_) {}
         }
       }
@@ -1171,8 +1180,56 @@
       if (err.name === 'AbortError') return; // cancelled intentionally
       cursor.className = 'cursor hidden';
       box.className = 'answer-box';
-      answerText.textContent = '⚠️ ' + err.message;
-      setStatus('', err.message);
+      if (err.message === 'overloaded') {
+        answerText.textContent = '⏳ Claude is busy right now. Retrying in 5 seconds…';
+        setStatus('thinking', '⏳ Claude is busy — retrying…');
+        await new Promise(r => setTimeout(r, 5000));
+        if (streamController === null) return; // aborted while waiting
+        // Retry once
+        streamController = new AbortController();
+        try {
+          const docsText = getSupportingDocsText();
+          const res2 = await fetch('/api/interview/answer-stream', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ resume: resumeText, jobDescription: jd, question, supportingDocs: docsText }),
+            signal: streamController.signal,
+          });
+          if (!res2.ok) throw new Error('Server error');
+          answerText.textContent = '';
+          fullAnswer = '';
+          cursor.className = 'cursor';
+          box.className = 'answer-box streaming';
+          const reader2 = res2.body.getReader();
+          const dec2 = new TextDecoder();
+          let buf2 = '';
+          while (true) {
+            const { done, value } = await reader2.read();
+            if (done) break;
+            buf2 += dec2.decode(value, { stream: true });
+            const lines = buf2.split('\n'); buf2 = lines.pop();
+            for (const line of lines) {
+              if (!line.startsWith('data: ')) continue;
+              const payload = line.slice(6).trim();
+              if (payload === '[DONE]') break;
+              try { const o = JSON.parse(payload); if (o.error) throw new Error(o.error); if (o.text) { fullAnswer += o.text; answerText.textContent = fullAnswer; } } catch (_) {}
+            }
+          }
+          cursor.className = 'cursor hidden';
+          box.className = 'answer-box';
+          actions.style.display = 'flex';
+          setStatus('done', 'Answer ready — start recording to ask another question');
+        } catch (retryErr) {
+          if (retryErr.name === 'AbortError') return;
+          cursor.className = 'cursor hidden';
+          box.className = 'answer-box';
+          answerText.textContent = '⚠️ Claude is currently overloaded. Please wait a moment and try again.';
+          setStatus('', 'Claude is busy — please try again shortly');
+        }
+      } else {
+        answerText.textContent = '⚠️ ' + err.message;
+        setStatus('', err.message);
+      }
     } finally {
       streamController = null;
     }
