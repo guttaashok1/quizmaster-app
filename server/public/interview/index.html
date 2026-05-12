@@ -670,7 +670,29 @@
   }
 
   // ── Voice mode toggle ─────────────────────────────────────────────────────
-  // ── Audio device enumeration (no browser picker) ──────────────────────────
+  function setVoiceMode(mode) {
+    voiceMode = mode;
+    const micPanel = document.getElementById('mic-panel');
+    const sysPanel = document.getElementById('sysaudio-panel');
+    const micBtn   = document.getElementById('mode-mic');
+    const sysBtn   = document.getElementById('mode-sys');
+    const startBtn = document.getElementById('sys-start-btn');
+
+    if (mode === 'system') {
+      micPanel.style.display = 'none';
+      sysPanel.classList.add('visible');
+      micBtn.classList.remove('active');
+      sysBtn.classList.add('active');
+      startBtn.disabled = !contextReady();
+    } else {
+      micPanel.style.display = '';
+      sysPanel.classList.remove('visible');
+      micBtn.classList.add('active');
+      sysBtn.classList.remove('active');
+      if (sysIsCapturing) stopSystemAudio();
+    }
+  }
+
   // ── Web Speech API system audio (no sharing, no install) ──────────────────
   async function startSystemAudio() {
     if (!contextReady()) return;
