@@ -478,20 +478,22 @@
     <!-- System Audio mode UI -->
     <div id="sysaudio-panel" class="sysaudio-panel">
       <div class="sys-audio-info visible">
-        📺 <strong>For video call interviews — follow these steps:</strong>
-        <ol style="margin:8px 0 0 18px;line-height:1.7;font-size:13px">
-          <li>Open your video call <strong>in a browser tab</strong>:<br>
-            <span style="color:var(--text-muted)">
-              Teams → <strong>teams.microsoft.com</strong> &nbsp;|&nbsp;
-              Zoom → <strong>zoom.us/join</strong> &nbsp;|&nbsp;
-              Google Meet → already a tab ✓
-            </span>
-          </li>
-          <li>Click <em>"Share Interview Tab Audio"</em> below</li>
-          <li>In the picker, choose the <strong>Tab</strong> (not Window, not Entire screen)</li>
-          <li>Check <strong>"Share tab audio"</strong> ✓ then click Share</li>
-        </ol>
-        <div style="margin-top:8px;font-size:12px;color:var(--text-muted)">⚠️ Native apps (installed Teams, Zoom, Webex) cannot share audio — use the browser tab version instead.</div>
+        🎧 <strong>Pick your audio input — no sharing required</strong>
+        <div style="margin-top:6px;font-size:13px;color:var(--text-muted)">
+          Select the device your interviewer's voice comes through. On most setups this is your headset or speakers. For silent capture of only the remote audio, install a virtual cable first:
+          <span style="color:var(--accent)">BlackHole</span> (Mac) &nbsp;·&nbsp; <span style="color:var(--accent)">VB-Audio Cable</span> (Windows)
+        </div>
+      </div>
+
+      <!-- Audio device selector -->
+      <div id="device-row" style="display:flex;align-items:center;gap:8px;margin:10px 0;flex-wrap:wrap">
+        <select id="audio-device-select"
+          onchange="selectedDeviceId = this.value"
+          style="flex:1;min-width:0;background:var(--surface2);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:8px 10px;font-size:13px;cursor:pointer">
+          <option value="">⏳ Loading devices…</option>
+        </select>
+        <button onclick="loadAudioDevices()" title="Refresh device list"
+          style="padding:8px 10px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text-muted);cursor:pointer;font-size:15px">↻</button>
       </div>
 
       <!-- Whisper model download progress (shown on first use) -->
@@ -512,7 +514,7 @@
       </div>
       <div class="rec-buttons">
         <button class="btn-sysaudio" id="sys-start-btn" onclick="startSystemAudio()" disabled>
-          🖥️ Share Interview Tab Audio
+          🎙️ Start Listening
         </button>
         <button class="btn btn-stop" id="sys-stop-btn" onclick="stopSystemAudio()" disabled style="display:none">
           ⏹ Stop Listening
@@ -581,7 +583,8 @@
   let supportingDocs = [];
 
   // System audio state
-  let sysStream = null;       // MediaStream from getDisplayMedia
+  let selectedDeviceId = 'default'; // chosen audio input device
+  let sysStream = null;       // MediaStream from getUserMedia
   let sysAudioCtx = null;     // AudioContext
   let sysAnalyser = null;     // AnalyserNode for VAD
   let sysRecorder = null;     // MediaRecorder
@@ -685,6 +688,46 @@
   }
 
   // ── Voice mode toggle ─────────────────────────────────────────────────────
+  // ── Audio device enumeration (no browser picker) ──────────────────────────
+  async function loadAudioDevices() {
+    const select = document.getElementById('audio-device-select');
+    if (!select) return;
+
+    // We need at least one getUserMedia call to unlock device labels
+    try {
+      const tmp = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+      tmp.getTracks().forEach(t => t.stop());
+    } catch (_) { /* permission denied – labels may be empty */ }
+
+    const all = await navigator.mediaDevices.enumerateDevices();
+    const inputs = all.filter(d => d.kind === 'audioinput');
+
+    select.innerHTML = '';
+    // Virtual/loopback names to auto-prioritise
+    const LOOPBACK_RE = /stereo mix|virtual|blackhole|cable|loopback|what u hear|monitor of|pulse|soundflower/i;
+
+    let firstLoopback = null;
+
+    inputs.forEach((d, i) => {
+      const opt = document.createElement('option');
+      opt.value = d.deviceId;
+      const isLoopback = LOOPBACK_RE.test(d.label);
+      opt.textContent = (d.label || `Microphone ${i + 1}`) + (isLoopback ? ' ⭐' : '');
+      if (isLoopback && !firstLoopback) firstLoopback = d.deviceId;
+      select.appendChild(opt);
+    });
+
+    // Auto-select loopback if found; otherwise leave default
+    if (firstLoopback) {
+      select.value = firstLoopback;
+      selectedDeviceId = firstLoopback;
+    } else if (inputs.length > 0) {
+      selectedDeviceId = inputs[0].deviceId;
+    }
+
+    document.getElementById('sys-start-btn').disabled = !contextReady();
+  }
+
   function setVoiceMode(mode) {
     voiceMode = mode;
     document.getElementById('mode-mic').className = 'mode-btn' + (mode === 'mic' ? ' active' : '');
@@ -692,9 +735,10 @@
     document.getElementById('mic-panel').style.display = mode === 'mic' ? '' : 'none';
     document.getElementById('sysaudio-panel').className = mode === 'system' ? 'sysaudio-panel visible' : 'sysaudio-panel';
     if (mode === 'system') {
-      document.getElementById('sys-start-btn').disabled = !contextReady();
+      document.getElementById('sys-start-btn').disabled = true; // re-enabled after device load
       if (isRecording) stopRecording();
-      // Pre-load Whisper model in the background so it's ready when the user starts
+      // Enumerate audio devices and pre-load Whisper in parallel
+      loadAudioDevices();
       preloadWhisper();
     } else {
       if (sysIsCapturing) stopSystemAudio();
@@ -738,55 +782,28 @@
     btn.textContent = '⌛ Requesting access…';
 
     try {
-      // Request system audio — Chrome shows a tab/window/screen picker
-      sysStream = await navigator.mediaDevices.getDisplayMedia({
-        video: { displaySurface: 'browser' },
-        audio: { echoCancellation: false, noiseSuppression: false, sampleRate: 16000 },
+      // Capture from the selected audio input device — no browser picker needed
+      sysStream = await navigator.mediaDevices.getUserMedia({
+        video: false,
+        audio: {
+          deviceId: selectedDeviceId ? { ideal: selectedDeviceId } : undefined,
+          echoCancellation: false,
+          noiseSuppression: false,
+          autoGainControl: false,
+          sampleRate: 16000,
+        },
       });
 
-      // Detect what type of surface the user shared
-      const videoTrack = sysStream.getVideoTracks()[0];
-      const surface = videoTrack?.getSettings()?.displaySurface; // 'browser' | 'window' | 'monitor'
-
-      if (surface === 'window') {
-        // Native app window — browser cannot capture its audio
-        sysStream.getTracks().forEach(t => t.stop());
-        sysStream = null;
-        setSysStatus('idle',
-          '⚠️ App windows can\'t share audio. Open Teams at teams.microsoft.com (or Zoom at zoom.us) in a browser tab, then try again.');
-        btn.disabled = false;
-        btn.textContent = '🖥️ Share Interview Tab Audio';
-        return;
-      }
-
-      if (surface === 'monitor') {
-        // Entire screen — audio only works if "Share system audio" was checked
-        const audioTrack = sysStream.getAudioTracks()[0];
-        if (!audioTrack) {
-          sysStream.getTracks().forEach(t => t.stop());
-          sysStream = null;
-          setSysStatus('idle',
-            '⚠️ No audio captured. For best results share a browser Tab, not the entire screen.');
-          btn.disabled = false;
-          btn.textContent = '🖥️ Share Interview Tab Audio';
-          return;
-        }
-        // Whole-screen share with system audio enabled — allow it
-      }
-
-      // If user chose a browser tab without enabling "Share tab audio"
       const audioTrack = sysStream.getAudioTracks()[0];
       if (!audioTrack) {
         sysStream.getTracks().forEach(t => t.stop());
         sysStream = null;
-        setSysStatus('idle', '⚠️ No audio found — tick "Share tab audio" in the picker, then try again.');
+        setSysStatus('idle', '⚠️ No audio track — try a different device.');
         btn.disabled = false;
-        btn.textContent = '🖥️ Share Interview Tab Audio';
+        btn.textContent = '🎙️ Start Listening';
         return;
       }
 
-      // Mute the video track so we don't see a preview
-      sysStream.getVideoTracks().forEach(t => { t.enabled = false; });
 
       // Set up AudioContext for VAD
       sysAudioCtx = new AudioContext({ sampleRate: 16000 });
@@ -804,7 +821,7 @@
       sysRecorder.ondataavailable = e => { if (e.data.size > 0) sysChunks.push(e.data); };
       sysRecorder.onstop = () => sendChunkForTranscription(mimeType);
 
-      // Handle user stopping the share from Chrome's built-in UI
+      // Handle device disconnection
       audioTrack.onended = () => stopSystemAudio();
 
       sysIsCapturing = true;
@@ -814,19 +831,19 @@
       btn.style.display = 'none';
       document.getElementById('sys-stop-btn').style.display = '';
       document.getElementById('sys-stop-btn').disabled = false;
-      setSysStatus('listening', '👂 Listening to system audio…');
+      setSysStatus('listening', '👂 Listening — speak interviewer audio…');
 
       // Start VAD polling loop
       vadLoop();
 
     } catch (err) {
       if (err.name === 'NotAllowedError') {
-        setSysStatus('idle', 'Screen share cancelled');
+        setSysStatus('idle', '⚠️ Microphone permission denied — allow access and try again');
       } else {
         setSysStatus('idle', '⚠️ ' + err.message);
       }
       btn.disabled = false;
-      btn.textContent = '🖥️ Share Interview Tab Audio';
+      btn.textContent = '🎙️ Start Listening';
     }
   }
 
