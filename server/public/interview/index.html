@@ -478,7 +478,20 @@
     <!-- System Audio mode UI -->
     <div id="sysaudio-panel" class="sysaudio-panel">
       <div class="sys-audio-info visible">
-        📺 <strong>For video call interviews (Zoom, Meet, Teams):</strong> Share the tab where your call is running. The app captures only what plays through your speakers — your voice is never recorded. Whisper AI transcribes locally in your browser (no API key needed).
+        📺 <strong>For video call interviews — follow these steps:</strong>
+        <ol style="margin:8px 0 0 18px;line-height:1.7;font-size:13px">
+          <li>Open your video call <strong>in a browser tab</strong>:<br>
+            <span style="color:var(--text-muted)">
+              Teams → <strong>teams.microsoft.com</strong> &nbsp;|&nbsp;
+              Zoom → <strong>zoom.us/join</strong> &nbsp;|&nbsp;
+              Google Meet → already a tab ✓
+            </span>
+          </li>
+          <li>Click <em>"Share Interview Tab Audio"</em> below</li>
+          <li>In the picker, choose the <strong>Tab</strong> (not Window, not Entire screen)</li>
+          <li>Check <strong>"Share tab audio"</strong> ✓ then click Share</li>
+        </ol>
+        <div style="margin-top:8px;font-size:12px;color:var(--text-muted)">⚠️ Native apps (installed Teams, Zoom, Webex) cannot share audio — use the browser tab version instead.</div>
       </div>
 
       <!-- Whisper model download progress (shown on first use) -->
@@ -725,19 +738,50 @@
     btn.textContent = '⌛ Requesting access…';
 
     try {
-      // Request system audio — Chrome shows a tab/window picker
+      // Request system audio — Chrome shows a tab/window/screen picker
       sysStream = await navigator.mediaDevices.getDisplayMedia({
         video: { displaySurface: 'browser' },
         audio: { echoCancellation: false, noiseSuppression: false, sampleRate: 16000 },
       });
 
-      // If user chose a source without audio, bail gracefully
-      const audioTrack = sysStream.getAudioTracks()[0];
-      if (!audioTrack) {
-        setSysStatus('idle', '⚠️ No audio track found — make sure to check "Share tab audio"');
+      // Detect what type of surface the user shared
+      const videoTrack = sysStream.getVideoTracks()[0];
+      const surface = videoTrack?.getSettings()?.displaySurface; // 'browser' | 'window' | 'monitor'
+
+      if (surface === 'window') {
+        // Native app window — browser cannot capture its audio
+        sysStream.getTracks().forEach(t => t.stop());
+        sysStream = null;
+        setSysStatus('idle',
+          '⚠️ App windows can\'t share audio. Open Teams at teams.microsoft.com (or Zoom at zoom.us) in a browser tab, then try again.');
         btn.disabled = false;
         btn.textContent = '🖥️ Share Interview Tab Audio';
+        return;
+      }
+
+      if (surface === 'monitor') {
+        // Entire screen — audio only works if "Share system audio" was checked
+        const audioTrack = sysStream.getAudioTracks()[0];
+        if (!audioTrack) {
+          sysStream.getTracks().forEach(t => t.stop());
+          sysStream = null;
+          setSysStatus('idle',
+            '⚠️ No audio captured. For best results share a browser Tab, not the entire screen.');
+          btn.disabled = false;
+          btn.textContent = '🖥️ Share Interview Tab Audio';
+          return;
+        }
+        // Whole-screen share with system audio enabled — allow it
+      }
+
+      // If user chose a browser tab without enabling "Share tab audio"
+      const audioTrack = sysStream.getAudioTracks()[0];
+      if (!audioTrack) {
         sysStream.getTracks().forEach(t => t.stop());
+        sysStream = null;
+        setSysStatus('idle', '⚠️ No audio found — tick "Share tab audio" in the picker, then try again.');
+        btn.disabled = false;
+        btn.textContent = '🖥️ Share Interview Tab Audio';
         return;
       }
 
