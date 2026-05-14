@@ -840,7 +840,8 @@
     const answerText = document.getElementById('answer-text');
     const cursor = document.getElementById('cursor');
     const answerActions = document.getElementById('answer-actions');
-    answerCard.style.display = '';
+    answerCard.style.display = 'block';
+    answerCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     answerText.textContent = '';
     cursor.className = 'cursor';
     answerActions.style.display = 'none';
