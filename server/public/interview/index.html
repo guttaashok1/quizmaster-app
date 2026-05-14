@@ -496,7 +496,37 @@
           <span class="transcript-placeholder" id="sys-transcript-placeholder">Interviewer's question will appear here…</span>
         </div>
       </div>
-      <div class="rec-buttons">
+
+      <!-- Editable question input -->
+      <div id="sys-question-wrap" style="margin-top:10px">
+        <div style="font-size:12px;font-weight:600;color:var(--text-muted);margin-bottom:6px;display:flex;align-items:center;gap:6px">
+          ✏️ Edit or type the question manually
+          <span style="font-weight:400;opacity:0.6">(auto-filled from voice)</span>
+        </div>
+        <textarea
+          id="sys-question-input"
+          placeholder="Type or paste the interview question here, then click Get Answer…"
+          rows="3"
+          style="width:100%;background:var(--surface2);color:var(--text);border:1px solid var(--border);border-radius:10px;padding:10px 13px;font-size:14px;font-family:var(--font);resize:vertical;line-height:1.6;transition:border-color 0.2s,box-shadow 0.2s;outline:none"
+          onkeydown="if((event.ctrlKey||event.metaKey)&&event.key==='Enter'){event.preventDefault();sysSubmitQuestion();}"
+          oninput="this.dataset.userEdited='1';updateSysSubmitBtn()"
+          onfocus="this.style.borderColor='var(--accent)';this.style.boxShadow='0 0 0 3px var(--accent-glow)'"
+          onblur="this.style.borderColor='var(--border)';this.style.boxShadow='none'"
+        ></textarea>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px">
+          <span style="font-size:11px;color:var(--text-muted);opacity:0.7">Ctrl+Enter to submit</span>
+          <div style="display:flex;gap:8px">
+            <button class="btn btn-ghost" onclick="sysClearQuestion()" style="padding:7px 14px;font-size:13px">
+              🗑 Clear
+            </button>
+            <button class="btn btn-primary" id="sys-submit-btn" onclick="sysSubmitQuestion()" disabled style="padding:8px 20px;font-size:14px;border-radius:9px">
+              ✨ Get Answer
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="rec-buttons" style="margin-top:12px">
         <button class="btn-sysaudio" id="sys-start-btn" onclick="startSystemAudio()" disabled>
           🎙️ Start Listening
         </button>
@@ -758,9 +788,20 @@
     setVadDot('idle');
   }
 
+  // ── Update "Get Answer" button enabled state ──────────────────────────────
+  function updateSysSubmitBtn() {
+    const input = document.getElementById('sys-question-input');
+    const btn   = document.getElementById('sys-submit-btn');
+    if (!input || !btn) return;
+    btn.disabled = input.value.trim().length === 0;
+  }
+
   function sysAutoAnswer() {
     const text = sysAccumulated.trim();
     if (!text || text.split(/\s+/).length < 6) return;
+    // Fill the editable box so the user can see/edit what was detected
+    const input = document.getElementById('sys-question-input');
+    if (input) { input.value = text; updateSysSubmitBtn(); }
     sysAccumulated = ''; sysInterim = '';
     showSysTranscriptLive('', '');
     document.getElementById('sys-answer-btn').style.display = 'none';
@@ -769,12 +810,47 @@
 
   function sysForceAnswer() {
     clearTimeout(sysQuestionTimer);
-    const text = (sysAccumulated + ' ' + sysInterim).trim();
+    // Prefer the editable textarea value so user's edits are respected
+    const input = document.getElementById('sys-question-input');
+    const text = (input && input.value.trim())
+      || (sysAccumulated + ' ' + sysInterim).trim();
     if (!text) return;
+    if (input) { input.value = text; }
     sysAccumulated = ''; sysInterim = '';
     showSysTranscriptLive('', '');
     document.getElementById('sys-answer-btn').style.display = 'none';
     triggerAnswerFromText(text);
+  }
+
+  // Submit from the manual textarea
+  function sysSubmitQuestion() {
+    const input = document.getElementById('sys-question-input');
+    if (!input) return;
+    const text = input.value.trim();
+    if (!text) return;
+    clearTimeout(sysQuestionTimer);
+    sysAccumulated = ''; sysInterim = '';
+    showSysTranscriptLive('', '');
+    // Reset after submit so speech can auto-fill again next time
+    input.value = '';
+    delete input.dataset.userEdited;
+    updateSysSubmitBtn();
+    document.getElementById('sys-answer-btn').style.display = 'none';
+    triggerAnswerFromText(text);
+  }
+
+  // Clear the manual textarea and transcript
+  function sysClearQuestion() {
+    const input = document.getElementById('sys-question-input');
+    if (input) {
+      input.value = '';
+      delete input.dataset.userEdited;
+      updateSysSubmitBtn();
+    }
+    clearTimeout(sysQuestionTimer);
+    sysAccumulated = ''; sysInterim = '';
+    showSysTranscriptLive('', '');
+    document.getElementById('sys-answer-btn').style.display = 'none';
   }
 
   function stopSystemAudio() {
@@ -820,6 +896,18 @@
       box.insertBefore(it, ph);
     }
     box.className = 'transcript-box' + (hasContent ? ' has-text' : '');
+
+    // Mirror final text into the editable textarea so users can review/edit
+    const input = document.getElementById('sys-question-input');
+    if (input && final !== undefined) {
+      // Only overwrite if the user hasn't manually edited it
+      // (detect by checking if it previously matched accumulated text)
+      const combined = (final + (interim ? ' ' + interim : '')).trim();
+      if (!input.dataset.userEdited) {
+        input.value = combined;
+        updateSysSubmitBtn();
+      }
+    }
   }
 
   // triggerAnswer but accepts text directly (for system audio mode)
