@@ -13,10 +13,73 @@
   <meta name="twitter:card" content="summary" />
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎙️</text></svg>" />
   <link rel="stylesheet" href="/styles.css" />
+  <style>
+    body {
+      background: #ffffff;
+      background-image: none;
+    }
+
+    /* ── Pricing hero ── */
+    /* Override dark body for light pricing page */
+    .pricing-hero-pill {
+      display: inline-block;
+      background: #ebf0ff;
+      border: 1px solid #bfdbfe;
+      color: #1a56db;
+      padding: 6px 18px;
+      border-radius: 999px;
+      font-size: 13px; font-weight: 600;
+      margin-bottom: 24px;
+    }
+
+    /* ── FAQ section light ── */
+    .faq-section-wrap {
+      background: #f8fafc;
+      padding: 64px 24px 80px;
+      border-top: 1px solid #e2e8f0;
+    }
+
+    /* ── CTA strip at bottom ── */
+    .pricing-cta {
+      background: linear-gradient(135deg, #1244b4 0%, #1a56db 100%);
+      padding: 72px 48px;
+      text-align: center;
+    }
+    .pricing-cta h2 {
+      font-size: 32px; font-weight: 800; color: #fff; margin-bottom: 12px;
+      letter-spacing: -0.5px;
+    }
+    .pricing-cta p { font-size: 16px; color: rgba(255,255,255,0.75); margin-bottom: 28px; }
+    .pricing-cta a {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: #fff; color: #1244b4;
+      padding: 13px 32px; border-radius: 8px;
+      font-size: 15px; font-weight: 800;
+      text-decoration: none; transition: box-shadow 0.2s, transform 0.2s;
+    }
+    .pricing-cta a:hover {
+      box-shadow: 0 8px 24px rgba(0,0,0,0.18);
+      transform: translateY(-1px);
+    }
+
+    /* ── Site footer (dark) ── */
+    .site-footer-light {
+      background: #04080f;
+      border-top: 1px solid rgba(255,255,255,0.06);
+      padding: 28px 48px;
+      text-align: center;
+      font-size: 13px;
+      color: rgba(255,255,255,0.3);
+    }
+    .site-footer-light a { color: rgba(255,255,255,0.4); margin: 0 12px; transition: color 0.2s; }
+    .site-footer-light a:hover { color: rgba(255,255,255,0.75); }
+    .site-footer-links { margin-top: 10px; }
+  </style>
 </head>
 <body>
 
-<nav class="nav">
+<!-- Nav -->
+<nav class="nav nav-light">
   <div class="nav-inner">
     <a href="/" class="nav-logo">
       <div class="icon">🎙️</div>
@@ -31,74 +94,88 @@
   </div>
 </nav>
 
+<!-- Hero -->
 <section class="pricing-hero">
-  <div class="hero-pill" style="display:inline-block;background:var(--accent-glow);border:1px solid rgba(108,99,255,0.35);color:#a8a4ff;padding:5px 16px;border-radius:999px;font-size:13px;font-weight:600;margin-bottom:22px">Simple, honest pricing</div>
+  <div class="pricing-hero-pill">Simple, honest pricing</div>
   <h1>Start free.<br><span class="gradient-text">Upgrade when ready.</span></h1>
   <p>Practice as much as you need with the free plan. Go unlimited with Pro when interviews get serious.</p>
 </section>
 
-<div class="pricing-grid">
-  <!-- Free tier -->
-  <div class="pricing-card">
-    <div class="pricing-tier">Free</div>
-    <div class="pricing-price">$0</div>
-    <div class="pricing-period">forever</div>
-    <ul class="pricing-features">
-      <li><span class="check">✓</span><span>10 questions per day</span></li>
-      <li><span class="check">✓</span><span>Voice recognition</span></li>
-      <li><span class="check">✓</span><span>Resume PDF upload</span></li>
-      <li><span class="check">✓</span><span>Job description context</span></li>
-      <li><span class="check">✓</span><span>Basic AI answers</span></li>
-    </ul>
-    <div class="pricing-btns">
-      <a href="/register.html" class="pricing-btn-free">Get Started Free</a>
+<!-- Pricing cards -->
+<div class="pricing-section-bg">
+  <div class="pricing-grid">
+    <!-- Free tier -->
+    <div class="pricing-card">
+      <div class="pricing-tier">Free</div>
+      <div class="pricing-price">$0</div>
+      <div class="pricing-period">forever</div>
+      <ul class="pricing-features">
+        <li><span class="check">✓</span><span>10 questions per day</span></li>
+        <li><span class="check">✓</span><span>Voice recognition</span></li>
+        <li><span class="check">✓</span><span>Resume PDF upload</span></li>
+        <li><span class="check">✓</span><span>Job description context</span></li>
+        <li><span class="check">✓</span><span>Basic AI answers</span></li>
+      </ul>
+      <div class="pricing-btns">
+        <a href="/register.html" class="pricing-btn-free">Get Started Free</a>
+      </div>
     </div>
-  </div>
 
-  <!-- Pro tier -->
-  <div class="pricing-card featured">
-    <div class="pricing-badge">Most Popular</div>
-    <div class="pricing-tier">Pro</div>
-    <div class="pricing-price">$12<span>/mo</span></div>
-    <div class="pricing-period">or $79 one-time lifetime access</div>
-    <ul class="pricing-features">
-      <li><span class="check">✓</span><span>Unlimited questions</span></li>
-      <li><span class="check">✓</span><span>Voice recognition</span></li>
-      <li><span class="check">✓</span><span>Resume PDF upload</span></li>
-      <li><span class="check">✓</span><span>Job description context</span></li>
-      <li><span class="check">✓</span><span>Priority AI responses</span></li>
-      <li><span class="check">✓</span><span>Read aloud answers</span></li>
-    </ul>
-    <div class="pricing-btns">
-      <a href="#" id="stripe-monthly-btn" class="pricing-btn-primary">Subscribe Monthly — $12/mo</a>
-      <a href="#" id="stripe-lifetime-btn" class="pricing-btn-outline">Buy Lifetime — $79</a>
+    <!-- Pro tier -->
+    <div class="pricing-card featured">
+      <div class="pricing-badge">Most Popular</div>
+      <div class="pricing-tier">Pro</div>
+      <div class="pricing-price">$12<span>/mo</span></div>
+      <div class="pricing-period">or $79 one-time lifetime access</div>
+      <ul class="pricing-features">
+        <li><span class="check">✓</span><span>Unlimited questions</span></li>
+        <li><span class="check">✓</span><span>Voice recognition</span></li>
+        <li><span class="check">✓</span><span>Resume PDF upload</span></li>
+        <li><span class="check">✓</span><span>Job description context</span></li>
+        <li><span class="check">✓</span><span>Priority AI responses</span></li>
+        <li><span class="check">✓</span><span>Read aloud answers</span></li>
+      </ul>
+      <div class="pricing-btns">
+        <a href="#" id="stripe-monthly-btn" class="pricing-btn-primary">Subscribe Monthly — $12/mo</a>
+        <a href="#" id="stripe-lifetime-btn" class="pricing-btn-outline">Buy Lifetime — $79</a>
+      </div>
     </div>
   </div>
 </div>
 
 <!-- FAQ -->
-<div class="faq-section">
-  <h2>Frequently Asked Questions</h2>
+<div class="faq-section-wrap">
+  <div class="faq-section">
+    <h2>Frequently Asked Questions</h2>
 
-  <div class="faq-item">
-    <div class="faq-q">Can I cancel anytime?</div>
-    <div class="faq-a">Yes, monthly subscriptions cancel instantly. You keep Pro access until the end of your billing period with no questions asked.</div>
-  </div>
+    <div class="faq-item">
+      <div class="faq-q">Can I cancel anytime?</div>
+      <div class="faq-a">Yes, monthly subscriptions cancel instantly. You keep Pro access until the end of your billing period with no questions asked.</div>
+    </div>
 
-  <div class="faq-item">
-    <div class="faq-q">What counts as a question?</div>
-    <div class="faq-a">Each time you speak and get an AI answer counts as one question. Stopping and re-starting the recording before an answer is generated does not count.</div>
-  </div>
+    <div class="faq-item">
+      <div class="faq-q">What counts as a question?</div>
+      <div class="faq-a">Each time you speak and get an AI answer counts as one question. Stopping and re-starting the recording before an answer is generated does not count.</div>
+    </div>
 
-  <div class="faq-item">
-    <div class="faq-q">Is my data safe?</div>
-    <div class="faq-a">Resume and job description text are only sent during your active session to generate answers — never stored on our servers. Your account data lives in your browser's local storage.</div>
+    <div class="faq-item">
+      <div class="faq-q">Is my data safe?</div>
+      <div class="faq-a">Resume and job description text are only sent during your active session to generate answers — never stored on our servers. Your account data lives in your browser's local storage.</div>
+    </div>
   </div>
 </div>
 
-<footer class="footer">
+<!-- CTA -->
+<div class="pricing-cta">
+  <h2>Ready to start practicing?</h2>
+  <p>Free account — up and running in 60 seconds.</p>
+  <a href="/register.html">Get Started Free →</a>
+</div>
+
+<!-- Footer -->
+<footer class="site-footer-light">
   <div>© 2026 Interview Coach. Powered by Claude AI.</div>
-  <div class="footer-links">
+  <div class="site-footer-links">
     <a href="/">Home</a>
     <a href="/about.html">About</a>
     <a href="/login.html">Sign In</a>
@@ -109,7 +186,6 @@
 <script src="/auth.js"></script>
 <script>
   document.addEventListener('DOMContentLoaded', () => {
-
     Auth.renderNav();
   });
 </script>
