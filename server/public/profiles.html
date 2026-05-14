@@ -221,6 +221,25 @@
 
     .modal-footer { display: flex; gap: 10px; justify-content: flex-end; margin-top: 28px; flex-wrap: wrap; }
 
+    /* ── DB Banner ── */
+    .db-banner {
+      background: rgba(234,179,8,0.08); border: 1px solid rgba(234,179,8,0.25);
+      border-radius: 12px; padding: 14px 18px; margin-bottom: 20px;
+      display: flex; gap: 12px; align-items: flex-start;
+    }
+    .db-banner-icon { font-size: 22px; flex-shrink: 0; margin-top: 1px; }
+    .db-banner-body { font-size: 13px; color: #fde68a; line-height: 1.6; flex: 1; }
+    .db-banner-body strong { color: #fbbf24; }
+    .db-banner-link { color: #fbbf24; cursor: pointer; text-decoration: underline; margin-left: 4px; }
+    .db-help { margin-top: 10px; }
+    .db-help ol { padding-left: 20px; }
+    .db-help li { margin-bottom: 5px; color: #fde68a; }
+    .db-help a { color: #fbbf24; }
+    .db-help code {
+      background: rgba(234,179,8,0.15); padding: 1px 5px;
+      border-radius: 4px; font-size: 12px; font-family: monospace;
+    }
+
     @media (max-width: 600px) {
       .nav { padding: 0 14px; }
       .page-wrap { padding: 20px 14px 60px; }
@@ -252,6 +271,24 @@
       <p>Save your resume, job description, and supporting context together. Load any profile on the interview page to start a session in one click.</p>
     </div>
     <button class="btn btn-primary" onclick="openCreate()">+ New Profile</button>
+  </div>
+
+  <!-- DB banner: shown when DATABASE_URL not set on server -->
+  <div class="db-banner" id="db-banner" style="display:none">
+    <div class="db-banner-icon">🗄️</div>
+    <div class="db-banner-body">
+      <strong>Profiles are stored locally on this device only.</strong>
+      To sync profiles across any device after login, connect a free PostgreSQL database.
+      <a class="db-banner-link" onclick="toggleDbHelp(event)">Setup guide →</a>
+      <div class="db-help" id="db-help" style="display:none">
+        <ol>
+          <li>Create a free database at <a href="https://neon.tech" target="_blank" rel="noopener">neon.tech</a> or <a href="https://supabase.com" target="_blank" rel="noopener">supabase.com</a></li>
+          <li>Copy your connection string (starts with <code>postgres://</code> or <code>postgresql://</code>)</li>
+          <li>In Vercel → your project → Settings → Environment Variables → add <code>DATABASE_URL</code></li>
+          <li>Click <strong>Redeploy</strong> — profiles will sync automatically from any device</li>
+        </ol>
+      </div>
+    </div>
   </div>
 
   <div class="flash" id="flash"></div>
@@ -354,38 +391,54 @@
   const _sess = Auth.requireAuth();
   if (_sess) document.getElementById('nav-user').textContent = '👤 ' + _sess.username;
 
-  // ── localStorage-based profile store ─────────────────────────────────────────
-  // Keyed by username so multiple users on same browser are isolated.
+  // ── API availability ──────────────────────────────────────────────────────────
+  // null = not checked yet, true = server DB ready, false = no DB (localStorage mode)
+  let apiAvailable = null;
+
+  function apiHeaders() {
+    return { 'Content-Type': 'application/json', ...Auth.authHeaders() };
+  }
+
+  // ── localStorage fallback store ───────────────────────────────────────────────
   function storageKey() { return 'ic_profiles_' + (_sess?.username || 'guest'); }
 
-  function getProfiles() {
+  function getLocalProfiles() {
     try { return JSON.parse(localStorage.getItem(storageKey()) || '[]'); }
     catch { return []; }
   }
 
-  function saveProfiles(profiles) {
+  function saveLocalProfiles(profiles) {
     localStorage.setItem(storageKey(), JSON.stringify(profiles));
   }
 
-  function createProfile(data) {
-    const profiles = getProfiles();
+  function createLocalProfile(data) {
+    const profiles = getLocalProfiles();
     const now = new Date().toISOString();
     const profile = { id: crypto.randomUUID(), ...data, createdAt: now, updatedAt: now };
     profiles.push(profile);
-    saveProfiles(profiles);
+    saveLocalProfiles(profiles);
     return profile;
   }
 
-  function updateProfileById(id, data) {
-    const profiles = getProfiles();
+  function updateLocalProfile(id, data) {
+    const profiles = getLocalProfiles();
     const idx = profiles.findIndex(p => p.id === id);
     if (idx === -1) throw new Error('Profile not found');
     profiles[idx] = { ...profiles[idx], ...data, updatedAt: new Date().toISOString() };
-    saveProfiles(profiles);
+    saveLocalProfiles(profiles);
   }
 
-  function removeProfile(id) {
-    saveProfiles(getProfiles().filter(p => p.id !== id));
+  function removeLocalProfile(id) {
+    saveLocalProfiles(getLocalProfiles().filter(p => p.id !== id));
+  }
+
+  // ── DB banner ─────────────────────────────────────────────────────────────────
+  function showDbBanner() { document.getElementById('db-banner').style.display = ''; }
+  function hideDbBanner() { document.getElementById('db-banner').style.display = 'none'; }
+  function toggleDbHelp(e) {
+    if (e) e.preventDefault();
+    const el = document.getElementById('db-help');
+    el.style.display = el.style.display === 'none' ? '' : 'none';
   }
 
   // ── Flash & Modal messages ────────────────────────────────────────────────────
@@ -404,11 +457,57 @@
   }
   function hideModalMsg() { document.getElementById('modal-msg').style.display = 'none'; }
 
-  // ── Render profiles ───────────────────────────────────────────────────────────
+  // ── Profile list ──────────────────────────────────────────────────────────────
+  // Stores summary objects: {id, name, hasResume, hasJD, docsCount, createdAt, updatedAt}
   let allProfiles = [];
 
-  function loadAndRender() {
-    allProfiles = getProfiles();
+  async function loadAndRender() {
+    const container = document.getElementById('profiles-list');
+    container.innerHTML = '<div class="loading-row">Loading…</div>';
+
+    try {
+      const res = await fetch('/api/profiles', { headers: Auth.authHeaders() });
+
+      if (res.status === 503) {
+        const body = await res.json().catch(() => ({}));
+        if (body.code === 'NO_DATABASE') {
+          apiAvailable = false;
+          showDbBanner();
+          _loadFromLocalStorage();
+          return;
+        }
+      }
+
+      if (res.status === 401) { Auth.logout(); return; }
+      if (!res.ok) throw new Error('Server error ' + res.status);
+
+      const data = await res.json();
+      apiAvailable = true;
+      hideDbBanner();
+      allProfiles = data.profiles; // [{id, name, hasResume, hasJD, docsCount, ...}]
+      renderProfiles();
+
+    } catch (err) {
+      console.warn('API unreachable, using localStorage:', err.message);
+      if (apiAvailable === null) {
+        apiAvailable = false;
+        showDbBanner();
+      }
+      _loadFromLocalStorage();
+    }
+  }
+
+  function _loadFromLocalStorage() {
+    const stored = getLocalProfiles();
+    allProfiles = stored.map(p => ({
+      id:        p.id,
+      name:      p.name,
+      hasResume: (p.resumeText || '').length > 0,
+      hasJD:     (p.jobDescription || '').length > 0,
+      docsCount: (p.supportingDocs || []).length,
+      createdAt: p.createdAt,
+      updatedAt: p.updatedAt,
+    }));
     renderProfiles();
   }
 
@@ -429,18 +528,14 @@
     const grid = document.createElement('div');
     grid.className = 'profiles-grid';
 
-    allProfiles.slice().reverse().forEach(p => {
+    [...allProfiles].forEach(p => {
       const card = document.createElement('div');
       card.className = 'profile-card';
 
-      const hasResume = (p.resumeText || '').length > 0;
-      const hasJD     = (p.jobDescription || '').length > 0;
-      const docsCount = (p.supportingDocs || []).length;
-
       const chips = [
-        hasResume ? '<span class="chip chip-has">📄 Resume</span>' : '<span class="chip chip-miss">No Resume</span>',
-        hasJD     ? '<span class="chip chip-has">📝 Job Description</span>' : '<span class="chip chip-miss">No JD</span>',
-        docsCount ? `<span class="chip chip-has">📎 ${docsCount} doc${docsCount > 1 ? 's' : ''}</span>` : '',
+        p.hasResume ? '<span class="chip chip-has">📄 Resume</span>' : '<span class="chip chip-miss">No Resume</span>',
+        p.hasJD     ? '<span class="chip chip-has">📝 Job Description</span>' : '<span class="chip chip-miss">No JD</span>',
+        p.docsCount ? `<span class="chip chip-has">📎 ${p.docsCount} doc${p.docsCount > 1 ? 's' : ''}</span>` : '',
       ].filter(Boolean).join('');
 
       const date = new Date(p.updatedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
@@ -474,10 +569,24 @@
     window.location.href = '/interview/';
   }
 
-  function confirmDelete(id, name) {
+  async function confirmDelete(id, name) {
     if (!confirm(`Delete "${name}"? This cannot be undone.`)) return;
-    removeProfile(id);
-    allProfiles = getProfiles();
+
+    if (apiAvailable) {
+      try {
+        const res = await fetch(`/api/profiles/${id}`, {
+          method: 'DELETE', headers: Auth.authHeaders(),
+        });
+        if (!res.ok && res.status !== 404) throw new Error('Delete failed (' + res.status + ')');
+      } catch (err) {
+        showFlash('Failed to delete: ' + err.message, 'error');
+        return;
+      }
+    } else {
+      removeLocalProfile(id);
+    }
+
+    allProfiles = allProfiles.filter(p => p.id !== id);
     renderProfiles();
     showFlash(`"${name}" deleted`);
   }
@@ -511,14 +620,37 @@
     setTimeout(() => document.getElementById('f-name').focus(), 80);
   }
 
-  function openEdit(id) {
+  async function openEdit(id) {
     resetModal();
-    const p = getProfiles().find(x => x.id === id);
-    if (!p) { showFlash('Profile not found', 'error'); return; }
-
-    editingId = id;
     document.getElementById('modal-title').textContent = 'Edit Profile';
     document.getElementById('save-btn').textContent    = 'Update Profile';
+    document.getElementById('overlay').classList.add('open');
+    showModalMsg('Loading profile…', 'info');
+
+    let p;
+    if (apiAvailable) {
+      try {
+        const res = await fetch(`/api/profiles/${id}`, { headers: Auth.authHeaders() });
+        if (!res.ok) throw new Error('Server returned ' + res.status);
+        const data = await res.json();
+        p = {
+          id:             data.profile.id,
+          name:           data.profile.name,
+          resumeText:     data.profile.resumeText     || '',
+          jobDescription: data.profile.jobDescription || '',
+          supportingDocs: data.profile.supportingDocs || [],
+        };
+      } catch (err) {
+        showModalMsg('Could not load profile: ' + err.message, 'error');
+        return;
+      }
+    } else {
+      p = getLocalProfiles().find(x => x.id === id);
+      if (!p) { showModalMsg('Profile not found', 'error'); return; }
+    }
+
+    hideModalMsg();
+    editingId = id;
 
     document.getElementById('f-name').value = p.name;
     document.getElementById('f-jd').value   = p.jobDescription || '';
@@ -529,14 +661,12 @@
     }
 
     if (p.supportingDocs?.length) {
-      const notesDoc = p.supportingDocs.find(d => d.name === 'Notes');
+      const notesDoc  = p.supportingDocs.find(d => d.name === 'Notes');
       if (notesDoc) document.getElementById('f-notes').value = notesDoc.text;
       const otherDocs = p.supportingDocs.filter(d => d.name !== 'Notes');
       modalDocsUploaded = otherDocs.map(d => ({ name: d.name, text: d.text, status: 'ok' }));
       renderModalDocs();
     }
-
-    document.getElementById('overlay').classList.add('open');
   }
 
   function closeModal() {
@@ -667,7 +797,7 @@
   }
 
   // ── Save ──────────────────────────────────────────────────────────────────────
-  function saveModal() {
+  async function saveModal() {
     const name = document.getElementById('f-name').value.trim();
     if (!name) {
       document.getElementById('f-name').focus();
@@ -695,18 +825,35 @@
     btn.disabled = true; btn.textContent = 'Saving…';
 
     try {
-      const data = { name, resumeText, jobDescription, supportingDocs };
-      if (editingId) {
-        updateProfileById(editingId, data);
+      const payload = { name, resumeText, jobDescription, supportingDocs };
+
+      if (apiAvailable) {
+        // ── Server-side save ──────────────────────────────────────────────────
+        const url    = editingId ? `/api/profiles/${editingId}` : '/api/profiles';
+        const method = editingId ? 'PUT' : 'POST';
+        const res = await fetch(url, {
+          method,
+          headers: apiHeaders(),
+          body: JSON.stringify(payload),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.error || `Save failed (${res.status})`);
         closeModal();
-        showFlash(`"${name}" updated`);
+        showFlash(editingId ? `"${name}" updated` : `"${name}" saved successfully`);
+        await loadAndRender(); // refresh list from server
+
       } else {
-        createProfile(data);
+        // ── localStorage fallback ─────────────────────────────────────────────
+        if (editingId) {
+          updateLocalProfile(editingId, payload);
+        } else {
+          createLocalProfile(payload);
+        }
         closeModal();
-        showFlash(`"${name}" saved successfully`);
+        showFlash(editingId ? `"${name}" updated` : `"${name}" saved successfully`);
+        _loadFromLocalStorage();
       }
-      allProfiles = getProfiles();
-      renderProfiles();
+
     } catch(err) {
       showModalMsg(err.message || 'Failed to save profile', 'error');
     } finally {

@@ -516,7 +516,15 @@
   }
   updateQuota();
 
-  // ── localStorage profile store (same key logic as profiles.html) ─────────────
+  // ── API availability ──────────────────────────────────────────────────────────
+  // null = not checked, true = server DB ready, false = no DB (localStorage mode)
+  let apiAvailable = null;
+
+  function apiHeaders() {
+    return { 'Content-Type': 'application/json', ...Auth.authHeaders() };
+  }
+
+  // ── localStorage fallback store ───────────────────────────────────────────────
   function storageKey() { return 'ic_profiles_' + (_sess?.username || 'guest'); }
   function getStoredProfiles() {
     try { return JSON.parse(localStorage.getItem(storageKey()) || '[]'); }
@@ -537,14 +545,49 @@
   // Answer
   let streamCtrl = null, fullAnswer = '', utterance = null;
 
-  // ── Profile List (reads from localStorage — instant, no server needed) ────────
-  function loadProfileList() {
-    const sel      = document.getElementById('profile-select');
-    const profiles = getStoredProfiles();
+  // ── Profile List — API-first with localStorage fallback ───────────────────────
+  async function loadProfileList() {
+    try {
+      const res = await fetch('/api/profiles', { headers: Auth.authHeaders() });
 
+      if (res.status === 503) {
+        const body = await res.json().catch(() => ({}));
+        if (body.code === 'NO_DATABASE') {
+          apiAvailable = false;
+          _populateSelectFromStorage();
+          return;
+        }
+      }
+
+      if (res.status === 401) { Auth.logout(); return; }
+      if (!res.ok) throw new Error('Server error ' + res.status);
+
+      const data = await res.json();
+      apiAvailable = true;
+      _populateSelect(data.profiles);
+
+    } catch (err) {
+      console.warn('API unreachable, using localStorage:', err.message);
+      apiAvailable = false;
+      _populateSelectFromStorage();
+    }
+  }
+
+  function _populateSelectFromStorage() {
+    const profiles = getStoredProfiles();
+    // Normalise to the same summary shape the API uses
+    const summaries = [...profiles].reverse().map(p => ({
+      id:   p.id,
+      name: p.name,
+    }));
+    _populateSelect(summaries);
+  }
+
+  function _populateSelect(profiles) {
+    const sel = document.getElementById('profile-select');
     while (sel.options.length > 1) sel.remove(1);
 
-    if (profiles.length === 0) {
+    if (!profiles || profiles.length === 0) {
       document.getElementById('profile-picker').style.display = 'none';
       document.getElementById('empty-state').style.display = '';
       return;
@@ -552,9 +595,9 @@
 
     document.getElementById('profile-picker').style.display = '';
     document.getElementById('empty-state').style.display = 'none';
-    [...profiles].reverse().forEach(p => sel.appendChild(new Option(p.name, p.id)));
+    profiles.forEach(p => sel.appendChild(new Option(p.name, p.id)));
 
-    // Auto-load if redirected from profiles page
+    // Auto-load if redirected from profiles page via "Load in Coach"
     const autoId = sessionStorage.getItem('loadProfileId');
     if (autoId) {
       sessionStorage.removeItem('loadProfileId');
@@ -568,7 +611,7 @@
   }
 
   // ── Session Lifecycle ─────────────────────────────────────────────────────────
-  function beginSession() {
+  async function beginSession() {
     const sel = document.getElementById('profile-select');
     const id  = sel.value;
     if (!id) return;
@@ -577,8 +620,25 @@
     btn.textContent = 'Loading…'; btn.disabled = true;
 
     try {
-      const profile = getStoredProfiles().find(p => p.id === id);
-      if (!profile) throw new Error('Profile not found — it may have been deleted.');
+      let profile;
+
+      if (apiAvailable) {
+        // Fetch full profile data (list endpoint only returns summaries)
+        const res = await fetch(`/api/profiles/${id}`, { headers: Auth.authHeaders() });
+        if (!res.ok) throw new Error('Could not load profile from server (' + res.status + ')');
+        const data = await res.json();
+        profile = {
+          name:           data.profile.name,
+          resumeText:     data.profile.resumeText     || '',
+          jobDescription: data.profile.jobDescription || '',
+          supportingDocs: data.profile.supportingDocs || [],
+        };
+      } else {
+        // Load from localStorage
+        const stored = getStoredProfiles().find(p => p.id === id);
+        if (!stored) throw new Error('Profile not found — it may have been deleted.');
+        profile = stored;
+      }
 
       resumeText     = profile.resumeText     || '';
       jobDescription = profile.jobDescription || '';
@@ -587,9 +647,9 @@
       // Profile bar
       document.getElementById('sess-name').textContent = profile.name;
       const tags = [];
-      if (profile.resumeText)         tags.push('Resume ✓');
-      if (profile.jobDescription)     tags.push('JD ✓');
-      if (profile.supportingDocs?.length) tags.push(`${profile.supportingDocs.length} doc${profile.supportingDocs.length > 1 ? 's' : ''}`);
+      if (resumeText)             tags.push('Resume ✓');
+      if (jobDescription)         tags.push('JD ✓');
+      if (supportingDocs?.length) tags.push(`${supportingDocs.length} doc${supportingDocs.length > 1 ? 's' : ''}`);
       document.getElementById('sess-meta').textContent = tags.join(' · ') || 'No data attached';
 
       // Nav chip
@@ -606,7 +666,7 @@
 
     } catch(err) {
       btn.textContent = 'Begin Session →';
-      btn.disabled = false;
+      btn.disabled = !sel.value;
       alert('Could not load profile: ' + err.message);
     }
   }
