@@ -342,6 +342,13 @@
       border-radius: 8px; padding: 12px 16px; font-size: 13px; color: #ff8080; text-align: center;
     }
 
+    .card-toggle-btn {
+      background: none; border: none; color: var(--text-muted);
+      font-size: 13px; cursor: pointer; padding: 4px 8px;
+      border-radius: 6px; transition: background 0.15s;
+    }
+    .card-toggle-btn:hover { background: var(--surface2); }
+
     @media (max-width: 600px) {
       .container { padding: 20px 14px 60px; }
       header { padding: 14px 16px; }
@@ -371,13 +378,49 @@
     <p>Upload your resume and job description — then speak your question and get a live answer.</p>
   </div>
 
+  <!-- Job Profile selector -->
+  <div class="card profile-selector-card" id="profile-card">
+    <div class="card-header-row" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+      <div style="display:flex;align-items:center;gap:10px">
+        <div class="card-num" id="profile-num">📋</div>
+        <div class="card-title">Job Profile</div>
+      </div>
+      <a href="/profiles.html" style="font-size:13px;color:var(--accent2);font-weight:600">Manage Profiles →</a>
+    </div>
+
+    <!-- Profile loaded state (hidden until profile selected) -->
+    <div id="profile-loaded-bar" style="display:none;background:rgba(6,182,212,0.08);border:1px solid rgba(6,182,212,0.2);border-radius:10px;padding:12px 16px;margin-bottom:14px;align-items:center;justify-content:space-between">
+      <div>
+        <span style="font-size:13px;font-weight:700;color:var(--accent3)">✓ </span>
+        <span id="profile-loaded-name" style="font-size:13px;font-weight:700;color:var(--text)"></span>
+        <span style="font-size:12px;color:var(--text-muted);margin-left:8px" id="profile-loaded-meta"></span>
+      </div>
+      <button onclick="clearLoadedProfile()" style="font-size:12px;color:var(--text-muted);background:none;border:none;cursor:pointer;padding:4px 8px">✕ Clear</button>
+    </div>
+
+    <div id="profile-select-row" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+      <select id="profile-select" style="flex:1;min-width:180px;background:var(--surface2);color:var(--text);border:1px solid var(--border);border-radius:10px;padding:10px 14px;font-size:14px;font-family:var(--font);cursor:pointer">
+        <option value="">— Select a saved profile —</option>
+      </select>
+      <button onclick="loadSelectedProfile()" class="btn btn-outline" style="padding:9px 20px;font-size:14px;white-space:nowrap">
+        Load Profile
+      </button>
+      <button onclick="saveCurrentAsProfile()" class="btn btn-ghost" id="save-profile-btn" style="padding:9px 20px;font-size:14px;white-space:nowrap" title="Save current Resume + JD as a new profile">
+        + Save as Profile
+      </button>
+    </div>
+    <div id="profile-msg" style="margin-top:10px;font-size:13px;display:none"></div>
+  </div>
+
   <!-- Step 1: Resume -->
-  <div class="card">
+  <div class="card" id="card-resume">
     <div class="card-header">
       <div class="card-num" id="num1">1</div>
       <div class="card-title">Your Resume</div>
       <div class="card-badge" id="resume-badge"><span class="badge badge-missing">Missing</span></div>
+      <button class="card-toggle-btn" onclick="toggleCard('card-resume')">▲</button>
     </div>
+    <div class="card-body">
     <div class="tabs">
       <button class="tab active" id="tab-upload" onclick="switchTab('upload')">📄 Upload PDF</button>
       <button class="tab" id="tab-paste" onclick="switchTab('paste')">✏️ Paste Text</button>
@@ -400,26 +443,32 @@
       <label for="resume-text">Paste your resume text below</label>
       <textarea id="resume-text" rows="7" placeholder="Paste your resume content here…" oninput="onResumePaste()"></textarea>
     </div>
+    </div>
   </div>
 
   <!-- Step 2: Job Description -->
-  <div class="card">
+  <div class="card" id="card-jd">
     <div class="card-header">
       <div class="card-num" id="num2">2</div>
       <div class="card-title">Job Description</div>
       <div class="card-badge" id="jd-badge"><span class="badge badge-missing">Missing</span></div>
+      <button class="card-toggle-btn" onclick="toggleCard('card-jd')">▲</button>
     </div>
+    <div class="card-body">
     <label for="jd-text">Paste the full job description</label>
     <textarea id="jd-text" rows="5" placeholder="Copy and paste the job description from the company's careers page…" oninput="onJdInput()"></textarea>
+    </div>
   </div>
 
   <!-- Step 2b: Supporting Documents (optional) -->
-  <div class="card">
+  <div class="card" id="card-docs">
     <div class="card-header">
       <div class="card-num" style="background:var(--surface2);color:var(--text-muted);font-size:13px">+</div>
       <div class="card-title">Supporting Documents <span style="font-size:12px;color:var(--text-muted);font-weight:400">(optional)</span></div>
       <div class="card-badge" id="docs-badge"></div>
+      <button class="card-toggle-btn" onclick="toggleCard('card-docs')">▲</button>
     </div>
+    <div class="card-body">
     <p style="font-size:13px;color:var(--text-muted);margin-bottom:12px;line-height:1.6">
       Upload any extra context the AI should know — portfolio, cover letter, certifications, company research, or notes. Supports multiple PDFs.
     </p>
@@ -432,6 +481,7 @@
 
     <div class="docs-list" id="docs-list"></div>
     <div class="docs-count" id="docs-count"></div>
+    </div>
   </div>
 
   <!-- Step 3: Voice -->
@@ -1383,6 +1433,157 @@
       setTimeout(() => btn.textContent = orig, 2000);
     });
   }
+
+  // ── Job Profiles ──────────────────────────────────────────────────────────
+  const PROFILES_API = '/api/profiles';
+
+  async function loadProfileList() {
+    try {
+      const res = await fetch(PROFILES_API, { headers: Auth.authHeaders() });
+      if (!res.ok) return;
+      const { profiles } = await res.json();
+      const sel = document.getElementById('profile-select');
+      // Clear existing options except placeholder
+      while (sel.options.length > 1) sel.remove(1);
+      profiles.forEach(p => {
+        const opt = document.createElement('option');
+        opt.value = p.id;
+        const parts = [];
+        if (p.hasResume) parts.push('Resume');
+        if (p.hasJD) parts.push('JD');
+        if (p.docsCount) parts.push(`${p.docsCount} doc${p.docsCount>1?'s':''}`);
+        opt.textContent = `${p.name}  (${parts.join(' · ')})`;
+        sel.appendChild(opt);
+      });
+    } catch(_) {}
+  }
+
+  async function loadSelectedProfile() {
+    const sel = document.getElementById('profile-select');
+    const id = sel.value;
+    if (!id) { showProfileMsg('Please select a profile first', 'warn'); return; }
+    showProfileMsg('Loading…', 'info');
+    try {
+      const res = await fetch(`${PROFILES_API}/${id}`, { headers: Auth.authHeaders() });
+      if (!res.ok) throw new Error('Not found');
+      const { profile } = await res.json();
+
+      // Apply to app state
+      if (profile.resumeText) {
+        resumeText = profile.resumeText;
+        // Show in paste tab
+        document.getElementById('resume-text').value = profile.resumeText;
+        switchTab('paste');
+      }
+      if (profile.jobDescription) {
+        document.getElementById('jd-text').value = profile.jobDescription;
+        onJdInput();
+      }
+      if (profile.supportingDocs?.length) {
+        supportingDocs = profile.supportingDocs.map(d => ({ ...d, id: crypto.randomUUID(), status: 'ready' }));
+        renderDocsList();
+      }
+
+      updateResumeBadge();
+      updateStartBtn();
+
+      // Show loaded bar
+      const meta = [];
+      if (profile.resumeText) meta.push('Resume ✓');
+      if (profile.jobDescription) meta.push('JD ✓');
+      if (profile.supportingDocs?.length) meta.push(`${profile.supportingDocs.length} docs ✓`);
+      document.getElementById('profile-loaded-name').textContent = profile.name;
+      document.getElementById('profile-loaded-meta').textContent = meta.join(' · ');
+      document.getElementById('profile-loaded-bar').style.display = 'flex';
+
+      // Auto-collapse the 3 data cards to save space
+      collapseCard('card-resume');
+      collapseCard('card-jd');
+      collapseCard('card-docs');
+
+      showProfileMsg(`✓ "${profile.name}" loaded successfully`, 'success');
+    } catch(err) {
+      showProfileMsg('Failed to load profile', 'error');
+    }
+  }
+
+  async function saveCurrentAsProfile() {
+    const jd = document.getElementById('jd-text').value.trim();
+    if (!resumeText && !jd) { showProfileMsg('Add a Resume or Job Description first', 'warn'); return; }
+
+    const name = prompt('Profile name (e.g. "Google SWE L5", "Product Manager - Stripe"):');
+    if (!name?.trim()) return;
+
+    showProfileMsg('Saving…', 'info');
+    try {
+      const body = {
+        name: name.trim(),
+        resumeText: resumeText || '',
+        jobDescription: jd,
+        supportingDocs: supportingDocs.filter(d => d.status === 'ready').map(d => ({ name: d.name, text: d.text })),
+      };
+      const res = await fetch(PROFILES_API, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...Auth.authHeaders() },
+        body: JSON.stringify(body),
+      });
+      if (!res.ok) { const e = await res.json(); throw new Error(e.message || e.error); }
+      showProfileMsg(`✓ Saved as "${name.trim()}"`, 'success');
+      loadProfileList(); // refresh dropdown
+    } catch(err) {
+      showProfileMsg('Failed to save: ' + err.message, 'error');
+    }
+  }
+
+  function clearLoadedProfile() {
+    document.getElementById('profile-loaded-bar').style.display = 'none';
+    document.getElementById('profile-select').value = '';
+    showProfileMsg('', 'none');
+    expandCard('card-resume');
+    expandCard('card-jd');
+    expandCard('card-docs');
+  }
+
+  function showProfileMsg(text, type) {
+    const el = document.getElementById('profile-msg');
+    if (!text || type === 'none') { el.style.display = 'none'; return; }
+    el.style.display = '';
+    const colors = { success: 'var(--accent2)', error: 'var(--danger)', warn: '#f59e0b', info: 'var(--text-muted)' };
+    el.style.color = colors[type] || 'var(--text-muted)';
+    el.textContent = text;
+    if (type === 'success') setTimeout(() => { el.style.display = 'none'; }, 3000);
+  }
+
+  // ── Card collapse/expand ───────────────────────────────────────────────────
+  function collapseCard(cardId) {
+    const card = document.getElementById(cardId);
+    if (!card) return;
+    const body = card.querySelector('.card-body');
+    const toggleBtn = card.querySelector('.card-toggle-btn');
+    if (body) body.style.display = 'none';
+    if (toggleBtn) toggleBtn.textContent = '▼';
+    card.dataset.collapsed = '1';
+  }
+  function expandCard(cardId) {
+    const card = document.getElementById(cardId);
+    if (!card) return;
+    const body = card.querySelector('.card-body');
+    const toggleBtn = card.querySelector('.card-toggle-btn');
+    if (body) body.style.display = '';
+    if (toggleBtn) toggleBtn.textContent = '▲';
+    delete card.dataset.collapsed;
+  }
+  function toggleCard(cardId) {
+    const card = document.getElementById(cardId);
+    if (!card) return;
+    if (card.dataset.collapsed) expandCard(cardId);
+    else collapseCard(cardId);
+  }
+
+  // Load profiles on page load (added to existing DOMContentLoaded handler above)
+  document.addEventListener('DOMContentLoaded', () => {
+    loadProfileList();
+  });
 </script>
 
 <!-- Whisper (transformers.js) — runs entirely in the browser, no API key needed -->

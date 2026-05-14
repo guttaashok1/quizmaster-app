@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Job Profiles — Interview Coach</title>
+  <script src="/auth.js"></script>
+  <link rel="stylesheet" href="/styles.css" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg, #080812);
+      color: var(--text, #fff);
+      font-family: var(--font, 'Space Grotesk', system-ui, sans-serif);
+      min-height: 100vh;
+    }
+
+    .page-nav {
+      position: sticky; top: 0; z-index: 100;
+      background: rgba(8,8,18,0.85);
+      backdrop-filter: blur(18px);
+      border-bottom: 1px solid rgba(255,255,255,0.07);
+      padding: 0 32px; height: 60px;
+      display: flex; align-items: center; gap: 14px;
+    }
+    .page-nav a { color: rgba(255,255,255,0.5); text-decoration: none; font-size: 14px; }
+    .page-nav a:hover { color: #fff; }
+    .page-nav .sep { color: rgba(255,255,255,0.2); }
+    .page-nav h1 { font-size: 16px; font-weight: 700; color: #fff; }
+    .page-nav .nav-right { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+    .page-nav .nav-user { font-size: 13px; color: rgba(255,255,255,0.5); }
+
+    .container {
+      max-width: 860px; margin: 0 auto;
+      padding: 36px 24px 80px;
+    }
+
+    .page-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 28px; flex-wrap: wrap; gap: 14px;
+    }
+    .page-header h2 { font-size: 22px; font-weight: 800; }
+    .page-header p { font-size: 14px; color: rgba(255,255,255,0.5); margin-top: 4px; }
+
+    /* Buttons */
+    .btn {
+      display: inline-flex; align-items: center; gap: 7px;
+      padding: 10px 20px; border-radius: 9px; font-size: 14px; font-weight: 600;
+      cursor: pointer; border: none; transition: opacity 0.2s, box-shadow 0.2s;
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, #2563eb, #38bdf8);
+      color: #fff;
+    }
+    .btn-primary:hover { box-shadow: 0 0 18px rgba(37,99,235,0.45); }
+    .btn-outline {
+      background: transparent; border: 1px solid rgba(255,255,255,0.15);
+      color: rgba(255,255,255,0.8);
+    }
+    .btn-outline:hover { border-color: rgba(255,255,255,0.35); color: #fff; }
+    .btn-danger {
+      background: transparent; border: 1px solid rgba(255,79,79,0.35);
+      color: #ff6b6b;
+    }
+    .btn-danger:hover { background: rgba(255,79,79,0.1); }
+    .btn-sm { padding: 6px 13px; font-size: 13px; }
+    .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    /* Profile cards grid */
+    .profiles-grid {
+      display: flex; flex-direction: column; gap: 14px;
+    }
+
+    .profile-card {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.09);
+      border-radius: 14px; padding: 20px 22px;
+      transition: border-color 0.2s;
+    }
+    .profile-card:hover { border-color: rgba(255,255,255,0.16); }
+
+    .profile-card-header {
+      display: flex; align-items: flex-start; justify-content: space-between; gap: 12px;
+    }
+    .profile-card-name {
+      font-size: 16px; font-weight: 700; color: #fff;
+    }
+    .profile-card-meta {
+      font-size: 12px; color: rgba(255,255,255,0.45); margin-top: 5px;
+      display: flex; gap: 10px; flex-wrap: wrap;
+    }
+    .profile-card-meta .chip {
+      background: rgba(255,255,255,0.07); border-radius: 5px;
+      padding: 2px 8px; font-size: 11px;
+    }
+    .profile-card-meta .chip.has { background: rgba(6,182,212,0.12); color: #06b6d4; }
+
+    .profile-card-actions {
+      display: flex; gap: 8px; flex-shrink: 0; flex-wrap: wrap;
+    }
+
+    /* Empty state */
+    .empty-state {
+      text-align: center; padding: 64px 24px;
+      color: rgba(255,255,255,0.4); font-size: 15px;
+    }
+    .empty-state .empty-icon { font-size: 48px; margin-bottom: 14px; }
+    .empty-state p { line-height: 1.7; }
+
+    /* Modal overlay */
+    .modal-overlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,0.65); z-index: 200;
+      align-items: center; justify-content: center;
+      padding: 20px;
+    }
+    .modal-overlay.open { display: flex; }
+
+    .modal {
+      background: #111122; border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 16px; padding: 28px; width: 100%; max-width: 640px;
+      max-height: 90vh; overflow-y: auto;
+    }
+    .modal h3 { font-size: 18px; font-weight: 700; margin-bottom: 20px; }
+
+    .form-group { margin-bottom: 18px; }
+    .form-group label {
+      display: block; font-size: 13px; font-weight: 600;
+      color: rgba(255,255,255,0.7); margin-bottom: 7px;
+    }
+    .form-group input[type="text"],
+    .form-group textarea {
+      width: 100%; background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 9px; color: #fff;
+      font-family: var(--font, 'Space Grotesk', system-ui, sans-serif);
+      font-size: 14px; padding: 11px 14px;
+      resize: vertical; line-height: 1.6;
+      transition: border-color 0.2s;
+      outline: none;
+    }
+    .form-group input[type="text"]:focus,
+    .form-group textarea:focus {
+      border-color: #2563eb;
+      box-shadow: 0 0 0 3px rgba(37,99,235,0.18);
+    }
+    .form-group input::placeholder,
+    .form-group textarea::placeholder { color: rgba(255,255,255,0.3); }
+
+    .modal-actions {
+      display: flex; gap: 10px; justify-content: flex-end; margin-top: 24px;
+      flex-wrap: wrap;
+    }
+
+    .flash {
+      padding: 12px 16px; border-radius: 9px; font-size: 14px;
+      margin-bottom: 20px; display: none;
+    }
+    .flash.success { background: rgba(6,182,212,0.1); border: 1px solid rgba(6,182,212,0.25); color: #06b6d4; }
+    .flash.error   { background: rgba(255,79,79,0.1);  border: 1px solid rgba(255,79,79,0.3);  color: #ff6b6b; }
+
+    .loading-row {
+      text-align: center; padding: 48px; color: rgba(255,255,255,0.4); font-size: 14px;
+    }
+
+    @media (max-width: 600px) {
+      .page-nav { padding: 0 16px; }
+      .container { padding: 20px 14px 60px; }
+      .profile-card-header { flex-direction: column; }
+      .profile-card-actions { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+
+<nav class="page-nav">
+  <a href="/interview/">← Interview Coach</a>
+  <span class="sep">›</span>
+  <h1>Job Profiles</h1>
+  <div class="nav-right">
+    <span class="nav-user" id="nav-user"></span>
+    <button class="btn btn-outline btn-sm" onclick="Auth.logout()">Log out</button>
+  </div>
+</nav>
+
+<div class="container">
+  <div class="page-header">
+    <div>
+      <h2>Saved Job Profiles</h2>
+      <p>Each profile stores your Resume, Job Description, and Supporting Docs — load one on the interview page to auto-fill everything instantly.</p>
+    </div>
+    <button class="btn btn-primary" onclick="openCreateModal()">+ New Profile</button>
+  </div>
+
+  <div class="flash" id="flash"></div>
+
+  <div id="profiles-list">
+    <div class="loading-row">Loading your profiles…</div>
+  </div>
+</div>
+
+<!-- Create / Edit Modal -->
+<div class="modal-overlay" id="modal-overlay" onclick="handleOverlayClick(event)">
+  <div class="modal">
+    <h3 id="modal-title">New Job Profile</h3>
+
+    <div class="form-group">
+      <label for="f-name">Profile Name *</label>
+      <input type="text" id="f-name" placeholder='e.g. "Google SWE L5" or "PM at Stripe"' maxlength="100" />
+    </div>
+
+    <div class="form-group">
+      <label for="f-resume">Resume Text</label>
+      <textarea id="f-resume" rows="7" placeholder="Paste your resume text here…"></textarea>
+    </div>
+
+    <div class="form-group">
+      <label for="f-jd">Job Description</label>
+      <textarea id="f-jd" rows="6" placeholder="Paste the full job description here…"></textarea>
+    </div>
+
+    <div class="form-group">
+      <label for="f-docs">Supporting Notes / Extra Context <span style="font-weight:400;color:rgba(255,255,255,0.35)">(optional)</span></label>
+      <textarea id="f-docs" rows="4" placeholder="Paste any additional context — company research, cover letter notes, certifications, etc."></textarea>
+      <div style="font-size:12px;color:rgba(255,255,255,0.3);margin-top:5px">This will be stored as a single supporting document named "Notes".</div>
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn btn-outline" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" id="modal-save-btn" onclick="saveModal()">Save Profile</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  // ── Auth guard ─────────────────────────────────────────────────────────────
+  const _session = Auth.requireAuth();
+  if (_session) {
+    document.getElementById('nav-user').textContent = '👤 ' + _session.username;
+  }
+
+  const PROFILES_API = '/api/profiles';
+  let allProfiles = [];
+  let editingId = null; // null = create mode, string = edit mode
+
+  // ── Flash message ──────────────────────────────────────────────────────────
+  function showFlash(text, type = 'success') {
+    const el = document.getElementById('flash');
+    el.textContent = text;
+    el.className = 'flash ' + type;
+    el.style.display = '';
+    clearTimeout(el._timer);
+    el._timer = setTimeout(() => { el.style.display = 'none'; }, 4000);
+  }
+
+  // ── Load and render profiles ───────────────────────────────────────────────
+  async function loadProfiles() {
+    try {
+      const res = await fetch(PROFILES_API, { headers: Auth.authHeaders() });
+      if (!res.ok) throw new Error('Failed to load');
+      const { profiles } = await res.json();
+      allProfiles = profiles;
+      renderProfiles();
+    } catch (err) {
+      document.getElementById('profiles-list').innerHTML =
+        '<div class="loading-row" style="color:#ff6b6b">Failed to load profiles. Please refresh.</div>';
+    }
+  }
+
+  function renderProfiles() {
+    const container = document.getElementById('profiles-list');
+    if (allProfiles.length === 0) {
+      container.innerHTML = `
+        <div class="empty-state">
+          <div class="empty-icon">📋</div>
+          <p>No profiles yet.<br>Create your first profile to save your Resume + Job Description combo.</p>
+        </div>`;
+      return;
+    }
+
+    container.innerHTML = '';
+    const grid = document.createElement('div');
+    grid.className = 'profiles-grid';
+
+    allProfiles.forEach(p => {
+      const card = document.createElement('div');
+      card.className = 'profile-card';
+
+      const chips = [];
+      if (p.hasResume) chips.push('<span class="chip has">Resume ✓</span>');
+      else chips.push('<span class="chip">No Resume</span>');
+      if (p.hasJD) chips.push('<span class="chip has">JD ✓</span>');
+      else chips.push('<span class="chip">No JD</span>');
+      if (p.docsCount) chips.push(`<span class="chip has">${p.docsCount} doc${p.docsCount>1?'s':''} ✓</span>`);
+
+      const updatedDate = new Date(p.updatedAt).toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' });
+
+      card.innerHTML = `
+        <div class="profile-card-header">
+          <div>
+            <div class="profile-card-name">${escHtml(p.name)}</div>
+            <div class="profile-card-meta">
+              ${chips.join('')}
+              <span style="color:rgba(255,255,255,0.3)">Updated ${updatedDate}</span>
+            </div>
+          </div>
+          <div class="profile-card-actions">
+            <a href="/interview/" onclick="scheduleProfileLoad('${p.id}')" class="btn btn-primary btn-sm">Load in Coach</a>
+            <button class="btn btn-outline btn-sm" onclick="openEditModal('${p.id}')">Edit</button>
+            <button class="btn btn-danger btn-sm" onclick="deleteProfile('${p.id}', ${JSON.stringify(p.name)})">Delete</button>
+          </div>
+        </div>`;
+      grid.appendChild(card);
+    });
+
+    container.appendChild(grid);
+  }
+
+  function escHtml(str) {
+    return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  // Store profile id to load after redirect to interview page
+  function scheduleProfileLoad(id) {
+    sessionStorage.setItem('loadProfileId', id);
+  }
+
+  // ── Delete ─────────────────────────────────────────────────────────────────
+  async function deleteProfile(id, name) {
+    if (!confirm(`Delete profile "${name}"? This cannot be undone.`)) return;
+    try {
+      const res = await fetch(`${PROFILES_API}/${id}`, {
+        method: 'DELETE',
+        headers: Auth.authHeaders(),
+      });
+      if (!res.ok) throw new Error('Delete failed');
+      allProfiles = allProfiles.filter(p => p.id !== id);
+      renderProfiles();
+      showFlash(`"${name}" deleted`);
+    } catch (err) {
+      showFlash('Failed to delete profile', 'error');
+    }
+  }
+
+  // ── Modal helpers ──────────────────────────────────────────────────────────
+  function openCreateModal() {
+    editingId = null;
+    document.getElementById('modal-title').textContent = 'New Job Profile';
+    document.getElementById('f-name').value = '';
+    document.getElementById('f-resume').value = '';
+    document.getElementById('f-jd').value = '';
+    document.getElementById('f-docs').value = '';
+    document.getElementById('modal-save-btn').textContent = 'Save Profile';
+    document.getElementById('modal-overlay').classList.add('open');
+    document.getElementById('f-name').focus();
+  }
+
+  async function openEditModal(id) {
+    editingId = id;
+    document.getElementById('modal-title').textContent = 'Edit Profile';
+    document.getElementById('modal-save-btn').textContent = 'Update Profile';
+    document.getElementById('modal-overlay').classList.add('open');
+
+    // Fetch full profile
+    try {
+      const res = await fetch(`${PROFILES_API}/${id}`, { headers: Auth.authHeaders() });
+      if (!res.ok) throw new Error('Not found');
+      const { profile } = await res.json();
+      document.getElementById('f-name').value = profile.name;
+      document.getElementById('f-resume').value = profile.resumeText;
+      document.getElementById('f-jd').value = profile.jobDescription;
+      // Show first supporting doc in the notes field if it exists
+      const notesDoc = profile.supportingDocs?.find(d => d.name === 'Notes');
+      document.getElementById('f-docs').value = notesDoc?.text ?? (profile.supportingDocs?.[0]?.text ?? '');
+    } catch (err) {
+      closeModal();
+      showFlash('Could not load profile for editing', 'error');
+    }
+  }
+
+  function closeModal() {
+    document.getElementById('modal-overlay').classList.remove('open');
+    editingId = null;
+  }
+
+  function handleOverlayClick(e) {
+    if (e.target === document.getElementById('modal-overlay')) closeModal();
+  }
+
+  async function saveModal() {
+    const name = document.getElementById('f-name').value.trim();
+    if (!name) { alert('Please enter a profile name.'); return; }
+
+    const btn = document.getElementById('modal-save-btn');
+    btn.disabled = true;
+    btn.textContent = 'Saving…';
+
+    const resumeText = document.getElementById('f-resume').value.trim();
+    const jobDescription = document.getElementById('f-jd').value.trim();
+    const notesText = document.getElementById('f-docs').value.trim();
+    const supportingDocs = notesText ? [{ name: 'Notes', text: notesText }] : [];
+
+    const body = { name, resumeText, jobDescription, supportingDocs };
+
+    try {
+      let res;
+      if (editingId) {
+        res = await fetch(`${PROFILES_API}/${editingId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json', ...Auth.authHeaders() },
+          body: JSON.stringify(body),
+        });
+      } else {
+        res = await fetch(PROFILES_API, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', ...Auth.authHeaders() },
+          body: JSON.stringify(body),
+        });
+      }
+
+      if (!res.ok) {
+        const e = await res.json();
+        throw new Error(e.error || e.message || 'Save failed');
+      }
+
+      closeModal();
+      showFlash(editingId ? `"${name}" updated` : `"${name}" saved`);
+      await loadProfiles();
+    } catch (err) {
+      showFlash(err.message, 'error');
+    } finally {
+      btn.disabled = false;
+      btn.textContent = editingId ? 'Update Profile' : 'Save Profile';
+    }
+  }
+
+  // ── Init ───────────────────────────────────────────────────────────────────
+  document.addEventListener('DOMContentLoaded', () => {
+    loadProfiles();
+  });
+</script>
+</body>
+</html>

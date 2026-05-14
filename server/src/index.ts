@@ -11,6 +11,7 @@ import challengeRouter from './routes/challenge';
 import authRouter from './routes/auth';
 import interviewRouter from './routes/interview';
 import interviewAuthRouter from './routes/interviewAuth';
+import profilesRouter from './routes/profiles';
 import { initDatabase } from './services/database';
 
 const app = express();
@@ -109,6 +110,7 @@ app.use('/api/challenge', challengeRouter);
 app.use('/api/auth', authRouter);
 app.use('/api/interview', interviewRouter);
 app.use('/api/interview-auth', interviewAuthRouter);
+app.use('/api/profiles', profilesRouter);
 
 // ── 404 fallback for unknown API routes ───────────────────────────────────
 app.use('/api/*', (_req, res) => {
