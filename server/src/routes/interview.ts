@@ -108,6 +108,49 @@ router.post('/answer-stream', async (req: Request, res: Response) => {
   }
 });
 
+// POST /api/interview/detect-question — uses Claude Haiku to decide if transcript is an interview question
+router.post('/detect-question', async (req: Request, res: Response) => {
+  const { transcript } = req.body as { transcript?: string };
+  if (!transcript || transcript.trim().length < 8) {
+    res.json({ isQuestion: false, question: null, confidence: 'low' });
+    return;
+  }
+
+  try {
+    const client = getClient();
+    const response = await client.messages.create({
+      model: 'claude-haiku-4-5',
+      max_tokens: 200,
+      system: `You analyze audio transcripts from live job interviews. Your job:
+1. Determine if the text contains an interview question from the interviewer.
+2. If yes, extract the clean, grammatically correct question (fix transcription errors, remove filler words like "um", "uh", "so", "right").
+3. Interview questions include: behavioral ("tell me about a time"), technical, situational, opinion-based, role-specific.
+4. NOT interview questions: greetings, small talk, acknowledgements ("okay", "great", "sounds good"), mid-sentence fragments, background noise.
+Return ONLY valid JSON — no explanation, no markdown.`,
+      messages: [{
+        role: 'user',
+        content: `Transcript: "${transcript.trim()}"
+
+JSON response: {"isQuestion": true/false, "question": "clean question or null", "confidence": "high/medium/low"}`,
+      }],
+    });
+
+    const raw = response.content[0].type === 'text' ? response.content[0].text.trim() : '{}';
+    // Strip markdown code fences if model adds them
+    const cleaned = raw.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '').trim();
+    const result = JSON.parse(cleaned);
+    res.json({
+      isQuestion: Boolean(result.isQuestion),
+      question: result.question || null,
+      confidence: result.confidence || 'low',
+    });
+  } catch (err) {
+    console.error('detect-question error:', err);
+    // On error fall back to treating it as a question (don't lose user's text)
+    res.json({ isQuestion: true, question: transcript.trim(), confidence: 'low' });
+  }
+});
+
 // POST /api/interview/transcribe — converts audio blob to text via Whisper
 router.post('/transcribe', upload.single('audio'), async (req: Request, res: Response) => {
   if (!req.file) {

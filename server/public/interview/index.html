@@ -796,16 +796,47 @@
     btn.disabled = input.value.trim().length === 0;
   }
 
-  function sysAutoAnswer() {
+  // ── AI-powered question detection ─────────────────────────────────────────
+  async function sysAutoAnswer() {
     const text = sysAccumulated.trim();
-    if (!text || text.split(/\s+/).length < 6) return;
-    // Fill the editable box so the user can see/edit what was detected
+    if (!text || text.split(/\s+/).length < 5) return;
+
+    setSysStatus('listening', '🔍 Analyzing question…');
+
+    let detected = { isQuestion: true, question: text, confidence: 'low' };
+    try {
+      const resp = await fetch('/api/interview/detect-question', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ transcript: text }),
+      });
+      if (resp.ok) detected = await resp.json();
+    } catch (_) { /* network error — fall through with raw text */ }
+
     const input = document.getElementById('sys-question-input');
-    if (input) { input.value = text; updateSysSubmitBtn(); }
-    sysAccumulated = ''; sysInterim = '';
-    showSysTranscriptLive('', '');
-    document.getElementById('sys-answer-btn').style.display = 'none';
-    triggerAnswerFromText(text);
+
+    if (detected.isQuestion && detected.question) {
+      // ✅ Confirmed interview question — populate input + auto-answer
+      if (input && !input.dataset.userEdited) {
+        input.value = detected.question;
+        updateSysSubmitBtn();
+      }
+      sysAccumulated = ''; sysInterim = '';
+      showSysTranscriptLive('', '');
+      document.getElementById('sys-answer-btn').style.display = 'none';
+      triggerAnswerFromText(detected.question);
+    } else {
+      // ❌ Not a clear question — put raw text in manual box for user to review
+      if (input && !input.dataset.userEdited) {
+        input.value = text;
+        updateSysSubmitBtn();
+        input.focus();
+        input.select();
+      }
+      sysAccumulated = ''; sysInterim = '';
+      showSysTranscriptLive('', '');
+      setSysStatus('listening', '⚠️ Not sure that was a question — edit below and click Get Answer');
+    }
   }
 
   function sysForceAnswer() {
