@@ -3,24 +3,26 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Interview Coach — AI-Powered Practice</title>
+  <title>Interview Coach</title>
   <script src="/auth.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --bg: #0f0f13;
-      --surface: #1a1a24;
-      --surface2: #22222f;
-      --border: #2e2e42;
-      --accent: #6c63ff;
-      --accent-glow: rgba(108,99,255,0.2);
-      --accent2: #00d4aa;
-      --text: #e8e8f0;
-      --text-muted: #888899;
-      --danger: #ff4f4f;
-      --success: #00d4aa;
-      --radius: 12px;
+      --bg: #08080f;
+      --surface: #101020;
+      --surface2: #17172a;
+      --border: #252540;
+      --accent: #6366f1;
+      --accent-dim: rgba(99,102,241,0.12);
+      --accent-glow: rgba(99,102,241,0.25);
+      --green: #10b981;
+      --green-dim: rgba(16,185,129,0.12);
+      --red: #ef4444;
+      --red-dim: rgba(239,68,68,0.12);
+      --text: #f0f0f8;
+      --muted: #64748b;
+      --radius: 14px;
       --font: 'Inter', system-ui, -apple-system, sans-serif;
     }
 
@@ -29,1145 +31,650 @@
       color: var(--text);
       font-family: var(--font);
       min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
+      line-height: 1.5;
     }
 
-    header {
-      width: 100%;
-      padding: 0 32px;
-      height: 62px;
-      display: flex;
-      align-items: center;
-      gap: 12px;
+    /* ── Nav ───────────────────────────────────────────────────────────────── */
+    .nav {
+      position: sticky; top: 0; z-index: 200;
+      height: 58px; padding: 0 28px;
+      display: flex; align-items: center; gap: 12px;
+      background: rgba(8,8,15,0.94);
+      backdrop-filter: blur(18px);
       border-bottom: 1px solid var(--border);
-      background: rgba(15,15,19,0.85);
-      backdrop-filter: blur(12px);
-      position: sticky; top: 0; z-index: 50;
     }
-    .logo {
-      width: 34px; height: 34px;
-      background: linear-gradient(135deg, var(--accent), var(--accent2));
-      border-radius: 9px;
+    .nav-logo {
+      width: 30px; height: 30px; flex-shrink: 0;
+      background: linear-gradient(135deg, var(--accent), var(--green));
+      border-radius: 8px;
       display: flex; align-items: center; justify-content: center;
-      font-size: 16px;
+      font-size: 14px;
     }
-    header h1 { font-size: 17px; font-weight: 700; }
-    header span { font-size: 13px; color: var(--text-muted); margin-left: 4px; }
-    .header-right { margin-left: auto; display: flex; align-items: center; gap: 10px; }
-    .header-user { font-size: 13px; color: var(--text-muted); }
-    .header-quota { font-size: 12px; color: var(--text-muted); }
-    .header-quota.warn { color: var(--danger); }
-    .header-home { font-size: 13px; color: var(--text-muted); text-decoration: none; }
-    .header-home:hover { color: var(--text); }
-    .btn-nav-filled {
-      background: var(--accent); color: #fff;
-      border-radius: 7px; font-size: 14px; font-weight: 600;
-      cursor: pointer; border: none; transition: box-shadow 0.2s;
-      text-decoration: none;
+    .nav-brand { font-size: 15px; font-weight: 700; }
+    .nav-chip {
+      background: var(--accent-dim);
+      border: 1px solid var(--accent-glow);
+      border-radius: 7px; padding: 3px 10px;
+      font-size: 12px; font-weight: 600; color: #a5b4fc;
+      display: none; align-items: center; gap: 5px;
+      max-width: 210px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
     }
-    .btn-nav-filled:hover { box-shadow: 0 0 16px rgba(108,99,255,0.45); }
-    .btn-logout {
-      padding: 6px 14px; border-radius: 7px; font-size: 13px; font-weight: 600;
-      background: transparent; border: 1px solid var(--border); color: var(--text-muted);
-      cursor: pointer; transition: border-color 0.2s, color 0.2s;
+    .nav-chip.show { display: flex; }
+    .nav-right { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+    .nav-user  { font-size: 13px; color: var(--muted); }
+    .nav-quota { font-size: 12px; color: var(--muted); }
+    .nav-quota.warn { color: var(--red); }
+    .nav-link  { font-size: 13px; color: var(--muted); text-decoration: none; transition: color 0.2s; }
+    .nav-link:hover { color: var(--text); }
+    .btn-tiny {
+      padding: 5px 13px; border-radius: 7px; font-size: 13px; font-weight: 600;
+      cursor: pointer; border: 1px solid var(--border); background: transparent; color: var(--muted);
+      transition: all 0.2s;
     }
-    .btn-logout:hover { border-color: var(--danger); color: var(--danger); }
+    .btn-tiny:hover { border-color: var(--red); color: var(--red); }
 
-    .container {
-      width: 100%;
-      max-width: 860px;
-      padding: 36px 24px 80px;
-      display: flex;
-      flex-direction: column;
-      gap: 24px;
+    /* ══ SETUP SCREEN ══════════════════════════════════════════════════════════ */
+    #setup {
+      min-height: calc(100vh - 58px);
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      padding: 40px 20px;
+      text-align: center;
     }
-
-    .hero { text-align: center; padding: 8px 0; }
-    .hero h2 {
-      font-size: 26px; font-weight: 800; letter-spacing: -0.4px;
+    .setup-emoji { font-size: 54px; display: block; margin-bottom: 20px; }
+    .setup-title {
+      font-size: 32px; font-weight: 800; letter-spacing: -0.6px;
       background: linear-gradient(135deg, var(--text) 30%, var(--accent));
       -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      margin-bottom: 10px;
     }
-    .hero p { color: var(--text-muted); margin-top: 8px; font-size: 14px; }
-
-    .card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 22px;
+    .setup-sub {
+      font-size: 15px; color: var(--muted); margin-bottom: 36px;
+      max-width: 440px; line-height: 1.65;
     }
-    .card-header {
-      display: flex; align-items: center; gap: 10px; margin-bottom: 16px;
+    .setup-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 20px; padding: 28px;
+      width: 100%; max-width: 450px; text-align: left;
     }
-    .card-num {
-      width: 26px; height: 26px; border-radius: 50%;
-      background: var(--accent); font-size: 12px; font-weight: 700;
-      display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    .setup-label {
+      font-size: 11px; font-weight: 700; letter-spacing: 0.1em;
+      text-transform: uppercase; color: var(--muted); margin-bottom: 10px;
     }
-    .card-num.done { background: var(--accent2); color: #000; }
-    .card-title { font-size: 15px; font-weight: 600; }
-    .card-badge { margin-left: auto; }
-    .badge {
-      display: inline-block; padding: 2px 8px; border-radius: 4px;
-      font-size: 11px; font-weight: 600;
-    }
-    .badge-ready { background: rgba(0,212,170,0.15); color: var(--accent2); }
-    .badge-missing { background: rgba(255,79,79,0.12); color: var(--danger); }
-
-    label { font-size: 13px; color: var(--text-muted); display: block; margin-bottom: 6px; }
-
-    textarea {
-      width: 100%; background: var(--surface2); border: 1px solid var(--border);
-      border-radius: 8px; color: var(--text); font-family: var(--font);
-      font-size: 14px; padding: 12px 14px; resize: vertical; line-height: 1.6;
-      transition: border-color 0.2s; min-height: 110px;
-    }
-    textarea:focus { outline: none; border-color: var(--accent); }
-    textarea::placeholder { color: var(--text-muted); }
-
-    .tabs {
-      display: flex; gap: 4px; background: var(--surface2);
-      border-radius: 8px; padding: 4px; margin-bottom: 14px;
-    }
-    .tab {
-      flex: 1; padding: 8px; border: none; border-radius: 6px;
-      background: transparent; color: var(--text-muted); font-size: 13px;
-      font-weight: 500; cursor: pointer; transition: background 0.2s, color 0.2s;
-    }
-    .tab.active { background: var(--surface); color: var(--text); box-shadow: 0 1px 3px rgba(0,0,0,0.3); }
-
-    .upload-zone {
-      border: 2px dashed var(--border); border-radius: 8px; padding: 24px 20px;
-      text-align: center; cursor: pointer; transition: border-color 0.2s, background 0.2s;
-      position: relative;
-    }
-    .upload-zone:hover, .upload-zone.drag-over { border-color: var(--accent); background: var(--accent-glow); }
-    .upload-zone input[type="file"] { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
-    .upload-icon { font-size: 28px; margin-bottom: 6px; }
-    .upload-text { font-size: 14px; color: var(--text-muted); }
-    .file-badge {
-      display: inline-flex; align-items: center; gap: 8px;
-      background: rgba(0,212,170,0.12); border: 1px solid var(--accent2);
-      color: var(--accent2); border-radius: 6px; padding: 6px 12px; font-size: 13px; margin-top: 10px;
-    }
-    .file-badge button { background: none; border: none; color: var(--accent2); cursor: pointer; font-size: 16px; }
-
-    /* ── Supporting Documents ── */
-    .docs-drop-zone {
-      border: 2px dashed var(--border); border-radius: 8px; padding: 18px 20px;
-      text-align: center; cursor: pointer; transition: border-color 0.2s, background 0.2s;
-      position: relative;
-    }
-    .docs-drop-zone:hover, .docs-drop-zone.drag-over { border-color: var(--accent); background: var(--accent-glow); }
-    .docs-drop-zone input[type="file"] { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
-    .docs-list { display: flex; flex-direction: column; gap: 6px; margin-top: 10px; }
-    .doc-item {
-      display: flex; align-items: center; gap: 10px;
+    .select-wrap { position: relative; margin-bottom: 16px; }
+    .profile-select {
+      width: 100%; appearance: none;
       background: var(--surface2); border: 1px solid var(--border);
-      border-radius: 8px; padding: 9px 12px; font-size: 13px;
+      border-radius: 11px; color: var(--text);
+      font-size: 15px; padding: 13px 44px 13px 15px;
+      cursor: pointer; outline: none; font-family: var(--font);
+      transition: border-color 0.2s;
     }
-    .doc-item .doc-icon { font-size: 16px; flex-shrink: 0; }
-    .doc-item .doc-name { flex: 1; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .doc-item .doc-status { font-size: 11px; color: var(--text-muted); flex-shrink: 0; }
-    .doc-item .doc-status.ready { color: #00d4aa; }
-    .doc-item .doc-status.error { color: var(--danger); }
-    .doc-item .doc-remove { background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 15px; padding: 0 2px; flex-shrink: 0; }
-    .doc-item .doc-remove:hover { color: var(--danger); }
-    .docs-count { font-size: 12px; color: var(--text-muted); margin-top: 6px; }
+    .profile-select:focus { border-color: var(--accent); }
+    .select-caret {
+      position: absolute; right: 14px; top: 50%; transform: translateY(-50%);
+      pointer-events: none; color: var(--muted); font-size: 11px;
+    }
+    .setup-btns { display: flex; gap: 10px; }
+    .btn-begin {
+      flex: 1; padding: 13px 20px;
+      background: linear-gradient(135deg, var(--accent), #8b5cf6);
+      color: #fff; border: none; border-radius: 11px;
+      font-size: 15px; font-weight: 700;
+      cursor: pointer; transition: box-shadow 0.2s, opacity 0.2s;
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+    }
+    .btn-begin:hover:not(:disabled) { box-shadow: 0 0 22px rgba(99,102,241,0.4); }
+    .btn-begin:disabled { opacity: 0.35; cursor: not-allowed; }
+    .btn-outline-sm {
+      padding: 13px 16px; background: transparent;
+      border: 1px solid var(--border); border-radius: 11px;
+      color: var(--muted); font-size: 14px; font-weight: 600;
+      cursor: pointer; transition: all 0.2s; text-decoration: none;
+      display: flex; align-items: center; gap: 6px; white-space: nowrap;
+    }
+    .btn-outline-sm:hover { border-color: var(--accent); color: var(--text); }
+    .empty-state {
+      text-align: center; padding: 10px 0 6px; display: none;
+    }
+    .empty-icon { font-size: 40px; display: block; margin-bottom: 12px; }
+    .empty-state p { font-size: 14px; color: var(--muted); margin-bottom: 18px; line-height: 1.6; }
+    .setup-footer {
+      margin-top: 18px; font-size: 13px; color: var(--muted);
+    }
+    .setup-footer a { color: var(--accent); text-decoration: none; }
+    .setup-footer a:hover { text-decoration: underline; }
 
-    /* ── Voice mode toggle ── */
+    /* ══ SESSION SCREEN ════════════════════════════════════════════════════════ */
+    #session { display: none; }
+    #session.on { display: block; }
+    .session-wrap {
+      max-width: 760px; margin: 0 auto;
+      padding: 28px 22px 80px;
+      display: flex; flex-direction: column; gap: 18px;
+    }
+
+    /* Profile bar */
+    .profile-bar {
+      display: flex; align-items: center; gap: 14px;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 14px 18px;
+    }
+    .profile-bar-icon {
+      width: 40px; height: 40px; border-radius: 10px; flex-shrink: 0;
+      background: linear-gradient(135deg, var(--accent-dim), rgba(139,92,246,0.15));
+      border: 1px solid var(--accent-glow);
+      display: flex; align-items: center; justify-content: center; font-size: 20px;
+    }
+    .profile-bar-info { flex: 1; min-width: 0; }
+    .profile-bar-name { font-size: 15px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .profile-bar-meta { font-size: 12px; color: var(--muted); margin-top: 2px; }
+    .btn-change {
+      flex-shrink: 0; padding: 7px 14px; border-radius: 8px;
+      background: transparent; border: 1px solid var(--border);
+      color: var(--muted); font-size: 13px; font-weight: 600; cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn-change:hover { border-color: var(--accent); color: var(--text); }
+
+    /* Mode toggle */
     .mode-toggle {
-      display: flex; gap: 4px; background: var(--surface2);
-      border-radius: 8px; padding: 4px; margin-bottom: 4px;
+      display: flex; gap: 4px;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 11px; padding: 4px;
     }
     .mode-btn {
-      flex: 1; padding: 8px 10px; border: none; border-radius: 6px;
-      background: transparent; color: var(--text-muted); font-size: 13px;
-      font-weight: 500; cursor: pointer; transition: background 0.2s, color 0.2s;
+      flex: 1; padding: 9px 14px; border: none; border-radius: 8px;
+      background: transparent; color: var(--muted); font-size: 14px; font-weight: 500;
+      cursor: pointer; transition: all 0.2s;
       display: flex; align-items: center; justify-content: center; gap: 6px;
     }
-    .mode-btn.active { background: var(--surface); color: var(--text); box-shadow: 0 1px 3px rgba(0,0,0,0.3); }
-    .sys-audio-info {
-      background: rgba(108,99,255,0.08); border: 1px solid rgba(108,99,255,0.2);
-      border-radius: 8px; padding: 10px 14px; font-size: 13px; color: #a8a4ff; line-height: 1.5;
-      display: none;
+    .mode-btn.on { background: var(--surface2); color: var(--text); box-shadow: 0 1px 4px rgba(0,0,0,0.4); }
+
+    /* Voice card */
+    .voice-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 22px;
     }
-    .sys-audio-info.visible { display: block; }
-    .sysaudio-panel { display: none; }
-    .sysaudio-panel.visible { display: flex; flex-direction: column; gap: 12px; }
-    .btn-sysaudio {
-      display: flex; align-items: center; justify-content: center; gap: 8px;
-      background: linear-gradient(135deg, #6c63ff, #00d4aa); color: #fff;
-      padding: 12px 24px; border-radius: 8px; font-size: 14px; font-weight: 700;
-      border: none; cursor: pointer; transition: opacity 0.2s; width: 100%;
+
+    /* Status row */
+    .status-row { display: flex; align-items: center; gap: 8px; margin-bottom: 16px; }
+    .sdot {
+      width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
+      background: var(--border); transition: background 0.3s;
     }
-    .btn-sysaudio:hover { opacity: 0.88; }
-    .btn-sysaudio:disabled { opacity: 0.4; cursor: not-allowed; }
-    .vad-indicator {
-      display: flex; align-items: center; gap: 8px;
-      font-size: 13px; color: var(--text-muted);
+    .sdot.listening { background: var(--red); animation: blink 1s infinite; }
+    .sdot.thinking  { background: var(--accent); animation: blink 0.6s infinite; }
+    .sdot.done      { background: var(--green); animation: none; }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.25} }
+    .stext { font-size: 13px; color: var(--muted); flex: 1; }
+    .wave { display: none; align-items: center; gap: 2px; height: 14px; }
+    .wave.on { display: inline-flex; }
+    .wave span { display: block; width: 3px; border-radius: 2px; background: var(--red); animation: wv 0.8s ease-in-out infinite; }
+    .wave span:nth-child(1){height:4px;animation-delay:0s}
+    .wave span:nth-child(2){height:10px;animation-delay:.1s}
+    .wave span:nth-child(3){height:7px;animation-delay:.2s}
+    .wave span:nth-child(4){height:14px;animation-delay:.3s}
+    .wave span:nth-child(5){height:7px;animation-delay:.4s}
+    .wave span:nth-child(6){height:4px;animation-delay:.5s}
+    @keyframes wv { 0%,100%{transform:scaleY(0.4)} 50%{transform:scaleY(1)} }
+
+    /* Transcript */
+    .transcript {
+      background: var(--surface2); border: 1.5px solid var(--border);
+      border-radius: 10px; padding: 15px 16px;
+      min-height: 76px; font-size: 16px; line-height: 1.7; color: var(--text);
+      margin-bottom: 14px; transition: border-color 0.25s;
+    }
+    .transcript.active   { border-color: var(--red); }
+    .transcript.has-text { border-color: var(--green); }
+    .tx-ph { color: var(--muted); font-style: italic; font-size: 14px; }
+
+    /* Buttons */
+    .btn-row { display: flex; gap: 10px; }
+    .btn-listen {
+      flex: 1; padding: 12px 20px;
+      background: var(--green); color: #000; border: none; border-radius: 10px;
+      font-size: 14px; font-weight: 700; cursor: pointer;
+      transition: box-shadow 0.2s, opacity 0.2s;
+      display: flex; align-items: center; justify-content: center; gap: 7px;
+    }
+    .btn-listen:hover:not(:disabled) { box-shadow: 0 0 18px rgba(16,185,129,0.35); }
+    .btn-listen:disabled { opacity: 0.35; cursor: not-allowed; }
+    .btn-stop {
+      flex: 1; padding: 12px 20px;
+      background: var(--red); color: #fff; border: none; border-radius: 10px;
+      font-size: 14px; font-weight: 700; cursor: pointer;
+      transition: box-shadow 0.2s;
+      display: flex; align-items: center; justify-content: center; gap: 7px;
+    }
+    .btn-stop:hover { box-shadow: 0 0 18px rgba(239,68,68,0.35); }
+    .btn-stop:disabled { opacity: 0.35; cursor: not-allowed; }
+
+    /* System audio */
+    .sys-info {
+      background: var(--accent-dim); border: 1px solid rgba(99,102,241,0.2);
+      border-radius: 9px; padding: 11px 14px;
+      font-size: 13px; color: #a5b4fc; line-height: 1.6; margin-bottom: 16px;
     }
     .vad-dot {
-      width: 8px; height: 8px; border-radius: 50%; background: var(--border);
-      transition: background 0.2s;
+      width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
+      background: var(--border); transition: background 0.2s, box-shadow 0.2s;
     }
-    .vad-dot.speaking { background: #00d4aa; box-shadow: 0 0 8px rgba(0,212,170,0.6); }
-    .vad-dot.recording { background: var(--danger); box-shadow: 0 0 8px rgba(255,79,79,0.6); animation: pulse 0.8s ease-in-out infinite; }
-    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+    .vad-dot.speaking { background: var(--green); box-shadow: 0 0 6px rgba(16,185,129,0.5); }
 
-    /* ── Whisper model loading bar ── */
-    .model-bar {
-      background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.09);
-      border-radius: 8px; padding: 10px 14px;
-      display: flex; align-items: center; gap: 12px; font-size: 13px;
+    /* Manual question */
+    .manual-section { margin-top: 16px; }
+    .manual-label { font-size: 12px; font-weight: 600; color: var(--muted); margin-bottom: 7px; }
+    textarea.manual-q {
+      width: 100%; background: var(--surface2); border: 1.5px solid var(--border);
+      border-radius: 10px; color: var(--text); font-family: var(--font);
+      font-size: 14px; padding: 10px 13px; resize: vertical; line-height: 1.6;
+      outline: none; transition: border-color 0.2s; min-height: 64px;
     }
-    .model-bar-text { color: var(--text-muted); flex-shrink: 0; }
-    .model-progress {
-      flex: 1; height: 4px; background: rgba(255,255,255,0.08);
-      border-radius: 2px; overflow: hidden;
+    textarea.manual-q:focus { border-color: var(--accent); }
+    .manual-footer {
+      display: flex; align-items: center; justify-content: space-between; margin-top: 7px;
     }
-    .model-progress-fill {
-      height: 100%;
-      background: linear-gradient(90deg, #6c63ff, #00d4aa);
-      border-radius: 2px; width: 0%;
-      transition: width 0.3s ease;
-    }
-
-    /* ── Voice section ── */
-    .voice-section { display: flex; flex-direction: column; gap: 16px; }
-
-    .mic-tip {
-      background: rgba(108,99,255,0.08); border: 1px solid rgba(108,99,255,0.25);
-      border-radius: 8px; padding: 10px 14px; font-size: 13px; color: #a8a4ff;
-      cursor: pointer; line-height: 1.5;
-    }
-
-    .transcript-wrap { position: relative; }
-    .transcript-box {
-      background: var(--surface2); border: 1px solid var(--border); border-radius: 8px;
-      padding: 14px; min-height: 64px; font-size: 15px; line-height: 1.65; color: var(--text);
-      transition: border-color 0.3s;
-    }
-    .transcript-box.listening { border-color: var(--danger); }
-    .transcript-box.has-text { border-color: var(--accent2); }
-    .transcript-placeholder { color: var(--text-muted); font-style: italic; font-size: 14px; }
-
-    /* live waveform indicator */
-    .wave {
-      display: none; align-items: center; gap: 3px; height: 18px; margin-left: 6px;
-    }
-    .wave.active { display: inline-flex; }
-    .wave span {
-      display: block; width: 3px; border-radius: 2px; background: var(--danger);
-      animation: wave 0.8s ease-in-out infinite;
-    }
-    .wave span:nth-child(1) { height: 6px; animation-delay: 0s; }
-    .wave span:nth-child(2) { height: 14px; animation-delay: 0.1s; }
-    .wave span:nth-child(3) { height: 10px; animation-delay: 0.2s; }
-    .wave span:nth-child(4) { height: 18px; animation-delay: 0.3s; }
-    .wave span:nth-child(5) { height: 10px; animation-delay: 0.4s; }
-    .wave span:nth-child(6) { height: 6px; animation-delay: 0.5s; }
-    @keyframes wave { 0%,100% { transform: scaleY(0.4); } 50% { transform: scaleY(1); } }
-
-    .status-row {
-      display: flex; align-items: center; gap: 8px;
-      font-size: 13px; color: var(--text-muted); min-height: 22px;
-    }
-    .status-dot {
-      width: 8px; height: 8px; border-radius: 50%; background: var(--border); flex-shrink: 0;
-    }
-    .status-dot.recording { background: var(--danger); animation: blink 1s infinite; }
-    .status-dot.thinking { background: var(--accent); animation: blink 0.6s infinite; }
-    .status-dot.done { background: var(--accent2); animation: none; }
-    @keyframes blink { 0%,100% { opacity: 1; } 50% { opacity: 0.2; } }
-
-    .rec-buttons {
-      display: flex; gap: 12px;
-    }
-    .btn {
-      display: inline-flex; align-items: center; gap: 8px;
-      padding: 11px 22px; border-radius: 8px; font-size: 14px; font-weight: 600;
-      cursor: pointer; border: none; transition: opacity 0.2s, transform 0.1s, box-shadow 0.2s;
-      flex: 1; justify-content: center;
-    }
-    .btn:active:not(:disabled) { transform: scale(0.97); }
-    .btn:disabled { opacity: 0.38; cursor: not-allowed; }
-
-    .btn-start {
-      background: var(--accent2); color: #000;
-    }
-    .btn-start:hover:not(:disabled) { box-shadow: 0 0 16px rgba(0,212,170,0.4); }
-
-    .btn-stop {
-      background: var(--danger); color: #fff;
-    }
-    .btn-stop:hover:not(:disabled) { box-shadow: 0 0 16px rgba(255,79,79,0.4); }
-
+    .manual-hint { font-size: 11px; color: var(--muted); opacity: 0.6; }
+    .manual-btns { display: flex; gap: 8px; }
     .btn-ghost {
-      background: var(--surface2); border: 1px solid var(--border); color: var(--text);
-      flex: unset; padding: 8px 14px; font-size: 13px;
+      padding: 7px 13px; border-radius: 8px; font-size: 12px; font-weight: 600;
+      cursor: pointer; background: transparent; border: 1px solid var(--border); color: var(--muted);
+      transition: all 0.2s;
     }
-    .btn-ghost:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
+    .btn-ghost:hover { border-color: var(--red); color: var(--red); }
+    .btn-get-answer {
+      padding: 8px 17px; border-radius: 8px; font-size: 13px; font-weight: 700;
+      cursor: pointer; background: var(--accent); border: none; color: #fff;
+      transition: box-shadow 0.2s, opacity 0.2s;
+    }
+    .btn-get-answer:hover:not(:disabled) { box-shadow: 0 0 14px rgba(99,102,241,0.4); }
+    .btn-get-answer:disabled { opacity: 0.35; cursor: not-allowed; }
 
-    /* ── Answer section ── */
-    .answer-card { display: none; }
+    .no-support-msg {
+      background: rgba(239,68,68,0.08); border: 1px solid rgba(239,68,68,0.2);
+      border-radius: 9px; padding: 11px 14px; font-size: 13px; color: #fca5a5;
+      margin-bottom: 14px; display: none;
+    }
 
+    /* ── Answer Card ─────────────────────────────────────────────────────────── */
+    .answer-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 22px; display: none;
+    }
+    .answer-card.show { display: block; }
     .answer-header {
-      display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px;
+      display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;
     }
-    .answer-header-left { display: flex; align-items: center; gap: 10px; }
-
+    .answer-title { display: flex; align-items: center; gap: 9px; font-size: 15px; font-weight: 700; }
+    .answer-badge {
+      width: 26px; height: 26px; border-radius: 8px;
+      background: var(--green); color: #000; font-size: 12px; font-weight: 800;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .answer-actions { display: flex; gap: 8px; }
+    .btn-action {
+      padding: 7px 14px; border-radius: 8px; font-size: 13px; font-weight: 600;
+      cursor: pointer; background: transparent; border: 1px solid var(--border); color: var(--muted);
+      transition: all 0.2s;
+    }
+    .btn-action:hover { border-color: var(--accent); color: var(--text); }
     .answer-box {
-      background: var(--surface2); border: 1px solid var(--border); border-radius: 8px;
-      padding: 18px; min-height: 80px; font-size: 15px; line-height: 1.75; color: var(--text);
-      white-space: pre-wrap; position: relative;
+      background: var(--surface2); border: 1.5px solid var(--border);
+      border-radius: 10px; padding: 18px;
+      font-size: 15px; line-height: 1.8; color: var(--text); white-space: pre-wrap;
+      min-height: 80px;
     }
-    .answer-box.streaming { border-color: var(--accent); }
+    .answer-box.stream { border-color: var(--accent); }
     .cursor {
-      display: inline-block; width: 2px; height: 1em;
+      display: inline-block; width: 2px; height: 1.1em;
       background: var(--accent); margin-left: 1px;
-      vertical-align: text-bottom;
-      animation: blink 0.8s step-end infinite;
+      vertical-align: text-bottom; animation: blink 0.7s step-end infinite;
     }
-    .cursor.hidden { display: none; }
-
-    .answer-actions {
-      display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap;
-    }
-
-    .no-support {
-      background: rgba(255,79,79,0.1); border: 1px solid rgba(255,79,79,0.3);
-      border-radius: 8px; padding: 12px 16px; font-size: 13px; color: #ff8080; text-align: center;
-    }
-
-    .card-toggle-btn {
-      background: none; border: none; color: var(--text-muted);
-      font-size: 13px; cursor: pointer; padding: 4px 8px;
-      border-radius: 6px; transition: background 0.15s;
-    }
-    .card-toggle-btn:hover { background: var(--surface2); }
+    .cursor.off { display: none; }
 
     @media (max-width: 600px) {
-      .container { padding: 20px 14px 60px; }
-      header { padding: 14px 16px; }
-      .hero h2 { font-size: 22px; }
+      .nav { padding: 0 14px; }
+      .session-wrap { padding: 16px 14px 60px; gap: 14px; }
+      .setup-card { padding: 22px 16px; }
+      .setup-title { font-size: 26px; }
+      .setup-btns { flex-direction: column; }
+      .mode-btn { font-size: 13px; }
     }
   </style>
 </head>
 <body>
 
-<header>
-  <div class="logo">🎙️</div>
-  <h1>Interview Coach</h1>
-  <span>AI-powered practice</span>
-  <div class="header-right">
-    <a href="/" class="header-home">← Home</a>
-    <a href="/admin.html" id="admin-link" class="header-home" style="display:none">⚙️ Admin</a>
-    <span class="header-user" id="header-user"></span>
-    <span class="header-quota" id="header-quota"></span>
-    <a href="/pricing.html" id="upgrade-btn" class="btn-nav-filled" style="display:none;font-size:12px;padding:5px 12px">⚡ Upgrade</a>
-    <button class="btn-logout" onclick="Auth.logout()">Log out</button>
+<!-- ── Nav ─────────────────────────────────────────────────────────────────── -->
+<nav class="nav">
+  <div class="nav-logo">🎙️</div>
+  <span class="nav-brand">Interview Coach</span>
+  <div class="nav-chip" id="nav-chip">
+    <span>📋</span><span id="nav-chip-name"></span>
   </div>
-</header>
-
-<div class="container">
-  <div class="hero">
-    <h2>Ace your next interview</h2>
-    <p>Upload your resume and job description — then speak your question and get a live answer.</p>
+  <div class="nav-right">
+    <a href="/" class="nav-link">← Home</a>
+    <span class="nav-user"  id="nav-user"></span>
+    <span class="nav-quota" id="nav-quota"></span>
+    <button class="btn-tiny" onclick="Auth.logout()">Log out</button>
   </div>
+</nav>
 
-  <!-- Job Profile selector -->
-  <div class="card profile-selector-card" id="profile-card">
-    <div class="card-header-row" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
-      <div style="display:flex;align-items:center;gap:10px">
-        <div class="card-num" id="profile-num">📋</div>
-        <div class="card-title">Job Profile</div>
+<!-- ══ SETUP SCREEN ══════════════════════════════════════════════════════════ -->
+<div id="setup">
+  <span class="setup-emoji">🎯</span>
+  <h2 class="setup-title">Ace your next interview</h2>
+  <p class="setup-sub">Select a Job Profile with your resume and job description, then step into a focused, distraction-free session.</p>
+
+  <div class="setup-card">
+    <div class="setup-label">Choose your Job Profile</div>
+
+    <!-- Picker shown when profiles exist -->
+    <div id="profile-picker">
+      <div class="select-wrap">
+        <select class="profile-select" id="profile-select" onchange="onProfileChange()">
+          <option value="">— Select a profile —</option>
+        </select>
+        <span class="select-caret">▾</span>
       </div>
-      <a href="/profiles.html" style="font-size:13px;color:var(--accent2);font-weight:600">Manage Profiles →</a>
-    </div>
-
-    <!-- Profile loaded state (hidden until profile selected) -->
-    <div id="profile-loaded-bar" style="display:none;background:rgba(6,182,212,0.08);border:1px solid rgba(6,182,212,0.2);border-radius:10px;padding:12px 16px;margin-bottom:14px;align-items:center;justify-content:space-between">
-      <div>
-        <span style="font-size:13px;font-weight:700;color:var(--accent3)">✓ </span>
-        <span id="profile-loaded-name" style="font-size:13px;font-weight:700;color:var(--text)"></span>
-        <span style="font-size:12px;color:var(--text-muted);margin-left:8px" id="profile-loaded-meta"></span>
-      </div>
-      <button onclick="clearLoadedProfile()" style="font-size:12px;color:var(--text-muted);background:none;border:none;cursor:pointer;padding:4px 8px">✕ Clear</button>
-    </div>
-
-    <div id="profile-select-row" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
-      <select id="profile-select" style="flex:1;min-width:180px;background:var(--surface2);color:var(--text);border:1px solid var(--border);border-radius:10px;padding:10px 14px;font-size:14px;font-family:var(--font);cursor:pointer">
-        <option value="">— Select a saved profile —</option>
-      </select>
-      <button onclick="loadSelectedProfile()" class="btn btn-outline" style="padding:9px 20px;font-size:14px;white-space:nowrap">
-        Load Profile
-      </button>
-      <button onclick="saveCurrentAsProfile()" class="btn btn-ghost" id="save-profile-btn" style="padding:9px 20px;font-size:14px;white-space:nowrap" title="Save current Resume + JD as a new profile">
-        + Save as Profile
-      </button>
-    </div>
-    <div id="profile-msg" style="margin-top:10px;font-size:13px;display:none"></div>
-  </div>
-
-  <!-- Step 1: Resume -->
-  <div class="card" id="card-resume">
-    <div class="card-header">
-      <div class="card-num" id="num1">1</div>
-      <div class="card-title">Your Resume</div>
-      <div class="card-badge" id="resume-badge"><span class="badge badge-missing">Missing</span></div>
-      <button class="card-toggle-btn" onclick="toggleCard('card-resume')">▲</button>
-    </div>
-    <div class="card-body">
-    <div class="tabs">
-      <button class="tab active" id="tab-upload" onclick="switchTab('upload')">📄 Upload PDF</button>
-      <button class="tab" id="tab-paste" onclick="switchTab('paste')">✏️ Paste Text</button>
-    </div>
-    <div id="panel-upload">
-      <div class="upload-zone" id="drop-zone">
-        <input type="file" id="resume-file" accept="application/pdf" />
-        <div class="upload-icon">📋</div>
-        <div class="upload-text"><strong>Click to upload</strong> or drag & drop your resume PDF</div>
-        <div class="upload-text" style="font-size:12px;margin-top:4px">Max 10 MB</div>
-      </div>
-      <div id="file-badge-wrap" style="display:none">
-        <div class="file-badge">
-          <span>📄</span><span id="file-name-display"></span>
-          <button onclick="clearResume()" title="Remove">✕</button>
-        </div>
-      </div>
-    </div>
-    <div id="panel-paste" style="display:none">
-      <label for="resume-text">Paste your resume text below</label>
-      <textarea id="resume-text" rows="7" placeholder="Paste your resume content here…" oninput="onResumePaste()"></textarea>
-    </div>
-    </div>
-  </div>
-
-  <!-- Step 2: Job Description -->
-  <div class="card" id="card-jd">
-    <div class="card-header">
-      <div class="card-num" id="num2">2</div>
-      <div class="card-title">Job Description</div>
-      <div class="card-badge" id="jd-badge"><span class="badge badge-missing">Missing</span></div>
-      <button class="card-toggle-btn" onclick="toggleCard('card-jd')">▲</button>
-    </div>
-    <div class="card-body">
-    <label for="jd-text">Paste the full job description</label>
-    <textarea id="jd-text" rows="5" placeholder="Copy and paste the job description from the company's careers page…" oninput="onJdInput()"></textarea>
-    </div>
-  </div>
-
-  <!-- Step 2b: Supporting Documents (optional) -->
-  <div class="card" id="card-docs">
-    <div class="card-header">
-      <div class="card-num" style="background:var(--surface2);color:var(--text-muted);font-size:13px">+</div>
-      <div class="card-title">Supporting Documents <span style="font-size:12px;color:var(--text-muted);font-weight:400">(optional)</span></div>
-      <div class="card-badge" id="docs-badge"></div>
-      <button class="card-toggle-btn" onclick="toggleCard('card-docs')">▲</button>
-    </div>
-    <div class="card-body">
-    <p style="font-size:13px;color:var(--text-muted);margin-bottom:12px;line-height:1.6">
-      Upload any extra context the AI should know — portfolio, cover letter, certifications, company research, or notes. Supports multiple PDFs.
-    </p>
-
-    <div class="docs-drop-zone" id="docs-drop-zone">
-      <input type="file" id="docs-file-input" accept="application/pdf" multiple />
-      <div style="font-size:22px;margin-bottom:6px">📎</div>
-      <div style="font-size:14px;color:var(--text-muted)"><strong style="color:var(--text)">Click to upload</strong> or drag & drop — multiple PDFs allowed</div>
-    </div>
-
-    <div class="docs-list" id="docs-list"></div>
-    <div class="docs-count" id="docs-count"></div>
-    </div>
-  </div>
-
-  <!-- Step 3: Voice -->
-  <div class="card">
-    <div class="card-header">
-      <div class="card-num" id="num3">3</div>
-      <div class="card-title">Ask by Voice</div>
-    </div>
-
-    <!-- Mode toggle -->
-    <div class="mode-toggle">
-      <button class="mode-btn active" id="mode-mic" onclick="setVoiceMode('mic')">🎙️ Microphone</button>
-      <button class="mode-btn" id="mode-sys" onclick="setVoiceMode('system')">🖥️ System Audio</button>
-    </div>
-
-    <!-- Mic mode UI -->
-    <div id="mic-panel" class="voice-section">
-      <div id="no-support-msg" class="no-support" style="display:none">
-        Voice recognition isn't supported in this browser. Try Chrome or Edge.
-      </div>
-      <div id="mic-tip" class="mic-tip" style="display:none" onclick="this.style.display='none'">
-        💡 <strong>Mac users:</strong> If Chrome is using your iPhone's mic instead, go to <strong>System Settings → Sound → Input</strong> and select <em>Built-in Microphone</em>. (Tap to dismiss)
-      </div>
-      <div>
-        <div class="status-row" id="status-row">
-          <div class="status-dot" id="status-dot"></div>
-          <span id="status-text">Ready — fill in Resume and Job Description first</span>
-          <div class="wave" id="wave">
-            <span></span><span></span><span></span><span></span><span></span><span></span>
-          </div>
-        </div>
-      </div>
-      <div class="transcript-wrap">
-        <div class="transcript-box" id="transcript">
-          <span class="transcript-placeholder" id="transcript-placeholder">Your spoken question will appear here…</span>
-        </div>
-      </div>
-      <div class="rec-buttons">
-        <button class="btn btn-start" id="start-btn" onclick="startRecording()" disabled>🎙️ Start Recording</button>
-        <button class="btn btn-stop" id="stop-btn" onclick="stopRecording()" disabled>⏹ Stop Recording</button>
-      </div>
-    </div>
-
-    <!-- System Audio mode UI -->
-    <div id="sysaudio-panel" class="sysaudio-panel">
-      <div class="sys-audio-info visible">
-        🎤 <strong>Mic listens for the interviewer — no sharing or install needed</strong>
-        <div style="margin-top:6px;font-size:13px;color:var(--text-muted)">
-          Keep your mic open during the call. When the interviewer finishes speaking, the question is auto-detected and an answer is generated instantly.
-          Works with Teams, Zoom, Meet, or any call platform.
-        </div>
-      </div>
-
-      <div>
-        <div class="status-row" id="sys-status-row">
-          <div class="vad-dot" id="vad-dot"></div>
-          <span id="sys-status-text">Select System Audio to start</span>
-        </div>
-      </div>
-      <div class="transcript-wrap">
-        <div class="transcript-box" id="sys-transcript">
-          <span class="transcript-placeholder" id="sys-transcript-placeholder">Interviewer's question will appear here…</span>
-        </div>
-      </div>
-
-      <!-- Editable question input -->
-      <div id="sys-question-wrap" style="margin-top:10px">
-        <div style="font-size:12px;font-weight:600;color:var(--text-muted);margin-bottom:6px;display:flex;align-items:center;gap:6px">
-          ✏️ Edit or type the question manually
-          <span style="font-weight:400;opacity:0.6">(auto-filled from voice)</span>
-        </div>
-        <textarea
-          id="sys-question-input"
-          placeholder="Type or paste the interview question here, then click Get Answer…"
-          rows="3"
-          style="width:100%;background:var(--surface2);color:var(--text);border:1px solid var(--border);border-radius:10px;padding:10px 13px;font-size:14px;font-family:var(--font);resize:vertical;line-height:1.6;transition:border-color 0.2s,box-shadow 0.2s;outline:none"
-          onkeydown="if((event.ctrlKey||event.metaKey)&&event.key==='Enter'){event.preventDefault();sysSubmitQuestion();}"
-          oninput="this.dataset.userEdited='1';updateSysSubmitBtn()"
-          onfocus="this.style.borderColor='var(--accent)';this.style.boxShadow='0 0 0 3px var(--accent-glow)'"
-          onblur="this.style.borderColor='var(--border)';this.style.boxShadow='none'"
-        ></textarea>
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px">
-          <span style="font-size:11px;color:var(--text-muted);opacity:0.7">Ctrl+Enter to submit</span>
-          <div style="display:flex;gap:8px">
-            <button class="btn btn-ghost" onclick="sysClearQuestion()" style="padding:7px 14px;font-size:13px">
-              🗑 Clear
-            </button>
-            <button class="btn btn-primary" id="sys-submit-btn" onclick="sysSubmitQuestion()" disabled style="padding:8px 20px;font-size:14px;border-radius:9px">
-              ✨ Get Answer
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <div class="rec-buttons" style="margin-top:12px">
-        <button class="btn-sysaudio" id="sys-start-btn" onclick="startSystemAudio()" disabled>
-          🎙️ Start Listening
-        </button>
-        <button class="btn btn-ghost" id="sys-answer-btn" onclick="sysForceAnswer()" style="display:none">
-          ✨ Answer this
-        </button>
-        <button class="btn btn-stop" id="sys-stop-btn" onclick="stopSystemAudio()" disabled style="display:none">
-          ⏹ Stop
+      <div class="setup-btns">
+        <a href="/profiles.html" class="btn-outline-sm">⚙️ Manage Profiles</a>
+        <button class="btn-begin" id="begin-btn" onclick="beginSession()" disabled>
+          Begin Session →
         </button>
       </div>
     </div>
+
+    <!-- Empty state when no profiles -->
+    <div class="empty-state" id="empty-state">
+      <span class="empty-icon">📋</span>
+      <p>No job profiles yet. Create one with your resume and job description to get started.</p>
+      <a href="/profiles.html" class="btn-begin" style="display:inline-flex;text-decoration:none;padding:13px 24px;border-radius:11px">
+        + Create Your First Profile
+      </a>
+    </div>
   </div>
 
-  <!-- Live Answer -->
-  <div class="card answer-card" id="answer-card">
+  <p class="setup-footer">
+    New here? <a href="/profiles.html">Create a job profile</a> to save your resume, JD, and notes.
+  </p>
+</div>
+
+<!-- ══ SESSION SCREEN ══════════════════════════════════════════════════════ -->
+<div id="session">
+<div class="session-wrap">
+
+  <!-- Profile bar -->
+  <div class="profile-bar">
+    <div class="profile-bar-icon">📋</div>
+    <div class="profile-bar-info">
+      <div class="profile-bar-name" id="sess-name"></div>
+      <div class="profile-bar-meta" id="sess-meta"></div>
+    </div>
+    <button class="btn-change" onclick="endSession()">↩ Change Profile</button>
+  </div>
+
+  <!-- Mode toggle -->
+  <div class="mode-toggle">
+    <button class="mode-btn on" id="mode-mic" onclick="setMode('mic')">🎙️ My Microphone</button>
+    <button class="mode-btn"    id="mode-sys" onclick="setMode('system')">🖥️ System Audio</button>
+  </div>
+
+  <!-- ── MIC PANEL ──────────────────────────────────────────────────────────── -->
+  <div class="voice-card" id="mic-panel">
+    <div class="status-row">
+      <div class="sdot" id="mic-dot"></div>
+      <span class="stext" id="mic-status">Press Start Listening and speak your question</span>
+      <div class="wave" id="mic-wave">
+        <span></span><span></span><span></span><span></span><span></span><span></span>
+      </div>
+    </div>
+    <div class="no-support-msg" id="no-support">
+      Voice recognition requires Chrome or Edge. Switch to <strong>System Audio</strong> mode or use a supported browser.
+    </div>
+    <div class="transcript" id="mic-tx">
+      <span class="tx-ph">Your spoken question will appear here…</span>
+    </div>
+    <div class="btn-row">
+      <button class="btn-listen" id="mic-start" onclick="startMic()" disabled>🎙️ Start Listening</button>
+      <button class="btn-stop"   id="mic-stop"  onclick="stopMic()"  disabled>⏹ Stop</button>
+    </div>
+  </div>
+
+  <!-- ── SYSTEM AUDIO PANEL ─────────────────────────────────────────────────── -->
+  <div class="voice-card" id="sys-panel" style="display:none">
+    <div class="sys-info">
+      🎤 <strong>Mic detects your interviewer's voice</strong> — no screen sharing or install needed.
+      Works seamlessly with Zoom, Teams, Google Meet, or any call platform.
+    </div>
+    <div class="status-row">
+      <div class="vad-dot" id="vad-dot"></div>
+      <span class="stext" id="sys-status">Press Start Listening to begin</span>
+    </div>
+    <div class="transcript" id="sys-tx">
+      <span class="tx-ph">Interviewer's question will appear here…</span>
+    </div>
+    <!-- Manual question input -->
+    <div class="manual-section">
+      <div class="manual-label">
+        ✏️ Edit or type question manually
+        <span style="font-weight:400;opacity:0.65"> (auto-filled from voice)</span>
+      </div>
+      <textarea class="manual-q" id="sys-q"
+        placeholder="Type or paste the interview question here, then click Get Answer…"
+        rows="3"
+        onkeydown="if((event.ctrlKey||event.metaKey)&&event.key==='Enter'){event.preventDefault();sysSubmit();}"
+        oninput="this.dataset.edited='1';updateSysBtn()"
+        onfocus="this.style.borderColor='var(--accent)'"
+        onblur="this.style.borderColor='var(--border)'"></textarea>
+      <div class="manual-footer">
+        <span class="manual-hint">Ctrl + Enter to submit</span>
+        <div class="manual-btns">
+          <button class="btn-ghost" onclick="sysClear()">🗑 Clear</button>
+          <button class="btn-get-answer" id="sys-submit" onclick="sysSubmit()" disabled>✨ Get Answer</button>
+        </div>
+      </div>
+    </div>
+    <div class="btn-row" style="margin-top:14px">
+      <button class="btn-listen" id="sys-start" onclick="startSys()">🎙️ Start Listening</button>
+      <button class="btn-stop"   id="sys-stop"  onclick="stopSys()" style="display:none">⏹ Stop</button>
+    </div>
+  </div>
+
+  <!-- ── ANSWER CARD ────────────────────────────────────────────────────────── -->
+  <div class="answer-card" id="answer-card">
     <div class="answer-header">
-      <div class="answer-header-left">
-        <div class="card-num done" id="answer-num">✓</div>
-        <div class="card-title">AI Coach Answer</div>
+      <div class="answer-title">
+        <div class="answer-badge">✓</div>
+        AI Coach Answer
       </div>
       <div class="answer-actions" id="answer-actions" style="display:none">
-        <button class="btn btn-ghost" id="speak-btn" onclick="speakAnswer()">🔊 Read Aloud</button>
-        <button class="btn btn-ghost" id="stop-speak-btn" onclick="stopSpeaking()" style="display:none">⏹ Stop</button>
-        <button class="btn btn-ghost" onclick="copyAnswer()">📋 Copy</button>
+        <button class="btn-action" id="speak-btn" onclick="speakAnswer()">🔊 Read Aloud</button>
+        <button class="btn-action" id="stop-speak" onclick="stopSpeaking()" style="display:none">⏹ Stop</button>
+        <button class="btn-action" onclick="copyAnswer()">📋 Copy</button>
       </div>
     </div>
     <div class="answer-box" id="answer-box">
-      <span id="answer-text"></span><span class="cursor hidden" id="cursor"></span>
+      <span id="answer-text"></span><span class="cursor off" id="cursor"></span>
     </div>
   </div>
+
+</div>
 </div>
 
 <script>
-  // ── Auth guard ─────────────────────────────────────────────────────────────
-  const _session = Auth.requireAuth();
-  if (_session) {
-    document.getElementById('header-user').textContent = '👤 ' + _session.username;
-  }
-
-  if (_session && _session.role === 'admin') {
-    document.getElementById('admin-link').style.display = '';
-  }
+  // ── Auth ─────────────────────────────────────────────────────────────────────
+  const _sess = Auth.requireAuth();
+  if (_sess) document.getElementById('nav-user').textContent = '👤 ' + _sess.username;
 
   async function updateQuota() {
-    const el = document.getElementById('header-quota');
-    if (!el) return;
+    const el = document.getElementById('nav-quota');
     const rem = await Auth.getRemainingQuestions();
-    if (rem === Infinity) { el.textContent = ''; return; }
-    el.textContent = rem + ' questions left today';
-    el.className = 'header-quota' + (rem <= 3 ? ' warn' : '');
+    if (rem === Infinity || rem == null) { el.textContent = ''; return; }
+    el.textContent = rem + ' answers left today';
+    el.className = 'nav-quota' + (rem <= 3 ? ' warn' : '');
   }
   updateQuota();
 
-  const upgradeBtn = document.getElementById('upgrade-btn');
-  if (upgradeBtn && _session && _session.role !== 'admin' && _session.plan !== 'pro') {
-    upgradeBtn.style.display = '';
-  }
+  // ── State ─────────────────────────────────────────────────────────────────────
+  const PROFILES_API = '/api/profiles';
+  let resumeText = '', jobDescription = '', supportingDocs = [];
+  let voiceMode = 'mic';
 
-  // ── State ──────────────────────────────────────────────────────────────────
-  let resumeText = '';
-  let recognition = null;
-  let isRecording = false;
-  let currentQuestion = '';
-  let debounceTimer = null;
-  let streamController = null; // AbortController for in-flight stream
-  let fullAnswer = '';
-  let utterance = null;
-  let voiceMode = 'mic'; // 'mic' | 'system'
+  // Mic
+  let recognition = null, isListening = false, currentQ = '', debounce = null;
 
-  // Supporting documents: array of { id, name, text, status }
-  let supportingDocs = [];
+  // System audio
+  let sysRec = null, sysAcc = '', sysInterim = '', sysTimer = null, sysCapturing = false;
+  const SYS_SILENCE = 2500;
 
-  // System audio state (Web Speech API)
-  let sysRecognition = null;    // SpeechRecognition instance
-  let sysAccumulated = '';      // final transcript chunks accumulate here
-  let sysInterim = '';          // current interim (non-final) text
-  let sysQuestionTimer = null;  // auto-trigger timer on silence
-  let sysIsCapturing = false;   // is recognition active
-  const SYS_SILENCE_MS = 2500; // ms of silence before auto-answering
+  // Answer
+  let streamCtrl = null, fullAnswer = '', utterance = null;
 
-  // ── Init ───────────────────────────────────────────────────────────────────
-  document.addEventListener('DOMContentLoaded', () => {
-    initVoice();
-    initDragDrop();
-    initSupportingDocs();
-    document.getElementById('resume-file').addEventListener('change', onFileSelect);
-  });
-
-  // ── Supporting Documents ──────────────────────────────────────────────────
-  function initSupportingDocs() {
-    const input = document.getElementById('docs-file-input');
-    const zone  = document.getElementById('docs-drop-zone');
-    input.addEventListener('change', e => handleDocFiles([...e.target.files]));
-    zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('drag-over'); });
-    zone.addEventListener('dragleave', () => zone.classList.remove('drag-over'));
-    zone.addEventListener('drop', e => {
-      e.preventDefault(); zone.classList.remove('drag-over');
-      const files = [...e.dataTransfer.files].filter(f => f.type === 'application/pdf');
-      if (files.length) handleDocFiles(files);
-    });
-  }
-
-  async function handleDocFiles(files) {
-    for (const file of files) {
-      if (file.type !== 'application/pdf') continue;
-      // Deduplicate by name
-      if (supportingDocs.find(d => d.name === file.name)) continue;
-      const id = crypto.randomUUID();
-      const doc = { id, name: file.name, text: '', status: 'parsing' };
-      supportingDocs.push(doc);
-      renderDocsList();
-      try {
-        const form = new FormData();
-        form.append('resume', file);
-        const res = await fetch('/api/interview/parse-resume', { method: 'POST', body: form });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.message || 'Parse failed');
-        doc.text = data.text;
-        doc.status = 'ready';
-      } catch (err) {
-        doc.status = 'error';
-        doc.errorMsg = err.message;
-      }
-      renderDocsList();
-    }
-    // Reset file input so same file can be re-added after removal
-    document.getElementById('docs-file-input').value = '';
-  }
-
-  function removeDoc(id) {
-    supportingDocs = supportingDocs.filter(d => d.id !== id);
-    renderDocsList();
-  }
-
-  function renderDocsList() {
-    const list  = document.getElementById('docs-list');
-    const count = document.getElementById('docs-count');
-    const badge = document.getElementById('docs-badge');
-    list.innerHTML = '';
-    supportingDocs.forEach(doc => {
-      const el = document.createElement('div');
-      el.className = 'doc-item';
-      const statusText = doc.status === 'parsing' ? '⏳ Parsing…'
-                       : doc.status === 'ready'   ? '✓ Ready'
-                       : `⚠️ ${doc.errorMsg || 'Error'}`;
-      const statusClass = doc.status === 'ready' ? 'ready' : doc.status === 'error' ? 'error' : '';
-      el.innerHTML = `
-        <span class="doc-icon">📄</span>
-        <span class="doc-name" title="${doc.name}">${doc.name}</span>
-        <span class="doc-status ${statusClass}">${statusText}</span>
-        <button class="doc-remove" onclick="removeDoc('${doc.id}')" title="Remove">✕</button>
-      `;
-      list.appendChild(el);
-    });
-    const readyCount = supportingDocs.filter(d => d.status === 'ready').length;
-    if (supportingDocs.length === 0) {
-      count.textContent = '';
-      badge.innerHTML = '';
-    } else {
-      count.textContent = `${readyCount} of ${supportingDocs.length} document${supportingDocs.length > 1 ? 's' : ''} ready`;
-      badge.innerHTML = readyCount > 0
-        ? `<span class="badge badge-ready">✓ ${readyCount} doc${readyCount > 1 ? 's' : ''}</span>`
-        : `<span class="badge badge-missing">Parsing…</span>`;
-    }
-  }
-
-  function getSupportingDocsText() {
-    const ready = supportingDocs.filter(d => d.status === 'ready' && d.text);
-    if (!ready.length) return '';
-    return ready.map(d => `--- ${d.name} ---\n${d.text}`).join('\n\n');
-  }
-
-  // ── Voice mode toggle ─────────────────────────────────────────────────────
-  function setVoiceMode(mode) {
-    voiceMode = mode;
-    const micPanel = document.getElementById('mic-panel');
-    const sysPanel = document.getElementById('sysaudio-panel');
-    const micBtn   = document.getElementById('mode-mic');
-    const sysBtn   = document.getElementById('mode-sys');
-    const startBtn = document.getElementById('sys-start-btn');
-
-    if (mode === 'system') {
-      micPanel.style.display = 'none';
-      sysPanel.classList.add('visible');
-      micBtn.classList.remove('active');
-      sysBtn.classList.add('active');
-      startBtn.disabled = !contextReady();
-    } else {
-      micPanel.style.display = '';
-      sysPanel.classList.remove('visible');
-      micBtn.classList.add('active');
-      sysBtn.classList.remove('active');
-      if (sysIsCapturing) stopSystemAudio();
-    }
-  }
-
-  // ── Web Speech API system audio (no sharing, no install) ──────────────────
-  async function startSystemAudio() {
-    if (!contextReady()) return;
-    const btn = document.getElementById('sys-start-btn');
-    btn.disabled = true;
-    btn.textContent = '⌛ Starting…';
-
-    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!SR) {
-      setSysStatus('idle', '⚠️ Speech recognition requires Chrome or Edge');
-      btn.disabled = false; btn.textContent = '🎙️ Start Listening'; return;
-    }
-
-    sysRecognition = new SR();
-    sysRecognition.continuous = true;
-    sysRecognition.interimResults = true;
-    sysRecognition.lang = 'en-US';
-    sysRecognition.maxAlternatives = 1;
-    sysAccumulated = ''; sysInterim = '';
-
-    sysRecognition.onresult = (event) => {
-      sysInterim = '';
-      for (let i = event.resultIndex; i < event.results.length; i++) {
-        if (event.results[i].isFinal) {
-          sysAccumulated += event.results[i][0].transcript + ' ';
-          clearTimeout(sysQuestionTimer);
-          if (sysAccumulated.trim().split(/\s+/).length >= 6) {
-            sysQuestionTimer = setTimeout(sysAutoAnswer, SYS_SILENCE_MS);
-          }
-        } else {
-          sysInterim += event.results[i][0].transcript;
-        }
-      }
-      showSysTranscriptLive(sysAccumulated, sysInterim);
-      const hasText = (sysAccumulated + sysInterim).trim().length > 0;
-      document.getElementById('sys-answer-btn').style.display = hasText ? '' : 'none';
-    };
-
-    sysRecognition.onspeechstart = () => { setVadDot('speaking'); setSysStatus('listening', '🎤 Speaking detected…'); };
-    sysRecognition.onspeechend  = () => { setVadDot('idle'); setSysStatus('listening', '👂 Listening…'); };
-
-    sysRecognition.onerror = (e) => {
-      if (e.error === 'no-speech') return;
-      if (e.error === 'not-allowed') { setSysStatus('idle', '⚠️ Microphone permission denied'); stopSystemAudio(); }
-    };
-
-    sysRecognition.onend = () => {
-      if (sysIsCapturing) { try { sysRecognition.start(); } catch (_) {} }
-    };
-
-    try { sysRecognition.start(); }
-    catch (err) {
-      setSysStatus('idle', '⚠️ Could not start: ' + err.message);
-      btn.disabled = false; btn.textContent = '🎙️ Start Listening'; return;
-    }
-
-    sysIsCapturing = true;
-    btn.style.display = 'none';
-    document.getElementById('sys-stop-btn').style.display = '';
-    document.getElementById('sys-stop-btn').disabled = false;
-    document.getElementById('sys-answer-btn').style.display = 'none';
-    setSysStatus('listening', '👂 Listening — speak or let the interviewer speak…');
-    setVadDot('idle');
-  }
-
-  // ── Update "Get Answer" button enabled state ──────────────────────────────
-  function updateSysSubmitBtn() {
-    const input = document.getElementById('sys-question-input');
-    const btn   = document.getElementById('sys-submit-btn');
-    if (!input || !btn) return;
-    btn.disabled = input.value.trim().length === 0;
-  }
-
-  // ── AI-powered question detection ─────────────────────────────────────────
-  async function sysAutoAnswer() {
-    const text = sysAccumulated.trim();
-    if (!text || text.split(/\s+/).length < 5) return;
-
-    setSysStatus('listening', '🔍 Analyzing question…');
-
-    let detected = { isQuestion: true, question: text, confidence: 'low' };
+  // ── Profile List ──────────────────────────────────────────────────────────────
+  async function loadProfileList() {
+    const sel = document.getElementById('profile-select');
     try {
-      const resp = await fetch('/api/interview/detect-question', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ transcript: text }),
-      });
-      if (resp.ok) detected = await resp.json();
-    } catch (_) { /* network error — fall through with raw text */ }
+      const res = await fetch(PROFILES_API, { headers: Auth.authHeaders() });
+      if (!res.ok) return;
+      const { profiles } = await res.json();
+      while (sel.options.length > 1) sel.remove(1);
 
-    const input = document.getElementById('sys-question-input');
-
-    if (detected.isQuestion && detected.question) {
-      // ✅ Confirmed interview question — populate input + auto-answer
-      if (input && !input.dataset.userEdited) {
-        input.value = detected.question;
-        updateSysSubmitBtn();
+      if (profiles.length === 0) {
+        document.getElementById('profile-picker').style.display = 'none';
+        document.getElementById('empty-state').style.display = '';
+        return;
       }
-      sysAccumulated = ''; sysInterim = '';
-      showSysTranscriptLive('', '');
-      document.getElementById('sys-answer-btn').style.display = 'none';
-      triggerAnswerFromText(detected.question);
-    } else {
-      // ❌ Not a clear question — put raw text in manual box for user to review
-      if (input && !input.dataset.userEdited) {
-        input.value = text;
-        updateSysSubmitBtn();
-        input.focus();
-        input.select();
+
+      document.getElementById('profile-picker').style.display = '';
+      document.getElementById('empty-state').style.display = 'none';
+      profiles.forEach(p => sel.appendChild(new Option(p.name, p.id)));
+
+      // Auto-load if redirected from profiles page
+      const autoId = sessionStorage.getItem('loadProfileId');
+      if (autoId) {
+        sessionStorage.removeItem('loadProfileId');
+        sel.value = autoId;
+        if (sel.value) { onProfileChange(); beginSession(); }
       }
-      sysAccumulated = ''; sysInterim = '';
-      showSysTranscriptLive('', '');
-      setSysStatus('listening', '⚠️ Not sure that was a question — edit below and click Get Answer');
+    } catch(_) {}
+  }
+
+  function onProfileChange() {
+    document.getElementById('begin-btn').disabled = !document.getElementById('profile-select').value;
+  }
+
+  // ── Session Lifecycle ─────────────────────────────────────────────────────────
+  async function beginSession() {
+    const sel = document.getElementById('profile-select');
+    const id = sel.value;
+    if (!id) return;
+
+    const btn = document.getElementById('begin-btn');
+    btn.textContent = 'Loading…'; btn.disabled = true;
+
+    try {
+      const res = await fetch(`${PROFILES_API}/${id}`, { headers: Auth.authHeaders() });
+      if (!res.ok) throw new Error('Profile not found');
+      const { profile } = await res.json();
+
+      resumeText     = profile.resumeText     || '';
+      jobDescription = profile.jobDescription || '';
+      supportingDocs = profile.supportingDocs || [];
+
+      // Profile bar
+      document.getElementById('sess-name').textContent = profile.name;
+      const tags = [];
+      if (profile.resumeText)         tags.push('Resume ✓');
+      if (profile.jobDescription)     tags.push('JD ✓');
+      if (profile.supportingDocs?.length) tags.push(`${profile.supportingDocs.length} doc${profile.supportingDocs.length > 1 ? 's' : ''}`);
+      document.getElementById('sess-meta').textContent = tags.join(' · ') || 'No data attached';
+
+      // Nav chip
+      document.getElementById('nav-chip-name').textContent = profile.name;
+      document.getElementById('nav-chip').classList.add('show');
+
+      // Switch screens
+      document.getElementById('setup').style.display = 'none';
+      document.getElementById('session').classList.add('on');
+
+      // Enable mic button and init
+      document.getElementById('mic-start').disabled = false;
+      initMic();
+
+    } catch(err) {
+      btn.textContent = 'Begin Session →';
+      btn.disabled = false;
+      alert('Could not load profile: ' + err.message);
     }
   }
 
-  function sysForceAnswer() {
-    clearTimeout(sysQuestionTimer);
-    // Prefer the editable textarea value so user's edits are respected
-    const input = document.getElementById('sys-question-input');
-    const text = (input && input.value.trim())
-      || (sysAccumulated + ' ' + sysInterim).trim();
-    if (!text) return;
-    if (input) { input.value = text; }
-    sysAccumulated = ''; sysInterim = '';
-    showSysTranscriptLive('', '');
-    document.getElementById('sys-answer-btn').style.display = 'none';
-    triggerAnswerFromText(text);
-  }
+  function endSession() {
+    // Stop everything
+    stopMic(true);
+    stopSys(true);
+    stopSpeaking();
+    if (streamCtrl) { streamCtrl.abort(); streamCtrl = null; }
 
-  // Submit from the manual textarea
-  function sysSubmitQuestion() {
-    const input = document.getElementById('sys-question-input');
-    if (!input) return;
-    const text = input.value.trim();
-    if (!text) return;
-    clearTimeout(sysQuestionTimer);
-    sysAccumulated = ''; sysInterim = '';
-    showSysTranscriptLive('', '');
-    // Reset after submit so speech can auto-fill again next time
-    input.value = '';
-    delete input.dataset.userEdited;
-    updateSysSubmitBtn();
-    document.getElementById('sys-answer-btn').style.display = 'none';
-    triggerAnswerFromText(text);
-  }
+    // Reset state
+    resumeText = ''; jobDescription = ''; supportingDocs = [];
+    currentQ = ''; sysAcc = ''; sysInterim = '';
+    recognition = null; isListening = false;
 
-  // Clear the manual textarea and transcript
-  function sysClearQuestion() {
-    const input = document.getElementById('sys-question-input');
-    if (input) {
-      input.value = '';
-      delete input.dataset.userEdited;
-      updateSysSubmitBtn();
-    }
-    clearTimeout(sysQuestionTimer);
-    sysAccumulated = ''; sysInterim = '';
-    showSysTranscriptLive('', '');
-    document.getElementById('sys-answer-btn').style.display = 'none';
-  }
+    // Reset answer card
+    document.getElementById('answer-card').classList.remove('show');
+    document.getElementById('answer-text').textContent = '';
+    document.getElementById('answer-box').className = 'answer-box';
 
-  function stopSystemAudio() {
-    sysIsCapturing = false;
-    clearTimeout(sysQuestionTimer);
-    if (sysRecognition) { try { sysRecognition.stop(); } catch (_) {} sysRecognition = null; }
-    sysAccumulated = ''; sysInterim = '';
-    const btn = document.getElementById('sys-start-btn');
-    btn.disabled = !contextReady();
-    btn.textContent = '🎙️ Start Listening';
-    btn.style.display = '';
-    document.getElementById('sys-stop-btn').style.display = 'none';
-    document.getElementById('sys-answer-btn').style.display = 'none';
-    setSysStatus('idle', 'Stopped — click above to start again');
-    setVadDot('idle');
-  }
+    // Reset mic panel
+    setMicTx('');
+    setMicStatus('', 'Press Start Listening and speak your question');
+    document.getElementById('mic-start').disabled = true;
+    document.getElementById('mic-stop').disabled = true;
 
+    // Reset sys panel
+    setSysTx('', '');
+    setSysStatus('Press Start Listening to begin');
+    setVadDot(false);
+    const sq = document.getElementById('sys-q');
+    sq.value = ''; delete sq.dataset.edited; updateSysBtn();
+    document.getElementById('sys-start').style.display = '';
+    document.getElementById('sys-stop').style.display = 'none';
 
-  function setSysStatus(mode, text) {
-    document.getElementById('sys-status-text').textContent = text;
-  }
+    // Reset nav
+    document.getElementById('nav-chip').classList.remove('show');
+    const btn = document.getElementById('begin-btn');
+    btn.textContent = 'Begin Session →';
+    btn.disabled = !document.getElementById('profile-select').value;
 
-  function setVadDot(state) {
-    const dot = document.getElementById('vad-dot');
-    dot.className = 'vad-dot' + (state === 'idle' ? '' : ' ' + state);
-  }
+    // Switch screens
+    document.getElementById('session').classList.remove('on');
+    document.getElementById('setup').style.display = '';
 
-  function showSysTranscriptLive(final, interim) {
-    const box = document.getElementById('sys-transcript');
-    const ph  = document.getElementById('sys-transcript-placeholder');
-    const hasContent = (final + interim).trim().length > 0;
-    ph.style.display = hasContent ? 'none' : '';
-    box.childNodes.forEach(n => { if (n !== ph) n.remove(); });
-    if (final) {
-      const f = document.createElement('span');
-      f.textContent = final;
-      box.insertBefore(f, ph);
-    }
-    if (interim) {
-      const it = document.createElement('span');
-      it.textContent = interim;
-      it.style.color = 'var(--text-muted)';
-      box.insertBefore(it, ph);
-    }
-    box.className = 'transcript-box' + (hasContent ? ' has-text' : '');
-
-    // Mirror final text into the editable textarea so users can review/edit
-    const input = document.getElementById('sys-question-input');
-    if (input && final !== undefined) {
-      // Only overwrite if the user hasn't manually edited it
-      // (detect by checking if it previously matched accumulated text)
-      const combined = (final + (interim ? ' ' + interim : '')).trim();
-      if (!input.dataset.userEdited) {
-        input.value = combined;
-        updateSysSubmitBtn();
-      }
-    }
-  }
-
-  // triggerAnswer but accepts text directly (for system audio mode)
-  async function triggerAnswerFromText(question) {
-    if (!await Auth.canAskQuestion()) {
-      setSysStatus('error', 'Daily limit reached — upgrade to Pro');
-      return;
-    }
-    if (streamController) streamController.abort();
-    streamController = new AbortController();
-    const jd = document.getElementById('jd-text').value.trim();
-    setSysStatus('streaming', '✨ Generating answer…');
-    setVadDot('idle');
-    await Auth.recordQuestion();
+    // Reset mode
+    setMode('mic');
     updateQuota();
-    const answerCard = document.getElementById('answer-card');
-    const answerBox = document.getElementById('answer-box');
-    const answerText = document.getElementById('answer-text');
-    const cursor = document.getElementById('cursor');
-    const answerActions = document.getElementById('answer-actions');
-    answerCard.style.display = 'block';
-    answerCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-    answerText.textContent = '';
-    cursor.className = 'cursor';
-    answerActions.style.display = 'none';
-    fullAnswer = '';
-    try {
-      const docsText = getSupportingDocsText();
-      const resp = await fetch('/api/interview/answer-stream', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ resume: resumeText, jobDescription: jd, question, supportingDocs: docsText }),
-        signal: streamController.signal,
-      });
-      const reader = resp.body.getReader();
-      const decoder = new TextDecoder();
-      let buf = '';
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        buf += decoder.decode(value, { stream: true });
-        const lines = buf.split('\n');
-        buf = lines.pop();
-        for (const line of lines) {
-          if (!line.startsWith('data:')) continue;
-          const raw = line.slice(5).trim();
-          if (raw === '[DONE]') { cursor.className = 'cursor hidden'; answerActions.style.display = ''; break; }
-          try {
-            const d = JSON.parse(raw);
-            if (d.text) { fullAnswer += d.text; answerText.textContent = fullAnswer; answerBox.scrollTop = answerBox.scrollHeight; }
-            if (d.error) {
-              if (d.error === 'overloaded') {
-                answerText.textContent = '⏳ Claude is busy — retrying in 5 seconds…';
-                setSysStatus('streaming', '⏳ Claude is busy — retrying…');
-                await new Promise(r => setTimeout(r, 5000));
-              } else {
-                answerText.textContent = '⚠️ ' + d.error;
-              }
-              cursor.className = 'cursor hidden'; break;
-            }
-          } catch (_) {}
-        }
-      }
-    } catch (err) {
-      if (err.name !== 'AbortError') answerText.textContent = '⚠️ ' + err.message;
-      cursor.className = 'cursor hidden';
-    }
-    if (sysIsCapturing) setSysStatus('listening', '👂 Listening — speak or let the interviewer speak…');
+    loadProfileList();
   }
 
-  // ── Resume ─────────────────────────────────────────────────────────────────
-  function switchTab(mode) {
-    document.getElementById('panel-upload').style.display = mode === 'upload' ? '' : 'none';
-    document.getElementById('panel-paste').style.display  = mode === 'paste'  ? '' : 'none';
-    document.getElementById('tab-upload').className = 'tab' + (mode === 'upload' ? ' active' : '');
-    document.getElementById('tab-paste').className  = 'tab' + (mode === 'paste'  ? ' active' : '');
-    if (mode === 'upload') resumeText = '';
-    updateResumeBadge();
-    updateStartBtn();
+  // ── Mode Toggle ───────────────────────────────────────────────────────────────
+  function setMode(mode) {
+    voiceMode = mode;
+    document.getElementById('mode-mic').classList.toggle('on', mode === 'mic');
+    document.getElementById('mode-sys').classList.toggle('on', mode === 'system');
+    document.getElementById('mic-panel').style.display = mode === 'mic' ? '' : 'none';
+    document.getElementById('sys-panel').style.display = mode === 'system' ? '' : 'none';
+    if (mode === 'mic' && sysCapturing) stopSys(true);
   }
 
-  function initDragDrop() {
-    const zone = document.getElementById('drop-zone');
-    zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('drag-over'); });
-    zone.addEventListener('dragleave', () => zone.classList.remove('drag-over'));
-    zone.addEventListener('drop', e => { e.preventDefault(); zone.classList.remove('drag-over'); const f = e.dataTransfer.files[0]; if (f) handleFile(f); });
-  }
-  function onFileSelect(e) { const f = e.target.files[0]; if (f) handleFile(f); }
-
-  async function handleFile(file) {
-    if (file.type !== 'application/pdf') { alert('Please upload a PDF file.'); return; }
-    document.getElementById('file-name-display').textContent = file.name;
-    document.getElementById('file-badge-wrap').style.display = '';
-    document.getElementById('drop-zone').style.display = 'none';
-    const form = new FormData();
-    form.append('resume', file);
-    try {
-      const res = await fetch('/api/interview/parse-resume', { method: 'POST', body: form });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message || 'Parse failed');
-      resumeText = data.text;
-      updateResumeBadge();
-      updateStartBtn();
-    } catch (err) {
-      alert('Could not parse PDF: ' + err.message + '\n\nTry "Paste Text" mode.');
-      clearResume();
-    }
-  }
-
-  function clearResume() {
-    resumeText = '';
-    document.getElementById('resume-file').value = '';
-    document.getElementById('file-badge-wrap').style.display = 'none';
-    document.getElementById('drop-zone').style.display = '';
-    updateResumeBadge(); updateStartBtn();
-  }
-
-  function onResumePaste() {
-    resumeText = document.getElementById('resume-text').value.trim();
-    updateResumeBadge(); updateStartBtn();
-  }
-
-  function updateResumeBadge() {
-    const ready = resumeText.length > 10;
-    document.getElementById('resume-badge').innerHTML = ready
-      ? '<span class="badge badge-ready">✓ Ready</span>'
-      : '<span class="badge badge-missing">Missing</span>';
-    const n = document.getElementById('num1');
-    n.className = 'card-num' + (ready ? ' done' : ''); n.textContent = ready ? '✓' : '1';
-  }
-
-  function onJdInput() {
-    const ready = document.getElementById('jd-text').value.trim().length > 10;
-    document.getElementById('jd-badge').innerHTML = ready
-      ? '<span class="badge badge-ready">✓ Ready</span>'
-      : '<span class="badge badge-missing">Missing</span>';
-    const n = document.getElementById('num2');
-    n.className = 'card-num' + (ready ? ' done' : ''); n.textContent = ready ? '✓' : '2';
-    updateStartBtn();
-  }
-
-  function contextReady() {
-    return resumeText.length > 10 && document.getElementById('jd-text').value.trim().length > 10;
-  }
-
-  function updateStartBtn() {
-    const ok = contextReady();
-    document.getElementById('start-btn').disabled = !ok || isRecording;
-    // Also update system audio button
-    if (!sysIsCapturing) document.getElementById('sys-start-btn').disabled = !ok;
-    if (ok && !isRecording) {
-      setStatus('', 'Ready — click Start Recording and speak your question');
-    } else if (!ok) {
-      setStatus('', 'Ready — fill in Resume and Job Description first');
-      if (!sysIsCapturing) setSysStatus('idle', 'Fill in Resume and Job Description first');
-    }
-  }
-
-  // ── Status helpers ─────────────────────────────────────────────────────────
-  function setStatus(mode, text) {
-    const dot = document.getElementById('status-dot');
-    const wave = document.getElementById('wave');
-    dot.className = 'status-dot' + (mode ? ' ' + mode : '');
-    document.getElementById('status-text').textContent = text;
-    wave.className = 'wave' + (mode === 'recording' ? ' active' : '');
-  }
-
-  // ── Voice recognition ──────────────────────────────────────────────────────
-  function initVoice() {
+  // ── Mic Mode ──────────────────────────────────────────────────────────────────
+  function initMic() {
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SR) {
-      document.getElementById('no-support-msg').style.display = '';
-      document.getElementById('start-btn').disabled = true;
+      document.getElementById('no-support').style.display = '';
+      document.getElementById('mic-start').disabled = true;
       return;
     }
-    if (/Mac/.test(navigator.userAgent)) {
-      document.getElementById('mic-tip').style.display = '';
-    }
-
     recognition = new SR();
     recognition.continuous = true;
     recognition.interimResults = true;
@@ -1177,459 +684,304 @@
       let interim = '';
       for (let i = e.resultIndex; i < e.results.length; i++) {
         if (e.results[i].isFinal) {
-          currentQuestion = (currentQuestion + ' ' + e.results[i][0].transcript).trim();
-          // Reset debounce: fire answer 1.8s after last final chunk
-          clearTimeout(debounceTimer);
-          debounceTimer = setTimeout(triggerAnswer, 1800);
+          currentQ = (currentQ + ' ' + e.results[i][0].transcript).trim();
+          clearTimeout(debounce);
+          debounce = setTimeout(triggerAnswer, 1800);
         } else {
           interim += e.results[i][0].transcript;
         }
       }
-      // Show final + live interim
-      const display = (currentQuestion + (interim ? ' ' + interim : '')).trim();
-      showTranscript(display);
+      setMicTx((currentQ + (interim ? ' ' + interim : '')).trim());
     };
-
-    recognition.onend = () => {
-      // Keep alive while recording
-      if (isRecording) { try { recognition.start(); } catch (_) {} }
-    };
-
+    recognition.onend = () => { if (isListening) try { recognition.start(); } catch(_){} };
     recognition.onerror = (e) => {
       if (e.error === 'no-speech' || e.error === 'aborted') return;
-      console.error('Speech error:', e.error);
-      setStatus('', 'Mic error: ' + e.error);
+      setMicStatus('', 'Mic error: ' + e.error);
     };
   }
 
-  function showTranscript(text) {
-    const box = document.getElementById('transcript');
-    const ph  = document.getElementById('transcript-placeholder');
+  function setMicTx(text) {
+    const box = document.getElementById('mic-tx');
     if (text) {
-      ph.style.display = 'none';
-      box.childNodes.forEach(n => { if (n !== ph) n.remove(); });
-      box.insertBefore(document.createTextNode(text), ph);
-      box.className = 'transcript-box' + (isRecording ? ' listening' : ' has-text');
+      box.textContent = text;
+      box.className = 'transcript ' + (isListening ? 'active' : 'has-text');
     } else {
-      ph.style.display = '';
-      box.childNodes.forEach(n => { if (n !== ph) n.remove(); });
-      box.className = 'transcript-box' + (isRecording ? ' listening' : '');
+      box.innerHTML = '<span class="tx-ph">Your spoken question will appear here…</span>';
+      box.className = 'transcript' + (isListening ? ' active' : '');
     }
   }
 
-  function startRecording() {
-    if (!recognition || isRecording) return;
-    // Clear previous state
-    currentQuestion = '';
-    clearTimeout(debounceTimer);
-    showTranscript('');
-    isRecording = true;
-
-    document.getElementById('start-btn').disabled = true;
-    document.getElementById('stop-btn').disabled = false;
-    setStatus('recording', 'Listening… speak your interview question');
-
-    try { recognition.start(); } catch (_) {}
+  function setMicStatus(state, text) {
+    document.getElementById('mic-dot').className  = 'sdot' + (state ? ' ' + state : '');
+    document.getElementById('mic-status').textContent = text;
+    document.getElementById('mic-wave').className  = 'wave' + (state === 'listening' ? ' on' : '');
   }
 
-  function stopRecording() {
-    if (!isRecording) return;
-    isRecording = false;
-    clearTimeout(debounceTimer);
-    try { recognition.stop(); } catch (_) {}
-
-    document.getElementById('start-btn').disabled = !contextReady();
-    document.getElementById('stop-btn').disabled = true;
-    setStatus('done', 'Recording stopped');
-
-    // If there's a question captured, trigger the answer
-    if (currentQuestion.trim()) triggerAnswer();
+  function startMic() {
+    if (!recognition || isListening) return;
+    currentQ = ''; clearTimeout(debounce); setMicTx('');
+    isListening = true;
+    document.getElementById('mic-start').disabled = true;
+    document.getElementById('mic-stop').disabled  = false;
+    setMicStatus('listening', 'Listening… speak your interview question');
+    try { recognition.start(); } catch(_) {}
   }
 
-  // ── Streaming answer ───────────────────────────────────────────────────────
+  function stopMic(silent = false) {
+    if (!isListening && !silent) return;
+    isListening = false; clearTimeout(debounce);
+    try { if (recognition) recognition.stop(); } catch(_) {}
+    document.getElementById('mic-start').disabled = false;
+    document.getElementById('mic-stop').disabled  = true;
+    if (!silent) {
+      setMicStatus('done', 'Stopped');
+      if (currentQ.trim()) triggerAnswer();
+    }
+  }
+
+  // ── System Audio Mode ─────────────────────────────────────────────────────────
+  async function startSys() {
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SR) { setSysStatus('⚠️ Requires Chrome or Edge'); return; }
+
+    sysRec = new SR();
+    sysRec.continuous = true; sysRec.interimResults = true; sysRec.lang = 'en-US';
+    sysAcc = ''; sysInterim = '';
+
+    sysRec.onresult = (e) => {
+      sysInterim = '';
+      for (let i = e.resultIndex; i < e.results.length; i++) {
+        if (e.results[i].isFinal) {
+          sysAcc += e.results[i][0].transcript + ' ';
+          clearTimeout(sysTimer);
+          if (sysAcc.trim().split(/\s+/).length >= 6)
+            sysTimer = setTimeout(sysAutoAnswer, SYS_SILENCE);
+        } else {
+          sysInterim += e.results[i][0].transcript;
+        }
+      }
+      setSysTx(sysAcc, sysInterim);
+    };
+    sysRec.onspeechstart = () => setVadDot(true);
+    sysRec.onspeechend   = () => setVadDot(false);
+    sysRec.onerror = (e) => {
+      if (e.error === 'no-speech') return;
+      if (e.error === 'not-allowed') { setSysStatus('⚠️ Mic permission denied'); stopSys(true); }
+    };
+    sysRec.onend = () => { if (sysCapturing) try { sysRec.start(); } catch(_){} };
+
+    try { sysRec.start(); } catch(err) { setSysStatus('⚠️ ' + err.message); return; }
+
+    sysCapturing = true;
+    document.getElementById('sys-start').style.display = 'none';
+    document.getElementById('sys-stop').style.display  = '';
+    setSysStatus('👂 Listening — speak or let your interviewer speak…');
+    setVadDot(false);
+  }
+
+  function stopSys(silent = false) {
+    sysCapturing = false; clearTimeout(sysTimer);
+    if (sysRec) { try { sysRec.stop(); } catch(_){} sysRec = null; }
+    sysAcc = ''; sysInterim = '';
+    document.getElementById('sys-start').style.display = '';
+    document.getElementById('sys-stop').style.display  = 'none';
+    if (!silent) setSysStatus('Stopped — click Start Listening to resume');
+    setVadDot(false);
+  }
+
+  function setSysStatus(text) { document.getElementById('sys-status').textContent = text; }
+
+  function setVadDot(speaking) {
+    document.getElementById('vad-dot').className = 'vad-dot' + (speaking ? ' speaking' : '');
+  }
+
+  function setSysTx(final, interim) {
+    const box = document.getElementById('sys-tx');
+    const hasContent = (final + interim).trim().length > 0;
+    box.innerHTML = '';
+    if (final)   { const s = document.createElement('span'); s.textContent = final;   box.appendChild(s); }
+    if (interim) { const s = document.createElement('span'); s.textContent = interim; s.style.color = 'var(--muted)'; box.appendChild(s); }
+    if (!hasContent) box.innerHTML = '<span class="tx-ph">Interviewer\'s question will appear here…</span>';
+    box.className = 'transcript' + (hasContent ? ' has-text' : '');
+
+    // Mirror to manual input (unless user is editing)
+    const inp = document.getElementById('sys-q');
+    if (inp && !inp.dataset.edited) {
+      inp.value = (final + (interim ? ' ' + interim : '')).trim();
+      updateSysBtn();
+    }
+  }
+
+  async function sysAutoAnswer() {
+    const text = sysAcc.trim();
+    if (!text || text.split(/\s+/).length < 5) return;
+    setSysStatus('🔍 Analyzing question…');
+
+    let detected = { isQuestion: true, question: text };
+    try {
+      const r = await fetch('/api/interview/detect-question', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ transcript: text }),
+      });
+      if (r.ok) detected = await r.json();
+    } catch(_) {}
+
+    const inp = document.getElementById('sys-q');
+    if (detected.isQuestion && detected.question) {
+      if (inp && !inp.dataset.edited) { inp.value = detected.question; updateSysBtn(); }
+      sysAcc = ''; sysInterim = ''; setSysTx('', '');
+      await triggerAnswerText(detected.question);
+    } else {
+      if (inp && !inp.dataset.edited) { inp.value = text; updateSysBtn(); inp.focus(); inp.select(); }
+      sysAcc = ''; sysInterim = ''; setSysTx('', '');
+      setSysStatus('⚠️ Not sure that was a question — edit below and click Get Answer');
+    }
+  }
+
+  function updateSysBtn() {
+    document.getElementById('sys-submit').disabled = !document.getElementById('sys-q').value.trim();
+  }
+
+  function sysSubmit() {
+    const inp = document.getElementById('sys-q');
+    const text = inp.value.trim(); if (!text) return;
+    clearTimeout(sysTimer); sysAcc = ''; sysInterim = ''; setSysTx('', '');
+    inp.value = ''; delete inp.dataset.edited; updateSysBtn();
+    triggerAnswerText(text);
+  }
+
+  function sysClear() {
+    const inp = document.getElementById('sys-q');
+    inp.value = ''; delete inp.dataset.edited; updateSysBtn();
+    clearTimeout(sysTimer); sysAcc = ''; sysInterim = ''; setSysTx('', '');
+  }
+
+  // ── Answer Streaming ──────────────────────────────────────────────────────────
+  function getSupportingDocsText() {
+    return (supportingDocs || []).filter(d => d.text)
+      .map(d => `--- ${d.name} ---\n${d.text}`).join('\n\n');
+  }
+
   async function triggerAnswer() {
+    clearTimeout(debounce);
+    const q = currentQ.trim(); if (!q) return;
+    currentQ = ''; setMicTx('');
+    await triggerAnswerText(q);
+    if (isListening) setMicStatus('listening', 'Listening — speak another question');
+    else setMicStatus('done', 'Answer ready — press Start Listening for another question');
+  }
+
+  async function triggerAnswerText(question) {
     if (!await Auth.canAskQuestion()) {
-      showTranscript('');
-      setStatus('', 'Daily limit reached — upgrade to Pro for unlimited questions');
-      const card = document.getElementById('answer-card');
-      card.style.display = 'block';
-      document.getElementById('answer-text').textContent = '⚠️ You\'ve used all 10 free questions for today. Upgrade to Pro for unlimited access.';
-      document.getElementById('answer-actions').style.display = 'none';
-      document.getElementById('cursor').className = 'cursor hidden';
-      document.getElementById('answer-box').className = 'answer-box';
+      showAnswerError('⚠️ Daily question limit reached — upgrade to Pro for unlimited answers.');
       return;
     }
-    await Auth.incrementQuestionCount();
+    await Auth.recordQuestion();
     updateQuota();
 
-    clearTimeout(debounceTimer);
-    const question = currentQuestion.trim();
-    if (!question || !contextReady()) return;
-
-    // Reset immediately so next speech starts a fresh question
-    currentQuestion = '';
-    showTranscript('');
-
-    // Cancel any in-flight stream
-    if (streamController) { streamController.abort(); streamController = null; }
+    if (streamCtrl) streamCtrl.abort();
     stopSpeaking();
+    streamCtrl = new AbortController();
 
-    const jd = document.getElementById('jd-text').value.trim();
+    const card    = document.getElementById('answer-card');
+    const box     = document.getElementById('answer-box');
+    const atext   = document.getElementById('answer-text');
+    const cursor  = document.getElementById('cursor');
+    const actions = document.getElementById('answer-actions');
 
-    // Show answer card
-    const card = document.getElementById('answer-card');
-    card.style.display = 'block';
+    card.classList.add('show');
     card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-
-    const answerText = document.getElementById('answer-text');
-    const cursor     = document.getElementById('cursor');
-    const actions    = document.getElementById('answer-actions');
-    const box        = document.getElementById('answer-box');
-
-    answerText.textContent = '';
-    fullAnswer = '';
-    cursor.className = 'cursor';
-    box.className = 'answer-box streaming';
+    atext.textContent = ''; fullAnswer = '';
+    cursor.className  = 'cursor';
+    box.className     = 'answer-box stream';
     actions.style.display = 'none';
 
-    setStatus('thinking', 'Generating answer…');
+    const docsText = getSupportingDocsText();
 
-    streamController = new AbortController();
-
-    try {
-      const docsText = getSupportingDocsText();
+    async function doStream(ctrl) {
       const res = await fetch('/api/interview/answer-stream', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ resume: resumeText, jobDescription: jd, question, supportingDocs: docsText }),
-        signal: streamController.signal,
+        body: JSON.stringify({ resume: resumeText, jobDescription, question, supportingDocs: docsText }),
+        signal: ctrl.signal,
       });
-
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.message || 'Server error');
-      }
-
-      const reader = res.body.getReader();
-      const decoder = new TextDecoder();
-      let buffer = '';
-
+      const reader = res.body.getReader(); const dec = new TextDecoder(); let buf = '';
       while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        buffer += decoder.decode(value, { stream: true });
-
-        // Parse SSE lines
-        const lines = buffer.split('\n');
-        buffer = lines.pop(); // keep incomplete line
-
+        const { done, value } = await reader.read(); if (done) break;
+        buf += dec.decode(value, { stream: true });
+        const lines = buf.split('\n'); buf = lines.pop();
         for (const line of lines) {
-          if (!line.startsWith('data: ')) continue;
-          const payload = line.slice(6).trim();
-          if (payload === '[DONE]') break;
+          if (!line.startsWith('data:')) continue;
+          const raw = line.slice(5).trim();
+          if (raw === '[DONE]') {
+            cursor.className = 'cursor off'; box.className = 'answer-box'; actions.style.display = '';
+            return 'done';
+          }
           try {
-            const obj = JSON.parse(payload);
-            if (obj.error) throw new Error(obj.error);
-            if (obj.text) {
-              fullAnswer += obj.text;
-              answerText.textContent = fullAnswer;
-            }
-          } catch (parseErr) {
-            if (parseErr.message !== 'Unexpected end of JSON input') throw parseErr;
-          }
+            const d = JSON.parse(raw);
+            if (d.text) { fullAnswer += d.text; atext.textContent = fullAnswer; box.scrollTop = box.scrollHeight; }
+            if (d.error) return d.error;
+          } catch(_) {}
         }
       }
+      return 'done';
+    }
 
-      // Done streaming
-      cursor.className = 'cursor hidden';
-      box.className = 'answer-box';
-      actions.style.display = 'flex';
-      setStatus('done', 'Answer ready — start recording to ask another question');
-
-    } catch (err) {
-      if (err.name === 'AbortError') return; // cancelled intentionally
-      cursor.className = 'cursor hidden';
-      box.className = 'answer-box';
-      if (err.message === 'overloaded') {
-        answerText.textContent = '⏳ Claude is busy right now. Retrying in 5 seconds…';
-        setStatus('thinking', '⏳ Claude is busy — retrying…');
+    try {
+      const result = await doStream(streamCtrl);
+      if (result === 'overloaded') {
+        atext.textContent = '⏳ Claude is busy — retrying in 5 seconds…';
+        if (voiceMode === 'system') setSysStatus('⏳ Claude busy — retrying…');
         await new Promise(r => setTimeout(r, 5000));
-        if (streamController === null) return; // aborted while waiting
-        // Retry once
-        streamController = new AbortController();
-        try {
-          const docsText = getSupportingDocsText();
-          const res2 = await fetch('/api/interview/answer-stream', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ resume: resumeText, jobDescription: jd, question, supportingDocs: docsText }),
-            signal: streamController.signal,
-          });
-          if (!res2.ok) throw new Error('Server error');
-          answerText.textContent = '';
-          fullAnswer = '';
-          cursor.className = 'cursor';
-          box.className = 'answer-box streaming';
-          const reader2 = res2.body.getReader();
-          const dec2 = new TextDecoder();
-          let buf2 = '';
-          while (true) {
-            const { done, value } = await reader2.read();
-            if (done) break;
-            buf2 += dec2.decode(value, { stream: true });
-            const lines = buf2.split('\n'); buf2 = lines.pop();
-            for (const line of lines) {
-              if (!line.startsWith('data: ')) continue;
-              const payload = line.slice(6).trim();
-              if (payload === '[DONE]') break;
-              try { const o = JSON.parse(payload); if (o.error) throw new Error(o.error); if (o.text) { fullAnswer += o.text; answerText.textContent = fullAnswer; } } catch (_) {}
-            }
-          }
-          cursor.className = 'cursor hidden';
-          box.className = 'answer-box';
-          actions.style.display = 'flex';
-          setStatus('done', 'Answer ready — start recording to ask another question');
-        } catch (retryErr) {
-          if (retryErr.name === 'AbortError') return;
-          cursor.className = 'cursor hidden';
-          box.className = 'answer-box';
-          answerText.textContent = '⚠️ Claude is currently overloaded. Please wait a moment and try again.';
-          setStatus('', 'Claude is busy — please try again shortly');
-        }
-      } else {
-        answerText.textContent = '⚠️ ' + err.message;
-        setStatus('', err.message);
+        if (!streamCtrl) return;
+        streamCtrl = new AbortController();
+        atext.textContent = ''; fullAnswer = '';
+        cursor.className = 'cursor'; box.className = 'answer-box stream';
+        const result2 = await doStream(streamCtrl);
+        if (result2 && result2 !== 'done') showAnswerError('⚠️ ' + result2);
+      } else if (result && result !== 'done') {
+        showAnswerError('⚠️ ' + result);
       }
+    } catch(err) {
+      if (err.name !== 'AbortError') showAnswerError('⚠️ ' + err.message);
     } finally {
-      streamController = null;
+      streamCtrl = null;
+      if (voiceMode === 'system' && sysCapturing) setSysStatus('👂 Listening — speak or let your interviewer speak…');
     }
   }
 
-  // ── TTS ───────────────────────────────────────────────────────────────────
+  function showAnswerError(text) {
+    document.getElementById('answer-card').classList.add('show');
+    document.getElementById('answer-text').textContent = text;
+    document.getElementById('cursor').className = 'cursor off';
+    document.getElementById('answer-box').className = 'answer-box';
+    document.getElementById('answer-actions').style.display = 'none';
+  }
+
+  // ── TTS ───────────────────────────────────────────────────────────────────────
   function speakAnswer() {
     if (!fullAnswer || !window.speechSynthesis) return;
     stopSpeaking();
-    utterance = new SpeechSynthesisUtterance(fullAnswer);
-    utterance.rate = 0.95;
-    utterance.onstart = () => { document.getElementById('speak-btn').style.display = 'none'; document.getElementById('stop-speak-btn').style.display = ''; };
-    utterance.onend = utterance.onerror = () => { document.getElementById('speak-btn').style.display = ''; document.getElementById('stop-speak-btn').style.display = 'none'; };
+    utterance = new SpeechSynthesisUtterance(fullAnswer); utterance.rate = 0.95;
+    utterance.onstart = () => { document.getElementById('speak-btn').style.display = 'none'; document.getElementById('stop-speak').style.display = ''; };
+    utterance.onend = utterance.onerror = () => { document.getElementById('speak-btn').style.display = ''; document.getElementById('stop-speak').style.display = 'none'; };
     window.speechSynthesis.speak(utterance);
   }
-
   function stopSpeaking() {
     if (window.speechSynthesis) window.speechSynthesis.cancel();
-    const sb = document.getElementById('speak-btn');
-    const ss = document.getElementById('stop-speak-btn');
-    if (sb) sb.style.display = '';
-    if (ss) ss.style.display = 'none';
+    const sb = document.getElementById('speak-btn'); const ss = document.getElementById('stop-speak');
+    if (sb) sb.style.display = ''; if (ss) ss.style.display = 'none';
   }
-
   function copyAnswer() {
     if (!fullAnswer) return;
     navigator.clipboard.writeText(fullAnswer).then(() => {
-      const btn = event.currentTarget;
-      const orig = btn.textContent;
-      btn.textContent = '✅ Copied!';
-      setTimeout(() => btn.textContent = orig, 2000);
+      const btn = event.currentTarget; const orig = btn.textContent;
+      btn.textContent = '✅ Copied!'; setTimeout(() => btn.textContent = orig, 2000);
     });
   }
 
-  // ── Job Profiles ──────────────────────────────────────────────────────────
-  const PROFILES_API = '/api/profiles';
-
-  async function loadProfileList() {
-    try {
-      const res = await fetch(PROFILES_API, { headers: Auth.authHeaders() });
-      if (!res.ok) return;
-      const { profiles } = await res.json();
-      const sel = document.getElementById('profile-select');
-      // Clear existing options except placeholder
-      while (sel.options.length > 1) sel.remove(1);
-      profiles.forEach(p => {
-        const opt = document.createElement('option');
-        opt.value = p.id;
-        const parts = [];
-        if (p.hasResume) parts.push('Resume');
-        if (p.hasJD) parts.push('JD');
-        if (p.docsCount) parts.push(`${p.docsCount} doc${p.docsCount>1?'s':''}`);
-        opt.textContent = `${p.name}  (${parts.join(' · ')})`;
-        sel.appendChild(opt);
-      });
-    } catch(_) {}
-  }
-
-  async function loadSelectedProfile() {
-    const sel = document.getElementById('profile-select');
-    const id = sel.value;
-    if (!id) { showProfileMsg('Please select a profile first', 'warn'); return; }
-    showProfileMsg('Loading…', 'info');
-    try {
-      const res = await fetch(`${PROFILES_API}/${id}`, { headers: Auth.authHeaders() });
-      if (!res.ok) throw new Error('Not found');
-      const { profile } = await res.json();
-
-      // Apply to app state
-      if (profile.resumeText) {
-        resumeText = profile.resumeText;
-        // Show in paste tab
-        document.getElementById('resume-text').value = profile.resumeText;
-        switchTab('paste');
-      }
-      if (profile.jobDescription) {
-        document.getElementById('jd-text').value = profile.jobDescription;
-        onJdInput();
-      }
-      if (profile.supportingDocs?.length) {
-        supportingDocs = profile.supportingDocs.map(d => ({ ...d, id: crypto.randomUUID(), status: 'ready' }));
-        renderDocsList();
-      }
-
-      updateResumeBadge();
-      updateStartBtn();
-
-      // Show loaded bar
-      const meta = [];
-      if (profile.resumeText) meta.push('Resume ✓');
-      if (profile.jobDescription) meta.push('JD ✓');
-      if (profile.supportingDocs?.length) meta.push(`${profile.supportingDocs.length} docs ✓`);
-      document.getElementById('profile-loaded-name').textContent = profile.name;
-      document.getElementById('profile-loaded-meta').textContent = meta.join(' · ');
-      document.getElementById('profile-loaded-bar').style.display = 'flex';
-
-      // Auto-collapse the 3 data cards to save space
-      collapseCard('card-resume');
-      collapseCard('card-jd');
-      collapseCard('card-docs');
-
-      showProfileMsg(`✓ "${profile.name}" loaded successfully`, 'success');
-    } catch(err) {
-      showProfileMsg('Failed to load profile', 'error');
-    }
-  }
-
-  async function saveCurrentAsProfile() {
-    const jd = document.getElementById('jd-text').value.trim();
-    if (!resumeText && !jd) { showProfileMsg('Add a Resume or Job Description first', 'warn'); return; }
-
-    const name = prompt('Profile name (e.g. "Google SWE L5", "Product Manager - Stripe"):');
-    if (!name?.trim()) return;
-
-    showProfileMsg('Saving…', 'info');
-    try {
-      const body = {
-        name: name.trim(),
-        resumeText: resumeText || '',
-        jobDescription: jd,
-        supportingDocs: supportingDocs.filter(d => d.status === 'ready').map(d => ({ name: d.name, text: d.text })),
-      };
-      const res = await fetch(PROFILES_API, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', ...Auth.authHeaders() },
-        body: JSON.stringify(body),
-      });
-      if (!res.ok) { const e = await res.json(); throw new Error(e.message || e.error); }
-      showProfileMsg(`✓ Saved as "${name.trim()}"`, 'success');
-      loadProfileList(); // refresh dropdown
-    } catch(err) {
-      showProfileMsg('Failed to save: ' + err.message, 'error');
-    }
-  }
-
-  function clearLoadedProfile() {
-    document.getElementById('profile-loaded-bar').style.display = 'none';
-    document.getElementById('profile-select').value = '';
-    showProfileMsg('', 'none');
-    expandCard('card-resume');
-    expandCard('card-jd');
-    expandCard('card-docs');
-  }
-
-  function showProfileMsg(text, type) {
-    const el = document.getElementById('profile-msg');
-    if (!text || type === 'none') { el.style.display = 'none'; return; }
-    el.style.display = '';
-    const colors = { success: 'var(--accent2)', error: 'var(--danger)', warn: '#f59e0b', info: 'var(--text-muted)' };
-    el.style.color = colors[type] || 'var(--text-muted)';
-    el.textContent = text;
-    if (type === 'success') setTimeout(() => { el.style.display = 'none'; }, 3000);
-  }
-
-  // ── Card collapse/expand ───────────────────────────────────────────────────
-  function collapseCard(cardId) {
-    const card = document.getElementById(cardId);
-    if (!card) return;
-    const body = card.querySelector('.card-body');
-    const toggleBtn = card.querySelector('.card-toggle-btn');
-    if (body) body.style.display = 'none';
-    if (toggleBtn) toggleBtn.textContent = '▼';
-    card.dataset.collapsed = '1';
-  }
-  function expandCard(cardId) {
-    const card = document.getElementById(cardId);
-    if (!card) return;
-    const body = card.querySelector('.card-body');
-    const toggleBtn = card.querySelector('.card-toggle-btn');
-    if (body) body.style.display = '';
-    if (toggleBtn) toggleBtn.textContent = '▲';
-    delete card.dataset.collapsed;
-  }
-  function toggleCard(cardId) {
-    const card = document.getElementById(cardId);
-    if (!card) return;
-    if (card.dataset.collapsed) expandCard(cardId);
-    else collapseCard(cardId);
-  }
-
-  // Load profiles on page load (added to existing DOMContentLoaded handler above)
-  document.addEventListener('DOMContentLoaded', () => {
-    loadProfileList();
-  });
-</script>
-
-<!-- Whisper (transformers.js) — runs entirely in the browser, no API key needed -->
-<script type="module">
-  import { pipeline, env } from 'https://cdn.jsdelivr.net/npm/@xenova/transformers@2.17.2';
-
-  // Use Hugging Face CDN for model weights; disable local model lookup
-  env.allowLocalModels = false;
-
-  let _pipe = null;
-  let _loading = false;
-  let _loadPromise = null;
-
-  window.__whisper = {
-    /** Start downloading + compiling the model. Safe to call multiple times. */
-    async load(onProgress) {
-      if (_pipe) return _pipe;
-      if (_loadPromise) return _loadPromise;
-      _loading = true;
-      _loadPromise = pipeline(
-        'automatic-speech-recognition',
-        'Xenova/whisper-tiny.en',
-        { progress_callback: onProgress }
-      ).then(p => { _pipe = p; _loading = false; return p; });
-      return _loadPromise;
-    },
-
-    /** Transcribe an audio Blob → plain text string. */
-    async transcribe(blob) {
-      if (!_pipe) throw new Error('Whisper model not ready');
-      const url = URL.createObjectURL(blob);
-      try {
-        const out = await _pipe(url, {
-          language: 'english',
-          task: 'transcribe',
-          chunk_length_s: 30,
-        });
-        return (out.text || '').trim();
-      } finally {
-        URL.revokeObjectURL(url);
-      }
-    },
-
-    get ready() { return !!_pipe; },
-    get loading() { return _loading; },
-  };
+  // ── Init ──────────────────────────────────────────────────────────────────────
+  document.addEventListener('DOMContentLoaded', loadProfileList);
 </script>
 </body>
 </html>

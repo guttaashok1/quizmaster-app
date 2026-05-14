@@ -5,192 +5,284 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Job Profiles — Interview Coach</title>
   <script src="/auth.js"></script>
-  <link rel="stylesheet" href="/styles.css" />
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
+    :root {
+      --bg: #08080f;
+      --surface: #101020;
+      --surface2: #17172a;
+      --border: #252540;
+      --accent: #6366f1;
+      --accent-dim: rgba(99,102,241,0.12);
+      --accent-glow: rgba(99,102,241,0.25);
+      --green: #10b981;
+      --green-dim: rgba(16,185,129,0.12);
+      --red: #ef4444;
+      --red-dim: rgba(239,68,68,0.1);
+      --text: #f0f0f8;
+      --muted: #64748b;
+      --radius: 14px;
+      --font: 'Inter', system-ui, -apple-system, sans-serif;
+    }
+
     body {
-      background: var(--bg, #080812);
-      color: var(--text, #fff);
-      font-family: var(--font, 'Space Grotesk', system-ui, sans-serif);
-      min-height: 100vh;
+      background: var(--bg); color: var(--text);
+      font-family: var(--font); min-height: 100vh; line-height: 1.5;
     }
 
-    .page-nav {
+    /* ── Nav ───────────────────────────────────────────────────────────────── */
+    .nav {
       position: sticky; top: 0; z-index: 100;
-      background: rgba(8,8,18,0.85);
-      backdrop-filter: blur(18px);
-      border-bottom: 1px solid rgba(255,255,255,0.07);
-      padding: 0 32px; height: 60px;
+      height: 58px; padding: 0 28px;
       display: flex; align-items: center; gap: 14px;
+      background: rgba(8,8,15,0.94); backdrop-filter: blur(18px);
+      border-bottom: 1px solid var(--border);
     }
-    .page-nav a { color: rgba(255,255,255,0.5); text-decoration: none; font-size: 14px; }
-    .page-nav a:hover { color: #fff; }
-    .page-nav .sep { color: rgba(255,255,255,0.2); }
-    .page-nav h1 { font-size: 16px; font-weight: 700; color: #fff; }
-    .page-nav .nav-right { margin-left: auto; display: flex; align-items: center; gap: 10px; }
-    .page-nav .nav-user { font-size: 13px; color: rgba(255,255,255,0.5); }
+    .nav-logo {
+      width: 30px; height: 30px; flex-shrink: 0;
+      background: linear-gradient(135deg, var(--accent), var(--green));
+      border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 14px;
+    }
+    .nav-brand { font-size: 15px; font-weight: 700; }
+    .nav-sep   { color: var(--border); font-size: 18px; }
+    .nav-page  { font-size: 14px; color: var(--muted); }
+    .nav-right { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+    .nav-user  { font-size: 13px; color: var(--muted); }
+    .nav-link  { font-size: 13px; color: var(--muted); text-decoration: none; transition: color 0.2s; }
+    .nav-link:hover { color: var(--text); }
+    .btn-nav {
+      padding: 5px 13px; border-radius: 7px; font-size: 13px; font-weight: 600;
+      cursor: pointer; border: 1px solid var(--border); background: transparent; color: var(--muted);
+      transition: all 0.2s;
+    }
+    .btn-nav:hover { border-color: var(--red); color: var(--red); }
 
-    .container {
-      max-width: 860px; margin: 0 auto;
-      padding: 36px 24px 80px;
-    }
+    /* ── Page Layout ─────────────────────────────────────────────────────────── */
+    .page-wrap { max-width: 860px; margin: 0 auto; padding: 36px 24px 80px; }
 
     .page-header {
-      display: flex; align-items: center; justify-content: space-between;
-      margin-bottom: 28px; flex-wrap: wrap; gap: 14px;
+      display: flex; align-items: flex-start; justify-content: space-between;
+      gap: 16px; margin-bottom: 28px; flex-wrap: wrap;
     }
-    .page-header h2 { font-size: 22px; font-weight: 800; }
-    .page-header p { font-size: 14px; color: rgba(255,255,255,0.5); margin-top: 4px; }
+    .page-header h1 { font-size: 24px; font-weight: 800; margin-bottom: 6px; }
+    .page-header p  { font-size: 14px; color: var(--muted); max-width: 480px; line-height: 1.6; }
 
-    /* Buttons */
+    /* ── Buttons ─────────────────────────────────────────────────────────────── */
     .btn {
       display: inline-flex; align-items: center; gap: 7px;
-      padding: 10px 20px; border-radius: 9px; font-size: 14px; font-weight: 600;
-      cursor: pointer; border: none; transition: opacity 0.2s, box-shadow 0.2s;
+      padding: 10px 20px; border-radius: 10px; font-size: 14px; font-weight: 600;
+      cursor: pointer; border: none; transition: box-shadow 0.2s, opacity 0.2s;
+      font-family: var(--font);
     }
     .btn-primary {
-      background: linear-gradient(135deg, #2563eb, #38bdf8);
-      color: #fff;
+      background: linear-gradient(135deg, var(--accent), #8b5cf6); color: #fff;
     }
-    .btn-primary:hover { box-shadow: 0 0 18px rgba(37,99,235,0.45); }
+    .btn-primary:hover { box-shadow: 0 0 18px rgba(99,102,241,0.4); }
+    .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }
     .btn-outline {
-      background: transparent; border: 1px solid rgba(255,255,255,0.15);
-      color: rgba(255,255,255,0.8);
+      background: transparent; border: 1px solid var(--border); color: var(--muted);
     }
-    .btn-outline:hover { border-color: rgba(255,255,255,0.35); color: #fff; }
+    .btn-outline:hover { border-color: var(--accent); color: var(--text); }
     .btn-danger {
-      background: transparent; border: 1px solid rgba(255,79,79,0.35);
-      color: #ff6b6b;
+      background: transparent; border: 1px solid rgba(239,68,68,0.3); color: #f87171;
     }
-    .btn-danger:hover { background: rgba(255,79,79,0.1); }
-    .btn-sm { padding: 6px 13px; font-size: 13px; }
-    .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+    .btn-danger:hover { background: var(--red-dim); border-color: var(--red); }
+    .btn-sm { padding: 6px 13px; font-size: 13px; border-radius: 8px; }
+    .btn-success {
+      background: var(--green); color: #000; border: none;
+    }
+    .btn-success:hover { box-shadow: 0 0 14px rgba(16,185,129,0.35); }
 
-    /* Profile cards grid */
-    .profiles-grid {
-      display: flex; flex-direction: column; gap: 14px;
-    }
-
-    .profile-card {
-      background: rgba(255,255,255,0.04);
-      border: 1px solid rgba(255,255,255,0.09);
-      border-radius: 14px; padding: 20px 22px;
-      transition: border-color 0.2s;
-    }
-    .profile-card:hover { border-color: rgba(255,255,255,0.16); }
-
-    .profile-card-header {
-      display: flex; align-items: flex-start; justify-content: space-between; gap: 12px;
-    }
-    .profile-card-name {
-      font-size: 16px; font-weight: 700; color: #fff;
-    }
-    .profile-card-meta {
-      font-size: 12px; color: rgba(255,255,255,0.45); margin-top: 5px;
-      display: flex; gap: 10px; flex-wrap: wrap;
-    }
-    .profile-card-meta .chip {
-      background: rgba(255,255,255,0.07); border-radius: 5px;
-      padding: 2px 8px; font-size: 11px;
-    }
-    .profile-card-meta .chip.has { background: rgba(6,182,212,0.12); color: #06b6d4; }
-
-    .profile-card-actions {
-      display: flex; gap: 8px; flex-shrink: 0; flex-wrap: wrap;
-    }
-
-    /* Empty state */
-    .empty-state {
-      text-align: center; padding: 64px 24px;
-      color: rgba(255,255,255,0.4); font-size: 15px;
-    }
-    .empty-state .empty-icon { font-size: 48px; margin-bottom: 14px; }
-    .empty-state p { line-height: 1.7; }
-
-    /* Modal overlay */
-    .modal-overlay {
-      display: none; position: fixed; inset: 0;
-      background: rgba(0,0,0,0.65); z-index: 200;
-      align-items: center; justify-content: center;
-      padding: 20px;
-    }
-    .modal-overlay.open { display: flex; }
-
-    .modal {
-      background: #111122; border: 1px solid rgba(255,255,255,0.12);
-      border-radius: 16px; padding: 28px; width: 100%; max-width: 640px;
-      max-height: 90vh; overflow-y: auto;
-    }
-    .modal h3 { font-size: 18px; font-weight: 700; margin-bottom: 20px; }
-
-    .form-group { margin-bottom: 18px; }
-    .form-group label {
-      display: block; font-size: 13px; font-weight: 600;
-      color: rgba(255,255,255,0.7); margin-bottom: 7px;
-    }
-    .form-group input[type="text"],
-    .form-group textarea {
-      width: 100%; background: rgba(255,255,255,0.06);
-      border: 1px solid rgba(255,255,255,0.12);
-      border-radius: 9px; color: #fff;
-      font-family: var(--font, 'Space Grotesk', system-ui, sans-serif);
-      font-size: 14px; padding: 11px 14px;
-      resize: vertical; line-height: 1.6;
-      transition: border-color 0.2s;
-      outline: none;
-    }
-    .form-group input[type="text"]:focus,
-    .form-group textarea:focus {
-      border-color: #2563eb;
-      box-shadow: 0 0 0 3px rgba(37,99,235,0.18);
-    }
-    .form-group input::placeholder,
-    .form-group textarea::placeholder { color: rgba(255,255,255,0.3); }
-
-    .modal-actions {
-      display: flex; gap: 10px; justify-content: flex-end; margin-top: 24px;
-      flex-wrap: wrap;
-    }
-
+    /* ── Flash ───────────────────────────────────────────────────────────────── */
     .flash {
-      padding: 12px 16px; border-radius: 9px; font-size: 14px;
+      padding: 12px 16px; border-radius: 10px; font-size: 14px;
       margin-bottom: 20px; display: none;
     }
-    .flash.success { background: rgba(6,182,212,0.1); border: 1px solid rgba(6,182,212,0.25); color: #06b6d4; }
-    .flash.error   { background: rgba(255,79,79,0.1);  border: 1px solid rgba(255,79,79,0.3);  color: #ff6b6b; }
+    .flash.success { background: var(--green-dim); border: 1px solid rgba(16,185,129,0.25); color: #34d399; }
+    .flash.error   { background: var(--red-dim); border: 1px solid rgba(239,68,68,0.25); color: #f87171; }
 
-    .loading-row {
-      text-align: center; padding: 48px; color: rgba(255,255,255,0.4); font-size: 14px;
+    /* ── Profile Grid ────────────────────────────────────────────────────────── */
+    .profiles-grid { display: flex; flex-direction: column; gap: 14px; }
+
+    .profile-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 20px 22px;
+      transition: border-color 0.2s;
+    }
+    .profile-card:hover { border-color: rgba(99,102,241,0.3); }
+    .profile-card-row {
+      display: flex; align-items: flex-start; justify-content: space-between; gap: 16px;
+    }
+    .profile-card-icon {
+      width: 44px; height: 44px; border-radius: 11px; flex-shrink: 0;
+      background: var(--accent-dim); border: 1px solid var(--accent-glow);
+      display: flex; align-items: center; justify-content: center; font-size: 20px;
+    }
+    .profile-card-info { flex: 1; min-width: 0; }
+    .profile-card-name { font-size: 16px; font-weight: 700; margin-bottom: 6px; }
+    .profile-card-chips { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 6px; }
+    .chip {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 3px 9px; border-radius: 5px; font-size: 11px; font-weight: 600;
+    }
+    .chip-has  { background: var(--green-dim); color: #34d399; }
+    .chip-miss { background: rgba(255,255,255,0.05); color: var(--muted); }
+    .profile-card-date { font-size: 12px; color: var(--muted); }
+    .profile-card-actions { display: flex; gap: 8px; flex-shrink: 0; flex-wrap: wrap; align-items: flex-start; }
+
+    /* ── Empty State ─────────────────────────────────────────────────────────── */
+    .empty-state {
+      text-align: center; padding: 70px 24px; color: var(--muted);
+    }
+    .empty-state .icon { font-size: 52px; display: block; margin-bottom: 16px; }
+    .empty-state h3    { font-size: 18px; font-weight: 700; color: var(--text); margin-bottom: 8px; }
+    .empty-state p     { font-size: 14px; max-width: 360px; margin: 0 auto 22px; line-height: 1.65; }
+
+    .loading-row { text-align: center; padding: 60px; color: var(--muted); font-size: 14px; }
+
+    /* ══ MODAL ════════════════════════════════════════════════════════════════ */
+    .overlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,0.72); z-index: 300;
+      align-items: center; justify-content: center;
+      padding: 20px; overflow-y: auto;
+    }
+    .overlay.open { display: flex; }
+
+    .modal {
+      background: #0e0e1e; border: 1px solid var(--border);
+      border-radius: 18px; padding: 30px; width: 100%; max-width: 620px;
+      max-height: calc(100vh - 40px); overflow-y: auto;
+      position: relative;
+    }
+    .modal-header {
+      display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px;
+    }
+    .modal-title { font-size: 18px; font-weight: 800; }
+    .modal-close {
+      width: 30px; height: 30px; border-radius: 8px;
+      background: transparent; border: 1px solid var(--border);
+      color: var(--muted); font-size: 16px; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: all 0.2s;
+    }
+    .modal-close:hover { border-color: var(--red); color: var(--red); }
+
+    /* Form fields */
+    .field { margin-bottom: 20px; }
+    .field-label {
+      display: block; font-size: 12px; font-weight: 700; letter-spacing: 0.06em;
+      text-transform: uppercase; color: var(--muted); margin-bottom: 8px;
+    }
+    .field-label span { font-weight: 400; text-transform: none; letter-spacing: 0; opacity: 0.7; }
+    input.field-input, textarea.field-input {
+      width: 100%; background: var(--surface2); border: 1.5px solid var(--border);
+      border-radius: 10px; color: var(--text); font-family: var(--font);
+      font-size: 14px; padding: 11px 14px; outline: none;
+      transition: border-color 0.2s; resize: vertical; line-height: 1.6;
+    }
+    input.field-input:focus, textarea.field-input:focus {
+      border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-dim);
+    }
+    input.field-input::placeholder, textarea.field-input::placeholder { color: var(--muted); }
+
+    /* Tabs (for resume input method) */
+    .field-tabs {
+      display: flex; gap: 4px; background: var(--surface2);
+      border-radius: 8px; padding: 3px; margin-bottom: 10px;
+    }
+    .field-tab {
+      flex: 1; padding: 7px; border: none; border-radius: 6px;
+      background: transparent; color: var(--muted);
+      font-size: 13px; font-weight: 500; cursor: pointer;
+      transition: all 0.2s; font-family: var(--font);
+    }
+    .field-tab.on { background: var(--surface); color: var(--text); box-shadow: 0 1px 3px rgba(0,0,0,0.3); }
+
+    /* PDF upload zone */
+    .pdf-drop {
+      border: 2px dashed var(--border); border-radius: 10px;
+      padding: 24px 20px; text-align: center; cursor: pointer;
+      transition: border-color 0.2s, background 0.2s; position: relative;
+    }
+    .pdf-drop:hover, .pdf-drop.over { border-color: var(--accent); background: var(--accent-dim); }
+    .pdf-drop input[type="file"] { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
+    .pdf-drop .drop-icon  { font-size: 28px; display: block; margin-bottom: 6px; }
+    .pdf-drop .drop-label { font-size: 14px; color: var(--muted); }
+    .pdf-drop .drop-sub   { font-size: 12px; color: var(--muted); opacity: 0.6; margin-top: 4px; }
+
+    /* PDF loaded state */
+    .pdf-loaded {
+      display: none; align-items: center; gap: 10px;
+      background: var(--green-dim); border: 1px solid rgba(16,185,129,0.25);
+      border-radius: 10px; padding: 10px 14px;
+    }
+    .pdf-loaded.show { display: flex; }
+    .pdf-loaded-name { flex: 1; font-size: 13px; font-weight: 600; color: #34d399; }
+    .pdf-loaded-sub  { font-size: 11px; color: var(--muted); margin-top: 2px; }
+    .pdf-loaded-clear {
+      background: none; border: none; color: var(--muted); cursor: pointer; font-size: 18px; padding: 0 2px;
+      transition: color 0.2s;
+    }
+    .pdf-loaded-clear:hover { color: var(--red); }
+
+    /* Supporting docs list */
+    .docs-list  { display: flex; flex-direction: column; gap: 6px; margin-top: 8px; }
+    .doc-row {
+      display: flex; align-items: center; gap: 10px;
+      background: var(--surface2); border: 1px solid var(--border);
+      border-radius: 8px; padding: 8px 12px; font-size: 13px;
+    }
+    .doc-row-icon   { font-size: 15px; flex-shrink: 0; }
+    .doc-row-name   { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--text); }
+    .doc-row-status { font-size: 11px; flex-shrink: 0; }
+    .doc-row-status.ok  { color: var(--green); }
+    .doc-row-status.err { color: var(--red); }
+    .doc-row-status.parsing { color: var(--muted); }
+    .doc-row-remove {
+      background: none; border: none; color: var(--muted); cursor: pointer;
+      font-size: 14px; flex-shrink: 0; padding: 0 2px; transition: color 0.2s;
+    }
+    .doc-row-remove:hover { color: var(--red); }
+
+    .modal-footer {
+      display: flex; gap: 10px; justify-content: flex-end; margin-top: 28px; flex-wrap: wrap;
     }
 
     @media (max-width: 600px) {
-      .page-nav { padding: 0 16px; }
-      .container { padding: 20px 14px 60px; }
-      .profile-card-header { flex-direction: column; }
+      .nav { padding: 0 14px; }
+      .page-wrap { padding: 20px 14px 60px; }
+      .profile-card-row { flex-direction: column; }
       .profile-card-actions { width: 100%; }
+      .modal { padding: 22px 16px; }
     }
   </style>
 </head>
 <body>
 
-<nav class="page-nav">
-  <a href="/interview/">← Interview Coach</a>
-  <span class="sep">›</span>
-  <h1>Job Profiles</h1>
+<!-- ── Nav ─────────────────────────────────────────────────────────────────── -->
+<nav class="nav">
+  <div class="nav-logo">🎙️</div>
+  <span class="nav-brand">Interview Coach</span>
+  <span class="nav-sep">/</span>
+  <span class="nav-page">Job Profiles</span>
   <div class="nav-right">
+    <a href="/interview/" class="nav-link">← Back to Coach</a>
     <span class="nav-user" id="nav-user"></span>
-    <button class="btn btn-outline btn-sm" onclick="Auth.logout()">Log out</button>
+    <button class="btn-nav" onclick="Auth.logout()">Log out</button>
   </div>
 </nav>
 
-<div class="container">
+<!-- ── Page ────────────────────────────────────────────────────────────────── -->
+<div class="page-wrap">
+
   <div class="page-header">
     <div>
-      <h2>Saved Job Profiles</h2>
-      <p>Each profile stores your Resume, Job Description, and Supporting Docs — load one on the interview page to auto-fill everything instantly.</p>
+      <h1>Job Profiles</h1>
+      <p>Each profile stores your Resume, Job Description, and supporting context. Load one on the Interview Coach page to start a focused session instantly.</p>
     </div>
-    <button class="btn btn-primary" onclick="openCreateModal()">+ New Profile</button>
+    <button class="btn btn-primary" onclick="openCreate()">+ New Profile</button>
   </div>
 
   <div class="flash" id="flash"></div>
@@ -198,73 +290,134 @@
   <div id="profiles-list">
     <div class="loading-row">Loading your profiles…</div>
   </div>
+
 </div>
 
-<!-- Create / Edit Modal -->
-<div class="modal-overlay" id="modal-overlay" onclick="handleOverlayClick(event)">
-  <div class="modal">
-    <h3 id="modal-title">New Job Profile</h3>
+<!-- ══ CREATE / EDIT MODAL ═══════════════════════════════════════════════════ -->
+<div class="overlay" id="overlay" onclick="handleOverlayClick(event)">
+<div class="modal">
 
-    <div class="form-group">
-      <label for="f-name">Profile Name *</label>
-      <input type="text" id="f-name" placeholder='e.g. "Google SWE L5" or "PM at Stripe"' maxlength="100" />
+  <div class="modal-header">
+    <div class="modal-title" id="modal-title">New Job Profile</div>
+    <button class="modal-close" onclick="closeModal()">✕</button>
+  </div>
+
+  <!-- Profile Name -->
+  <div class="field">
+    <label class="field-label" for="f-name">Profile Name *</label>
+    <input class="field-input" type="text" id="f-name"
+      placeholder='e.g. "Google SWE L5" or "Product Manager at Stripe"' maxlength="100" />
+  </div>
+
+  <!-- Resume -->
+  <div class="field">
+    <label class="field-label">Resume <span>(upload PDF or paste text)</span></label>
+    <div class="field-tabs">
+      <button class="field-tab on" id="tab-upload" onclick="switchResumeTab('upload')">📄 Upload PDF</button>
+      <button class="field-tab"   id="tab-paste"  onclick="switchResumeTab('paste')">✏️ Paste Text</button>
     </div>
 
-    <div class="form-group">
-      <label for="f-resume">Resume Text</label>
-      <textarea id="f-resume" rows="7" placeholder="Paste your resume text here…"></textarea>
+    <!-- Upload panel -->
+    <div id="panel-upload">
+      <div class="pdf-drop" id="resume-drop"
+        ondragover="ev(event,'resume-drop',true)" ondragleave="ev(event,'resume-drop',false)"
+        ondrop="dropResume(event)">
+        <input type="file" id="resume-file" accept="application/pdf" onchange="pickResume(event)" />
+        <span class="drop-icon">📋</span>
+        <div class="drop-label"><strong>Click to upload</strong> or drag & drop your resume PDF</div>
+        <div class="drop-sub">Max 10 MB</div>
+      </div>
+      <div class="pdf-loaded" id="resume-loaded">
+        <span>✅</span>
+        <div>
+          <div class="pdf-loaded-name" id="resume-loaded-name"></div>
+          <div class="pdf-loaded-sub"  id="resume-loaded-sub"></div>
+        </div>
+        <button class="pdf-loaded-clear" onclick="clearResumeFile()" title="Remove">✕</button>
+      </div>
     </div>
 
-    <div class="form-group">
-      <label for="f-jd">Job Description</label>
-      <textarea id="f-jd" rows="6" placeholder="Paste the full job description here…"></textarea>
-    </div>
-
-    <div class="form-group">
-      <label for="f-docs">Supporting Notes / Extra Context <span style="font-weight:400;color:rgba(255,255,255,0.35)">(optional)</span></label>
-      <textarea id="f-docs" rows="4" placeholder="Paste any additional context — company research, cover letter notes, certifications, etc."></textarea>
-      <div style="font-size:12px;color:rgba(255,255,255,0.3);margin-top:5px">This will be stored as a single supporting document named "Notes".</div>
-    </div>
-
-    <div class="modal-actions">
-      <button class="btn btn-outline" onclick="closeModal()">Cancel</button>
-      <button class="btn btn-primary" id="modal-save-btn" onclick="saveModal()">Save Profile</button>
+    <!-- Paste panel -->
+    <div id="panel-paste" style="display:none">
+      <textarea class="field-input" id="f-resume" rows="7"
+        placeholder="Paste your full resume text here…"></textarea>
     </div>
   </div>
+
+  <!-- Job Description -->
+  <div class="field">
+    <label class="field-label" for="f-jd">Job Description *</label>
+    <textarea class="field-input" id="f-jd" rows="6"
+      placeholder="Paste the full job description from the company's careers page…"></textarea>
+  </div>
+
+  <!-- Supporting Documents -->
+  <div class="field">
+    <label class="field-label">
+      Supporting Documents
+      <span>(optional — portfolio, cover letter, certifications, company notes)</span>
+    </label>
+
+    <div class="pdf-drop" id="docs-drop"
+      ondragover="ev(event,'docs-drop',true)" ondragleave="ev(event,'docs-drop',false)"
+      ondrop="dropDocs(event)">
+      <input type="file" id="docs-file" accept="application/pdf" multiple onchange="pickDocs(event)" />
+      <span class="drop-icon">📎</span>
+      <div class="drop-label"><strong>Click to upload</strong> or drag & drop — multiple PDFs allowed</div>
+    </div>
+
+    <div class="docs-list" id="modal-docs-list"></div>
+
+    <!-- Text notes as fallback -->
+    <div style="margin-top:12px">
+      <div style="font-size:12px;color:var(--muted);margin-bottom:6px">Or paste text notes:</div>
+      <textarea class="field-input" id="f-notes" rows="3"
+        placeholder="Company research, key talking points, certifications, etc."></textarea>
+    </div>
+  </div>
+
+  <div class="modal-footer">
+    <button class="btn btn-outline" onclick="closeModal()">Cancel</button>
+    <button class="btn btn-primary" id="save-btn" onclick="saveModal()">Save Profile</button>
+  </div>
+
+</div>
 </div>
 
 <script>
-  // ── Auth guard ─────────────────────────────────────────────────────────────
-  const _session = Auth.requireAuth();
-  if (_session) {
-    document.getElementById('nav-user').textContent = '👤 ' + _session.username;
-  }
+  // ── Auth ─────────────────────────────────────────────────────────────────────
+  const _sess = Auth.requireAuth();
+  if (_sess) document.getElementById('nav-user').textContent = '👤 ' + _sess.username;
 
   const PROFILES_API = '/api/profiles';
   let allProfiles = [];
-  let editingId = null; // null = create mode, string = edit mode
+  let editingId   = null;
 
-  // ── Flash message ──────────────────────────────────────────────────────────
+  // Modal docs state
+  let modalResumeParsed = ''; // text parsed from PDF
+  let modalDocsUploaded = []; // [{ name, text, status }]
+
+  // ── Flash ─────────────────────────────────────────────────────────────────────
   function showFlash(text, type = 'success') {
     const el = document.getElementById('flash');
     el.textContent = text;
-    el.className = 'flash ' + type;
+    el.className   = 'flash ' + type;
     el.style.display = '';
-    clearTimeout(el._timer);
-    el._timer = setTimeout(() => { el.style.display = 'none'; }, 4000);
+    clearTimeout(el._t);
+    el._t = setTimeout(() => { el.style.display = 'none'; }, 4000);
   }
 
-  // ── Load and render profiles ───────────────────────────────────────────────
+  // ── Load & Render ─────────────────────────────────────────────────────────────
   async function loadProfiles() {
     try {
       const res = await fetch(PROFILES_API, { headers: Auth.authHeaders() });
-      if (!res.ok) throw new Error('Failed to load');
+      if (!res.ok) throw new Error('Failed');
       const { profiles } = await res.json();
       allProfiles = profiles;
       renderProfiles();
-    } catch (err) {
+    } catch {
       document.getElementById('profiles-list').innerHTML =
-        '<div class="loading-row" style="color:#ff6b6b">Failed to load profiles. Please refresh.</div>';
+        '<div class="loading-row" style="color:#f87171">Failed to load profiles — please refresh.</div>';
     }
   }
 
@@ -273,8 +426,10 @@
     if (allProfiles.length === 0) {
       container.innerHTML = `
         <div class="empty-state">
-          <div class="empty-icon">📋</div>
-          <p>No profiles yet.<br>Create your first profile to save your Resume + Job Description combo.</p>
+          <span class="icon">📋</span>
+          <h3>No profiles yet</h3>
+          <p>Create your first profile to save your resume and job description together — load it in seconds on interview day.</p>
+          <button class="btn btn-primary" onclick="openCreate()">+ Create Your First Profile</button>
         </div>`;
       return;
     }
@@ -287,28 +442,26 @@
       const card = document.createElement('div');
       card.className = 'profile-card';
 
-      const chips = [];
-      if (p.hasResume) chips.push('<span class="chip has">Resume ✓</span>');
-      else chips.push('<span class="chip">No Resume</span>');
-      if (p.hasJD) chips.push('<span class="chip has">JD ✓</span>');
-      else chips.push('<span class="chip">No JD</span>');
-      if (p.docsCount) chips.push(`<span class="chip has">${p.docsCount} doc${p.docsCount>1?'s':''} ✓</span>`);
+      const chips = [
+        p.hasResume ? '<span class="chip chip-has">📄 Resume</span>' : '<span class="chip chip-miss">No Resume</span>',
+        p.hasJD     ? '<span class="chip chip-has">📝 Job Description</span>' : '<span class="chip chip-miss">No JD</span>',
+        p.docsCount ? `<span class="chip chip-has">📎 ${p.docsCount} doc${p.docsCount > 1 ? 's' : ''}</span>` : '',
+      ].filter(Boolean).join('');
 
-      const updatedDate = new Date(p.updatedAt).toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' });
+      const date = new Date(p.updatedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 
       card.innerHTML = `
-        <div class="profile-card-header">
-          <div>
+        <div class="profile-card-row">
+          <div class="profile-card-icon">📋</div>
+          <div class="profile-card-info">
             <div class="profile-card-name">${escHtml(p.name)}</div>
-            <div class="profile-card-meta">
-              ${chips.join('')}
-              <span style="color:rgba(255,255,255,0.3)">Updated ${updatedDate}</span>
-            </div>
+            <div class="profile-card-chips">${chips}</div>
+            <div class="profile-card-date">Updated ${date}</div>
           </div>
           <div class="profile-card-actions">
-            <a href="/interview/" onclick="scheduleProfileLoad('${p.id}')" class="btn btn-primary btn-sm">Load in Coach</a>
-            <button class="btn btn-outline btn-sm" onclick="openEditModal('${p.id}')">Edit</button>
-            <button class="btn btn-danger btn-sm" onclick="deleteProfile('${p.id}', ${JSON.stringify(p.name)})">Delete</button>
+            <button class="btn btn-success btn-sm" onclick="loadInCoach('${p.id}')">▶ Load in Coach</button>
+            <button class="btn btn-outline btn-sm" onclick="openEdit('${p.id}')">Edit</button>
+            <button class="btn btn-danger  btn-sm" onclick="deleteProfile('${p.id}', ${JSON.stringify(p.name)})">Delete</button>
           </div>
         </div>`;
       grid.appendChild(card);
@@ -317,107 +470,262 @@
     container.appendChild(grid);
   }
 
-  function escHtml(str) {
-    return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  function escHtml(s) {
+    return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
   }
 
-  // Store profile id to load after redirect to interview page
-  function scheduleProfileLoad(id) {
+  function loadInCoach(id) {
     sessionStorage.setItem('loadProfileId', id);
+    window.location.href = '/interview/';
   }
 
-  // ── Delete ─────────────────────────────────────────────────────────────────
+  // ── Delete ─────────────────────────────────────────────────────────────────────
   async function deleteProfile(id, name) {
     if (!confirm(`Delete profile "${name}"? This cannot be undone.`)) return;
     try {
       const res = await fetch(`${PROFILES_API}/${id}`, {
-        method: 'DELETE',
-        headers: Auth.authHeaders(),
+        method: 'DELETE', headers: Auth.authHeaders(),
       });
-      if (!res.ok) throw new Error('Delete failed');
+      if (!res.ok) throw new Error('Failed');
       allProfiles = allProfiles.filter(p => p.id !== id);
       renderProfiles();
       showFlash(`"${name}" deleted`);
-    } catch (err) {
+    } catch {
       showFlash('Failed to delete profile', 'error');
     }
   }
 
-  // ── Modal helpers ──────────────────────────────────────────────────────────
-  function openCreateModal() {
+  // ── Modal Open / Close ────────────────────────────────────────────────────────
+  function resetModal() {
     editingId = null;
-    document.getElementById('modal-title').textContent = 'New Job Profile';
-    document.getElementById('f-name').value = '';
-    document.getElementById('f-resume').value = '';
-    document.getElementById('f-jd').value = '';
-    document.getElementById('f-docs').value = '';
-    document.getElementById('modal-save-btn').textContent = 'Save Profile';
-    document.getElementById('modal-overlay').classList.add('open');
-    document.getElementById('f-name').focus();
+    modalResumeParsed = '';
+    modalDocsUploaded = [];
+
+    document.getElementById('f-name').value    = '';
+    document.getElementById('f-resume').value  = '';
+    document.getElementById('f-jd').value      = '';
+    document.getElementById('f-notes').value   = '';
+    document.getElementById('resume-file').value = '';
+    document.getElementById('docs-file').value   = '';
+
+    clearResumeFile();
+    switchResumeTab('upload');
+    renderModalDocs();
   }
 
-  async function openEditModal(id) {
+  function openCreate() {
+    resetModal();
+    document.getElementById('modal-title').textContent = 'New Job Profile';
+    document.getElementById('save-btn').textContent    = 'Save Profile';
+    document.getElementById('overlay').classList.add('open');
+    setTimeout(() => document.getElementById('f-name').focus(), 80);
+  }
+
+  async function openEdit(id) {
+    resetModal();
     editingId = id;
     document.getElementById('modal-title').textContent = 'Edit Profile';
-    document.getElementById('modal-save-btn').textContent = 'Update Profile';
-    document.getElementById('modal-overlay').classList.add('open');
+    document.getElementById('save-btn').textContent    = 'Update Profile';
+    document.getElementById('overlay').classList.add('open');
 
-    // Fetch full profile
     try {
       const res = await fetch(`${PROFILES_API}/${id}`, { headers: Auth.authHeaders() });
       if (!res.ok) throw new Error('Not found');
       const { profile } = await res.json();
+
       document.getElementById('f-name').value = profile.name;
-      document.getElementById('f-resume').value = profile.resumeText;
-      document.getElementById('f-jd').value = profile.jobDescription;
-      // Show first supporting doc in the notes field if it exists
-      const notesDoc = profile.supportingDocs?.find(d => d.name === 'Notes');
-      document.getElementById('f-docs').value = notesDoc?.text ?? (profile.supportingDocs?.[0]?.text ?? '');
-    } catch (err) {
+      document.getElementById('f-jd').value   = profile.jobDescription || '';
+
+      if (profile.resumeText) {
+        // Show in paste tab
+        document.getElementById('f-resume').value = profile.resumeText;
+        switchResumeTab('paste');
+      }
+
+      // Populate supporting docs
+      if (profile.supportingDocs?.length) {
+        const notesDoc = profile.supportingDocs.find(d => d.name === 'Notes');
+        if (notesDoc) {
+          document.getElementById('f-notes').value = notesDoc.text;
+        }
+        // Other docs (non-Notes) shown as uploaded
+        const otherDocs = profile.supportingDocs.filter(d => d.name !== 'Notes');
+        modalDocsUploaded = otherDocs.map(d => ({ name: d.name, text: d.text, status: 'ok' }));
+        renderModalDocs();
+      }
+    } catch(err) {
       closeModal();
       showFlash('Could not load profile for editing', 'error');
     }
   }
 
   function closeModal() {
-    document.getElementById('modal-overlay').classList.remove('open');
+    document.getElementById('overlay').classList.remove('open');
     editingId = null;
   }
 
   function handleOverlayClick(e) {
-    if (e.target === document.getElementById('modal-overlay')) closeModal();
+    if (e.target === document.getElementById('overlay')) closeModal();
   }
 
+  // ── Resume Tabs ───────────────────────────────────────────────────────────────
+  function switchResumeTab(tab) {
+    document.getElementById('panel-upload').style.display = tab === 'upload' ? '' : 'none';
+    document.getElementById('panel-paste').style.display  = tab === 'paste'  ? '' : 'none';
+    document.getElementById('tab-upload').className = 'field-tab' + (tab === 'upload' ? ' on' : '');
+    document.getElementById('tab-paste').className  = 'field-tab' + (tab === 'paste'  ? ' on' : '');
+    if (tab === 'upload') { /* keep modalResumeParsed if already loaded */ }
+  }
+
+  // ── Resume PDF Upload ─────────────────────────────────────────────────────────
+  function ev(e, id, over) {
+    e.preventDefault();
+    document.getElementById(id).classList.toggle('over', over);
+  }
+
+  function dropResume(e) {
+    e.preventDefault();
+    document.getElementById('resume-drop').classList.remove('over');
+    const file = e.dataTransfer.files[0];
+    if (file?.type === 'application/pdf') handleResumeFile(file);
+  }
+
+  function pickResume(e) {
+    const file = e.target.files[0];
+    if (file) handleResumeFile(file);
+  }
+
+  async function handleResumeFile(file) {
+    if (file.type !== 'application/pdf') { alert('Please upload a PDF file.'); return; }
+
+    const drop   = document.getElementById('resume-drop');
+    const loaded = document.getElementById('resume-loaded');
+    const loadedName = document.getElementById('resume-loaded-name');
+    const loadedSub  = document.getElementById('resume-loaded-sub');
+
+    drop.style.display = 'none';
+    loaded.classList.add('show');
+    loadedName.textContent = file.name;
+    loadedSub.textContent  = 'Parsing…';
+    modalResumeParsed = '';
+
+    try {
+      const form = new FormData();
+      form.append('resume', file);
+      const res = await fetch('/api/interview/parse-resume', { method: 'POST', body: form });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || 'Parse failed');
+      modalResumeParsed = data.text;
+      const kb = Math.round(data.text.length / 1024);
+      loadedSub.textContent = `✓ Parsed (${kb} KB of text)`;
+    } catch(err) {
+      loadedSub.textContent = '⚠️ Parse failed — ' + err.message;
+      loadedSub.style.color = '#f87171';
+    }
+  }
+
+  function clearResumeFile() {
+    modalResumeParsed = '';
+    document.getElementById('resume-file').value = '';
+    document.getElementById('resume-drop').style.display = '';
+    document.getElementById('resume-loaded').classList.remove('show');
+    document.getElementById('resume-loaded-sub').style.color = '';
+  }
+
+  // ── Supporting Docs Upload ────────────────────────────────────────────────────
+  function dropDocs(e) {
+    e.preventDefault();
+    document.getElementById('docs-drop').classList.remove('over');
+    const files = [...e.dataTransfer.files].filter(f => f.type === 'application/pdf');
+    if (files.length) handleDocFiles(files);
+  }
+
+  function pickDocs(e) {
+    const files = [...e.target.files];
+    if (files.length) handleDocFiles(files);
+    e.target.value = '';
+  }
+
+  async function handleDocFiles(files) {
+    for (const file of files) {
+      if (file.type !== 'application/pdf') continue;
+      if (modalDocsUploaded.find(d => d.name === file.name)) continue;
+      const doc = { name: file.name, text: '', status: 'parsing' };
+      modalDocsUploaded.push(doc);
+      renderModalDocs();
+      try {
+        const form = new FormData(); form.append('resume', file);
+        const res = await fetch('/api/interview/parse-resume', { method: 'POST', body: form });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.message || 'Parse failed');
+        doc.text = data.text; doc.status = 'ok';
+      } catch(err) {
+        doc.status = 'error'; doc.error = err.message;
+      }
+      renderModalDocs();
+    }
+  }
+
+  function removeModalDoc(name) {
+    modalDocsUploaded = modalDocsUploaded.filter(d => d.name !== name);
+    renderModalDocs();
+  }
+
+  function renderModalDocs() {
+    const list = document.getElementById('modal-docs-list');
+    list.innerHTML = '';
+    modalDocsUploaded.forEach(doc => {
+      const row = document.createElement('div');
+      row.className = 'doc-row';
+      const status = doc.status === 'parsing' ? '<span class="doc-row-status parsing">⏳ Parsing…</span>'
+                   : doc.status === 'ok'      ? '<span class="doc-row-status ok">✓ Ready</span>'
+                   : `<span class="doc-row-status err">⚠️ ${doc.error || 'Error'}</span>`;
+      row.innerHTML = `
+        <span class="doc-row-icon">📄</span>
+        <span class="doc-row-name" title="${escHtml(doc.name)}">${escHtml(doc.name)}</span>
+        ${status}
+        <button class="doc-row-remove" onclick="removeModalDoc(${JSON.stringify(doc.name)})" title="Remove">✕</button>`;
+      list.appendChild(row);
+    });
+  }
+
+  // ── Save Modal ────────────────────────────────────────────────────────────────
   async function saveModal() {
     const name = document.getElementById('f-name').value.trim();
-    if (!name) { alert('Please enter a profile name.'); return; }
+    if (!name) { document.getElementById('f-name').focus(); alert('Please enter a profile name.'); return; }
 
-    const btn = document.getElementById('modal-save-btn');
+    // Gather resume text
+    let resumeText = '';
+    const uploadTab = document.getElementById('tab-upload').classList.contains('on');
+    if (uploadTab) {
+      resumeText = modalResumeParsed;
+    } else {
+      resumeText = document.getElementById('f-resume').value.trim();
+    }
+
+    const jobDescription = document.getElementById('f-jd').value.trim();
+
+    // Gather supporting docs
+    const notesText = document.getElementById('f-notes').value.trim();
+    const supportingDocs = [
+      ...modalDocsUploaded.filter(d => d.status === 'ok').map(d => ({ name: d.name, text: d.text })),
+      ...(notesText ? [{ name: 'Notes', text: notesText }] : []),
+    ];
+
+    const btn = document.getElementById('save-btn');
     btn.disabled = true;
     btn.textContent = 'Saving…';
 
-    const resumeText = document.getElementById('f-resume').value.trim();
-    const jobDescription = document.getElementById('f-jd').value.trim();
-    const notesText = document.getElementById('f-docs').value.trim();
-    const supportingDocs = notesText ? [{ name: 'Notes', text: notesText }] : [];
-
-    const body = { name, resumeText, jobDescription, supportingDocs };
-
     try {
-      let res;
-      if (editingId) {
-        res = await fetch(`${PROFILES_API}/${editingId}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json', ...Auth.authHeaders() },
-          body: JSON.stringify(body),
-        });
-      } else {
-        res = await fetch(PROFILES_API, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', ...Auth.authHeaders() },
-          body: JSON.stringify(body),
-        });
-      }
+      const body = { name, resumeText, jobDescription, supportingDocs };
+      const url    = editingId ? `${PROFILES_API}/${editingId}` : PROFILES_API;
+      const method = editingId ? 'PUT' : 'POST';
+
+      const res = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json', ...Auth.authHeaders() },
+        body: JSON.stringify(body),
+      });
 
       if (!res.ok) {
         const e = await res.json();
@@ -427,7 +735,7 @@
       closeModal();
       showFlash(editingId ? `"${name}" updated` : `"${name}" saved`);
       await loadProfiles();
-    } catch (err) {
+    } catch(err) {
       showFlash(err.message, 'error');
     } finally {
       btn.disabled = false;
@@ -435,10 +743,8 @@
     }
   }
 
-  // ── Init ───────────────────────────────────────────────────────────────────
-  document.addEventListener('DOMContentLoaded', () => {
-    loadProfiles();
-  });
+  // ── Init ──────────────────────────────────────────────────────────────────────
+  document.addEventListener('DOMContentLoaded', loadProfiles);
 </script>
 </body>
 </html>
