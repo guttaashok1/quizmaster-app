@@ -516,8 +516,14 @@
   }
   updateQuota();
 
+  // ── localStorage profile store (same key logic as profiles.html) ─────────────
+  function storageKey() { return 'ic_profiles_' + (_sess?.username || 'guest'); }
+  function getStoredProfiles() {
+    try { return JSON.parse(localStorage.getItem(storageKey()) || '[]'); }
+    catch { return []; }
+  }
+
   // ── State ─────────────────────────────────────────────────────────────────────
-  const PROFILES_API = '/api/profiles';
   let resumeText = '', jobDescription = '', supportingDocs = [];
   let voiceMode = 'mic';
 
@@ -531,33 +537,30 @@
   // Answer
   let streamCtrl = null, fullAnswer = '', utterance = null;
 
-  // ── Profile List ──────────────────────────────────────────────────────────────
-  async function loadProfileList() {
-    const sel = document.getElementById('profile-select');
-    try {
-      const res = await fetch(PROFILES_API, { headers: Auth.authHeaders() });
-      if (!res.ok) return;
-      const { profiles } = await res.json();
-      while (sel.options.length > 1) sel.remove(1);
+  // ── Profile List (reads from localStorage — instant, no server needed) ────────
+  function loadProfileList() {
+    const sel      = document.getElementById('profile-select');
+    const profiles = getStoredProfiles();
 
-      if (profiles.length === 0) {
-        document.getElementById('profile-picker').style.display = 'none';
-        document.getElementById('empty-state').style.display = '';
-        return;
-      }
+    while (sel.options.length > 1) sel.remove(1);
 
-      document.getElementById('profile-picker').style.display = '';
-      document.getElementById('empty-state').style.display = 'none';
-      profiles.forEach(p => sel.appendChild(new Option(p.name, p.id)));
+    if (profiles.length === 0) {
+      document.getElementById('profile-picker').style.display = 'none';
+      document.getElementById('empty-state').style.display = '';
+      return;
+    }
 
-      // Auto-load if redirected from profiles page
-      const autoId = sessionStorage.getItem('loadProfileId');
-      if (autoId) {
-        sessionStorage.removeItem('loadProfileId');
-        sel.value = autoId;
-        if (sel.value) { onProfileChange(); beginSession(); }
-      }
-    } catch(_) {}
+    document.getElementById('profile-picker').style.display = '';
+    document.getElementById('empty-state').style.display = 'none';
+    [...profiles].reverse().forEach(p => sel.appendChild(new Option(p.name, p.id)));
+
+    // Auto-load if redirected from profiles page
+    const autoId = sessionStorage.getItem('loadProfileId');
+    if (autoId) {
+      sessionStorage.removeItem('loadProfileId');
+      sel.value = autoId;
+      if (sel.value) { onProfileChange(); beginSession(); }
+    }
   }
 
   function onProfileChange() {
@@ -565,18 +568,17 @@
   }
 
   // ── Session Lifecycle ─────────────────────────────────────────────────────────
-  async function beginSession() {
+  function beginSession() {
     const sel = document.getElementById('profile-select');
-    const id = sel.value;
+    const id  = sel.value;
     if (!id) return;
 
     const btn = document.getElementById('begin-btn');
     btn.textContent = 'Loading…'; btn.disabled = true;
 
     try {
-      const res = await fetch(`${PROFILES_API}/${id}`, { headers: Auth.authHeaders() });
-      if (!res.ok) throw new Error('Profile not found');
-      const { profile } = await res.json();
+      const profile = getStoredProfiles().find(p => p.id === id);
+      if (!profile) throw new Error('Profile not found — it may have been deleted.');
 
       resumeText     = profile.resumeText     || '';
       jobDescription = profile.jobDescription || '';

@@ -26,12 +26,9 @@
       --font: 'Inter', system-ui, -apple-system, sans-serif;
     }
 
-    body {
-      background: var(--bg); color: var(--text);
-      font-family: var(--font); min-height: 100vh; line-height: 1.5;
-    }
+    body { background: var(--bg); color: var(--text); font-family: var(--font); min-height: 100vh; line-height: 1.5; }
 
-    /* ── Nav ───────────────────────────────────────────────────────────────── */
+    /* ── Nav ── */
     .nav {
       position: sticky; top: 0; z-index: 100;
       height: 58px; padding: 0 28px;
@@ -45,7 +42,7 @@
       border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 14px;
     }
     .nav-brand { font-size: 15px; font-weight: 700; }
-    .nav-sep   { color: var(--border); font-size: 18px; }
+    .nav-sep   { color: var(--border); }
     .nav-page  { font-size: 14px; color: var(--muted); }
     .nav-right { margin-left: auto; display: flex; align-items: center; gap: 10px; }
     .nav-user  { font-size: 13px; color: var(--muted); }
@@ -53,14 +50,12 @@
     .nav-link:hover { color: var(--text); }
     .btn-nav {
       padding: 5px 13px; border-radius: 7px; font-size: 13px; font-weight: 600;
-      cursor: pointer; border: 1px solid var(--border); background: transparent; color: var(--muted);
-      transition: all 0.2s;
+      cursor: pointer; border: 1px solid var(--border); background: transparent; color: var(--muted); transition: all 0.2s;
     }
     .btn-nav:hover { border-color: var(--red); color: var(--red); }
 
-    /* ── Page Layout ─────────────────────────────────────────────────────────── */
+    /* ── Layout ── */
     .page-wrap { max-width: 860px; margin: 0 auto; padding: 36px 24px 80px; }
-
     .page-header {
       display: flex; align-items: flex-start; justify-content: space-between;
       gap: 16px; margin-bottom: 28px; flex-wrap: wrap;
@@ -68,52 +63,38 @@
     .page-header h1 { font-size: 24px; font-weight: 800; margin-bottom: 6px; }
     .page-header p  { font-size: 14px; color: var(--muted); max-width: 480px; line-height: 1.6; }
 
-    /* ── Buttons ─────────────────────────────────────────────────────────────── */
+    /* ── Buttons ── */
     .btn {
       display: inline-flex; align-items: center; gap: 7px;
       padding: 10px 20px; border-radius: 10px; font-size: 14px; font-weight: 600;
-      cursor: pointer; border: none; transition: box-shadow 0.2s, opacity 0.2s;
-      font-family: var(--font);
+      cursor: pointer; border: none; transition: box-shadow 0.2s, opacity 0.2s; font-family: var(--font);
     }
-    .btn-primary {
-      background: linear-gradient(135deg, var(--accent), #8b5cf6); color: #fff;
-    }
+    .btn-primary { background: linear-gradient(135deg, var(--accent), #8b5cf6); color: #fff; }
     .btn-primary:hover { box-shadow: 0 0 18px rgba(99,102,241,0.4); }
-    .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }
-    .btn-outline {
-      background: transparent; border: 1px solid var(--border); color: var(--muted);
-    }
+    .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--muted); }
     .btn-outline:hover { border-color: var(--accent); color: var(--text); }
-    .btn-danger {
-      background: transparent; border: 1px solid rgba(239,68,68,0.3); color: #f87171;
-    }
+    .btn-danger  { background: transparent; border: 1px solid rgba(239,68,68,0.3); color: #f87171; }
     .btn-danger:hover { background: var(--red-dim); border-color: var(--red); }
-    .btn-sm { padding: 6px 13px; font-size: 13px; border-radius: 8px; }
-    .btn-success {
-      background: var(--green); color: #000; border: none;
-    }
+    .btn-success { background: var(--green); color: #000; border: none; }
     .btn-success:hover { box-shadow: 0 0 14px rgba(16,185,129,0.35); }
+    .btn-sm { padding: 6px 13px; font-size: 13px; border-radius: 8px; }
+    .btn:disabled { opacity: 0.4; cursor: not-allowed; }
 
-    /* ── Flash ───────────────────────────────────────────────────────────────── */
+    /* ── Flash ── */
     .flash {
-      padding: 12px 16px; border-radius: 10px; font-size: 14px;
-      margin-bottom: 20px; display: none;
+      padding: 12px 16px; border-radius: 10px; font-size: 14px; margin-bottom: 20px; display: none;
     }
     .flash.success { background: var(--green-dim); border: 1px solid rgba(16,185,129,0.25); color: #34d399; }
-    .flash.error   { background: var(--red-dim); border: 1px solid rgba(239,68,68,0.25); color: #f87171; }
+    .flash.error   { background: var(--red-dim);   border: 1px solid rgba(239,68,68,0.25);  color: #f87171; }
 
-    /* ── Profile Grid ────────────────────────────────────────────────────────── */
+    /* ── Profile Cards ── */
     .profiles-grid { display: flex; flex-direction: column; gap: 14px; }
-
     .profile-card {
       background: var(--surface); border: 1px solid var(--border);
-      border-radius: var(--radius); padding: 20px 22px;
-      transition: border-color 0.2s;
+      border-radius: var(--radius); padding: 20px 22px; transition: border-color 0.2s;
     }
     .profile-card:hover { border-color: rgba(99,102,241,0.3); }
-    .profile-card-row {
-      display: flex; align-items: flex-start; justify-content: space-between; gap: 16px;
-    }
+    .profile-card-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
     .profile-card-icon {
       width: 44px; height: 44px; border-radius: 11px; flex-shrink: 0;
       background: var(--accent-dim); border: 1px solid var(--accent-glow);
@@ -122,54 +103,50 @@
     .profile-card-info { flex: 1; min-width: 0; }
     .profile-card-name { font-size: 16px; font-weight: 700; margin-bottom: 6px; }
     .profile-card-chips { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 6px; }
-    .chip {
-      display: inline-flex; align-items: center; gap: 4px;
-      padding: 3px 9px; border-radius: 5px; font-size: 11px; font-weight: 600;
-    }
+    .chip { display: inline-flex; align-items: center; gap: 4px; padding: 3px 9px; border-radius: 5px; font-size: 11px; font-weight: 600; }
     .chip-has  { background: var(--green-dim); color: #34d399; }
     .chip-miss { background: rgba(255,255,255,0.05); color: var(--muted); }
     .profile-card-date { font-size: 12px; color: var(--muted); }
     .profile-card-actions { display: flex; gap: 8px; flex-shrink: 0; flex-wrap: wrap; align-items: flex-start; }
 
-    /* ── Empty State ─────────────────────────────────────────────────────────── */
-    .empty-state {
-      text-align: center; padding: 70px 24px; color: var(--muted);
-    }
+    /* ── Empty / Loading ── */
+    .empty-state { text-align: center; padding: 70px 24px; color: var(--muted); }
     .empty-state .icon { font-size: 52px; display: block; margin-bottom: 16px; }
-    .empty-state h3    { font-size: 18px; font-weight: 700; color: var(--text); margin-bottom: 8px; }
-    .empty-state p     { font-size: 14px; max-width: 360px; margin: 0 auto 22px; line-height: 1.65; }
-
+    .empty-state h3 { font-size: 18px; font-weight: 700; color: var(--text); margin-bottom: 8px; }
+    .empty-state p  { font-size: 14px; max-width: 360px; margin: 0 auto 22px; line-height: 1.65; }
     .loading-row { text-align: center; padding: 60px; color: var(--muted); font-size: 14px; }
 
-    /* ══ MODAL ════════════════════════════════════════════════════════════════ */
+    /* ══ MODAL ══ */
     .overlay {
       display: none; position: fixed; inset: 0;
-      background: rgba(0,0,0,0.72); z-index: 300;
-      align-items: center; justify-content: center;
-      padding: 20px; overflow-y: auto;
+      background: rgba(0,0,0,0.75); z-index: 300;
+      align-items: flex-start; justify-content: center;
+      padding: 40px 20px; overflow-y: auto;
     }
     .overlay.open { display: flex; }
-
     .modal {
       background: #0e0e1e; border: 1px solid var(--border);
       border-radius: 18px; padding: 30px; width: 100%; max-width: 620px;
-      max-height: calc(100vh - 40px); overflow-y: auto;
-      position: relative;
+      position: relative; margin: auto;
     }
-    .modal-header {
-      display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px;
-    }
+    .modal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; }
     .modal-title { font-size: 18px; font-weight: 800; }
     .modal-close {
       width: 30px; height: 30px; border-radius: 8px;
-      background: transparent; border: 1px solid var(--border);
-      color: var(--muted); font-size: 16px; cursor: pointer;
-      display: flex; align-items: center; justify-content: center;
-      transition: all 0.2s;
+      background: transparent; border: 1px solid var(--border); color: var(--muted);
+      font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s;
     }
     .modal-close:hover { border-color: var(--red); color: var(--red); }
 
-    /* Form fields */
+    /* Modal error/info message */
+    .modal-msg {
+      padding: 10px 14px; border-radius: 9px; font-size: 13px; margin-bottom: 16px; display: none;
+    }
+    .modal-msg.error   { background: var(--red-dim);   border: 1px solid rgba(239,68,68,0.3);  color: #f87171; }
+    .modal-msg.success { background: var(--green-dim); border: 1px solid rgba(16,185,129,0.3); color: #34d399; }
+    .modal-msg.info    { background: var(--accent-dim); border: 1px solid var(--accent-glow);  color: #a5b4fc; }
+
+    /* Form */
     .field { margin-bottom: 20px; }
     .field-label {
       display: block; font-size: 12px; font-weight: 700; letter-spacing: 0.06em;
@@ -182,63 +159,59 @@
       font-size: 14px; padding: 11px 14px; outline: none;
       transition: border-color 0.2s; resize: vertical; line-height: 1.6;
     }
-    input.field-input:focus, textarea.field-input:focus {
-      border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-dim);
-    }
+    input.field-input:focus, textarea.field-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-dim); }
     input.field-input::placeholder, textarea.field-input::placeholder { color: var(--muted); }
 
-    /* Tabs (for resume input method) */
+    /* Tabs */
     .field-tabs {
       display: flex; gap: 4px; background: var(--surface2);
       border-radius: 8px; padding: 3px; margin-bottom: 10px;
     }
     .field-tab {
       flex: 1; padding: 7px; border: none; border-radius: 6px;
-      background: transparent; color: var(--muted);
-      font-size: 13px; font-weight: 500; cursor: pointer;
-      transition: all 0.2s; font-family: var(--font);
+      background: transparent; color: var(--muted); font-size: 13px; font-weight: 500;
+      cursor: pointer; transition: all 0.2s; font-family: var(--font);
     }
     .field-tab.on { background: var(--surface); color: var(--text); box-shadow: 0 1px 3px rgba(0,0,0,0.3); }
 
-    /* PDF upload zone */
-    .pdf-drop {
+    /* Upload zone */
+    .upload-zone {
       border: 2px dashed var(--border); border-radius: 10px;
       padding: 24px 20px; text-align: center; cursor: pointer;
       transition: border-color 0.2s, background 0.2s; position: relative;
     }
-    .pdf-drop:hover, .pdf-drop.over { border-color: var(--accent); background: var(--accent-dim); }
-    .pdf-drop input[type="file"] { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
-    .pdf-drop .drop-icon  { font-size: 28px; display: block; margin-bottom: 6px; }
-    .pdf-drop .drop-label { font-size: 14px; color: var(--muted); }
-    .pdf-drop .drop-sub   { font-size: 12px; color: var(--muted); opacity: 0.6; margin-top: 4px; }
+    .upload-zone:hover, .upload-zone.over { border-color: var(--accent); background: var(--accent-dim); }
+    .upload-zone input[type="file"] { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
+    .upload-zone .zone-icon  { font-size: 28px; display: block; margin-bottom: 6px; }
+    .upload-zone .zone-label { font-size: 14px; color: var(--muted); }
+    .upload-zone .zone-sub   { font-size: 12px; color: var(--muted); opacity: 0.6; margin-top: 4px; }
 
-    /* PDF loaded state */
-    .pdf-loaded {
+    /* File loaded chip */
+    .file-loaded {
       display: none; align-items: center; gap: 10px;
       background: var(--green-dim); border: 1px solid rgba(16,185,129,0.25);
       border-radius: 10px; padding: 10px 14px;
     }
-    .pdf-loaded.show { display: flex; }
-    .pdf-loaded-name { flex: 1; font-size: 13px; font-weight: 600; color: #34d399; }
-    .pdf-loaded-sub  { font-size: 11px; color: var(--muted); margin-top: 2px; }
-    .pdf-loaded-clear {
-      background: none; border: none; color: var(--muted); cursor: pointer; font-size: 18px; padding: 0 2px;
-      transition: color 0.2s;
+    .file-loaded.show { display: flex; }
+    .file-loaded-name { flex: 1; font-size: 13px; font-weight: 600; color: #34d399; }
+    .file-loaded-sub  { font-size: 11px; color: var(--muted); margin-top: 2px; }
+    .file-loaded-clear {
+      background: none; border: none; color: var(--muted); cursor: pointer;
+      font-size: 18px; padding: 0 2px; transition: color 0.2s;
     }
-    .pdf-loaded-clear:hover { color: var(--red); }
+    .file-loaded-clear:hover { color: var(--red); }
 
     /* Supporting docs list */
-    .docs-list  { display: flex; flex-direction: column; gap: 6px; margin-top: 8px; }
+    .docs-list { display: flex; flex-direction: column; gap: 6px; margin-top: 8px; }
     .doc-row {
       display: flex; align-items: center; gap: 10px;
       background: var(--surface2); border: 1px solid var(--border);
       border-radius: 8px; padding: 8px 12px; font-size: 13px;
     }
-    .doc-row-icon   { font-size: 15px; flex-shrink: 0; }
-    .doc-row-name   { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--text); }
+    .doc-row-name { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--text); }
     .doc-row-status { font-size: 11px; flex-shrink: 0; }
-    .doc-row-status.ok  { color: var(--green); }
-    .doc-row-status.err { color: var(--red); }
+    .doc-row-status.ok      { color: var(--green); }
+    .doc-row-status.err     { color: var(--red); }
     .doc-row-status.parsing { color: var(--muted); }
     .doc-row-remove {
       background: none; border: none; color: var(--muted); cursor: pointer;
@@ -246,9 +219,7 @@
     }
     .doc-row-remove:hover { color: var(--red); }
 
-    .modal-footer {
-      display: flex; gap: 10px; justify-content: flex-end; margin-top: 28px; flex-wrap: wrap;
-    }
+    .modal-footer { display: flex; gap: 10px; justify-content: flex-end; margin-top: 28px; flex-wrap: wrap; }
 
     @media (max-width: 600px) {
       .nav { padding: 0 14px; }
@@ -256,12 +227,12 @@
       .profile-card-row { flex-direction: column; }
       .profile-card-actions { width: 100%; }
       .modal { padding: 22px 16px; }
+      .overlay { padding: 20px 14px; }
     }
   </style>
 </head>
 <body>
 
-<!-- ── Nav ─────────────────────────────────────────────────────────────────── -->
 <nav class="nav">
   <div class="nav-logo">🎙️</div>
   <span class="nav-brand">Interview Coach</span>
@@ -274,26 +245,20 @@
   </div>
 </nav>
 
-<!-- ── Page ────────────────────────────────────────────────────────────────── -->
 <div class="page-wrap">
-
   <div class="page-header">
     <div>
       <h1>Job Profiles</h1>
-      <p>Each profile stores your Resume, Job Description, and supporting context. Load one on the Interview Coach page to start a focused session instantly.</p>
+      <p>Save your resume, job description, and supporting context together. Load any profile on the interview page to start a session in one click.</p>
     </div>
     <button class="btn btn-primary" onclick="openCreate()">+ New Profile</button>
   </div>
 
   <div class="flash" id="flash"></div>
-
-  <div id="profiles-list">
-    <div class="loading-row">Loading your profiles…</div>
-  </div>
-
+  <div id="profiles-list"><div class="loading-row">Loading…</div></div>
 </div>
 
-<!-- ══ CREATE / EDIT MODAL ═══════════════════════════════════════════════════ -->
+<!-- ══ MODAL ══ -->
 <div class="overlay" id="overlay" onclick="handleOverlayClick(event)">
 <div class="modal">
 
@@ -302,7 +267,9 @@
     <button class="modal-close" onclick="closeModal()">✕</button>
   </div>
 
-  <!-- Profile Name -->
+  <div class="modal-msg" id="modal-msg"></div>
+
+  <!-- Name -->
   <div class="field">
     <label class="field-label" for="f-name">Profile Name *</label>
     <input class="field-input" type="text" id="f-name"
@@ -311,36 +278,35 @@
 
   <!-- Resume -->
   <div class="field">
-    <label class="field-label">Resume <span>(upload PDF or paste text)</span></label>
+    <label class="field-label">Resume <span>(PDF or Word document, or paste text)</span></label>
     <div class="field-tabs">
-      <button class="field-tab on" id="tab-upload" onclick="switchResumeTab('upload')">📄 Upload PDF</button>
+      <button class="field-tab on" id="tab-upload" onclick="switchResumeTab('upload')">📄 Upload File</button>
       <button class="field-tab"   id="tab-paste"  onclick="switchResumeTab('paste')">✏️ Paste Text</button>
     </div>
 
-    <!-- Upload panel -->
     <div id="panel-upload">
-      <div class="pdf-drop" id="resume-drop"
-        ondragover="ev(event,'resume-drop',true)" ondragleave="ev(event,'resume-drop',false)"
+      <div class="upload-zone" id="resume-zone"
+        ondragover="zoneDrag(event,'resume-zone',true)"
+        ondragleave="zoneDrag(event,'resume-zone',false)"
         ondrop="dropResume(event)">
-        <input type="file" id="resume-file" accept="application/pdf" onchange="pickResume(event)" />
-        <span class="drop-icon">📋</span>
-        <div class="drop-label"><strong>Click to upload</strong> or drag & drop your resume PDF</div>
-        <div class="drop-sub">Max 10 MB</div>
+        <input type="file" id="resume-file" accept=".pdf,.docx,.doc,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+          onchange="pickResume(event)" />
+        <span class="zone-icon">📋</span>
+        <div class="zone-label"><strong>Click to upload</strong> or drag & drop</div>
+        <div class="zone-sub">PDF or Word (.docx) — max 10 MB</div>
       </div>
-      <div class="pdf-loaded" id="resume-loaded">
+      <div class="file-loaded" id="resume-loaded">
         <span>✅</span>
         <div>
-          <div class="pdf-loaded-name" id="resume-loaded-name"></div>
-          <div class="pdf-loaded-sub"  id="resume-loaded-sub"></div>
+          <div class="file-loaded-name" id="resume-loaded-name"></div>
+          <div class="file-loaded-sub"  id="resume-loaded-sub"></div>
         </div>
-        <button class="pdf-loaded-clear" onclick="clearResumeFile()" title="Remove">✕</button>
+        <button class="file-loaded-clear" onclick="clearResumeFile()" title="Remove">✕</button>
       </div>
     </div>
 
-    <!-- Paste panel -->
     <div id="panel-paste" style="display:none">
-      <textarea class="field-input" id="f-resume" rows="7"
-        placeholder="Paste your full resume text here…"></textarea>
+      <textarea class="field-input" id="f-resume" rows="7" placeholder="Paste your full resume text here…"></textarea>
     </div>
   </div>
 
@@ -351,28 +317,27 @@
       placeholder="Paste the full job description from the company's careers page…"></textarea>
   </div>
 
-  <!-- Supporting Documents -->
+  <!-- Supporting Docs -->
   <div class="field">
     <label class="field-label">
       Supporting Documents
-      <span>(optional — portfolio, cover letter, certifications, company notes)</span>
+      <span>(optional — portfolio, cover letter, certifications, company research)</span>
     </label>
-
-    <div class="pdf-drop" id="docs-drop"
-      ondragover="ev(event,'docs-drop',true)" ondragleave="ev(event,'docs-drop',false)"
+    <div class="upload-zone" id="docs-zone"
+      ondragover="zoneDrag(event,'docs-zone',true)"
+      ondragleave="zoneDrag(event,'docs-zone',false)"
       ondrop="dropDocs(event)">
-      <input type="file" id="docs-file" accept="application/pdf" multiple onchange="pickDocs(event)" />
-      <span class="drop-icon">📎</span>
-      <div class="drop-label"><strong>Click to upload</strong> or drag & drop — multiple PDFs allowed</div>
+      <input type="file" id="docs-file" accept=".pdf,.docx,.doc,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+        multiple onchange="pickDocs(event)" />
+      <span class="zone-icon">📎</span>
+      <div class="zone-label"><strong>Click to upload</strong> or drag & drop — multiple files allowed</div>
+      <div class="zone-sub">PDF or Word (.docx)</div>
     </div>
-
     <div class="docs-list" id="modal-docs-list"></div>
-
-    <!-- Text notes as fallback -->
     <div style="margin-top:12px">
-      <div style="font-size:12px;color:var(--muted);margin-bottom:6px">Or paste text notes:</div>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:6px">Or type notes / extra context:</div>
       <textarea class="field-input" id="f-notes" rows="3"
-        placeholder="Company research, key talking points, certifications, etc."></textarea>
+        placeholder="Company research, key talking points, certifications, cover letter highlights…"></textarea>
     </div>
   </div>
 
@@ -389,36 +354,62 @@
   const _sess = Auth.requireAuth();
   if (_sess) document.getElementById('nav-user').textContent = '👤 ' + _sess.username;
 
-  const PROFILES_API = '/api/profiles';
-  let allProfiles = [];
-  let editingId   = null;
+  // ── localStorage-based profile store ─────────────────────────────────────────
+  // Keyed by username so multiple users on same browser are isolated.
+  function storageKey() { return 'ic_profiles_' + (_sess?.username || 'guest'); }
 
-  // Modal docs state
-  let modalResumeParsed = ''; // text parsed from PDF
-  let modalDocsUploaded = []; // [{ name, text, status }]
-
-  // ── Flash ─────────────────────────────────────────────────────────────────────
-  function showFlash(text, type = 'success') {
-    const el = document.getElementById('flash');
-    el.textContent = text;
-    el.className   = 'flash ' + type;
-    el.style.display = '';
-    clearTimeout(el._t);
-    el._t = setTimeout(() => { el.style.display = 'none'; }, 4000);
+  function getProfiles() {
+    try { return JSON.parse(localStorage.getItem(storageKey()) || '[]'); }
+    catch { return []; }
   }
 
-  // ── Load & Render ─────────────────────────────────────────────────────────────
-  async function loadProfiles() {
-    try {
-      const res = await fetch(PROFILES_API, { headers: Auth.authHeaders() });
-      if (!res.ok) throw new Error('Failed');
-      const { profiles } = await res.json();
-      allProfiles = profiles;
-      renderProfiles();
-    } catch {
-      document.getElementById('profiles-list').innerHTML =
-        '<div class="loading-row" style="color:#f87171">Failed to load profiles — please refresh.</div>';
+  function saveProfiles(profiles) {
+    localStorage.setItem(storageKey(), JSON.stringify(profiles));
+  }
+
+  function createProfile(data) {
+    const profiles = getProfiles();
+    const now = new Date().toISOString();
+    const profile = { id: crypto.randomUUID(), ...data, createdAt: now, updatedAt: now };
+    profiles.push(profile);
+    saveProfiles(profiles);
+    return profile;
+  }
+
+  function updateProfileById(id, data) {
+    const profiles = getProfiles();
+    const idx = profiles.findIndex(p => p.id === id);
+    if (idx === -1) throw new Error('Profile not found');
+    profiles[idx] = { ...profiles[idx], ...data, updatedAt: new Date().toISOString() };
+    saveProfiles(profiles);
+  }
+
+  function removeProfile(id) {
+    saveProfiles(getProfiles().filter(p => p.id !== id));
+  }
+
+  // ── Flash & Modal messages ────────────────────────────────────────────────────
+  function showFlash(text, type = 'success') {
+    const el = document.getElementById('flash');
+    el.textContent = text; el.className = 'flash ' + type; el.style.display = '';
+    clearTimeout(el._t); el._t = setTimeout(() => { el.style.display = 'none'; }, 4000);
+  }
+
+  function showModalMsg(text, type = 'error') {
+    const el = document.getElementById('modal-msg');
+    el.textContent = text; el.className = 'modal-msg ' + type; el.style.display = '';
+    if (type === 'success' || type === 'info') {
+      clearTimeout(el._t); el._t = setTimeout(() => { el.style.display = 'none'; }, 3000);
     }
+  }
+  function hideModalMsg() { document.getElementById('modal-msg').style.display = 'none'; }
+
+  // ── Render profiles ───────────────────────────────────────────────────────────
+  let allProfiles = [];
+
+  function loadAndRender() {
+    allProfiles = getProfiles();
+    renderProfiles();
   }
 
   function renderProfiles() {
@@ -428,7 +419,7 @@
         <div class="empty-state">
           <span class="icon">📋</span>
           <h3>No profiles yet</h3>
-          <p>Create your first profile to save your resume and job description together — load it in seconds on interview day.</p>
+          <p>Create your first profile to save your resume and job description — load it in one click on interview day.</p>
           <button class="btn btn-primary" onclick="openCreate()">+ Create Your First Profile</button>
         </div>`;
       return;
@@ -438,14 +429,18 @@
     const grid = document.createElement('div');
     grid.className = 'profiles-grid';
 
-    allProfiles.forEach(p => {
+    allProfiles.slice().reverse().forEach(p => {
       const card = document.createElement('div');
       card.className = 'profile-card';
 
+      const hasResume = (p.resumeText || '').length > 0;
+      const hasJD     = (p.jobDescription || '').length > 0;
+      const docsCount = (p.supportingDocs || []).length;
+
       const chips = [
-        p.hasResume ? '<span class="chip chip-has">📄 Resume</span>' : '<span class="chip chip-miss">No Resume</span>',
-        p.hasJD     ? '<span class="chip chip-has">📝 Job Description</span>' : '<span class="chip chip-miss">No JD</span>',
-        p.docsCount ? `<span class="chip chip-has">📎 ${p.docsCount} doc${p.docsCount > 1 ? 's' : ''}</span>` : '',
+        hasResume ? '<span class="chip chip-has">📄 Resume</span>' : '<span class="chip chip-miss">No Resume</span>',
+        hasJD     ? '<span class="chip chip-has">📝 Job Description</span>' : '<span class="chip chip-miss">No JD</span>',
+        docsCount ? `<span class="chip chip-has">📎 ${docsCount} doc${docsCount > 1 ? 's' : ''}</span>` : '',
       ].filter(Boolean).join('');
 
       const date = new Date(p.updatedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
@@ -461,7 +456,7 @@
           <div class="profile-card-actions">
             <button class="btn btn-success btn-sm" onclick="loadInCoach('${p.id}')">▶ Load in Coach</button>
             <button class="btn btn-outline btn-sm" onclick="openEdit('${p.id}')">Edit</button>
-            <button class="btn btn-danger  btn-sm" onclick="deleteProfile('${p.id}', ${JSON.stringify(p.name)})">Delete</button>
+            <button class="btn btn-danger  btn-sm" onclick="confirmDelete('${p.id}', ${JSON.stringify(p.name)})">Delete</button>
           </div>
         </div>`;
       grid.appendChild(card);
@@ -471,7 +466,7 @@
   }
 
   function escHtml(s) {
-    return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
   }
 
   function loadInCoach(id) {
@@ -479,38 +474,33 @@
     window.location.href = '/interview/';
   }
 
-  // ── Delete ─────────────────────────────────────────────────────────────────────
-  async function deleteProfile(id, name) {
-    if (!confirm(`Delete profile "${name}"? This cannot be undone.`)) return;
-    try {
-      const res = await fetch(`${PROFILES_API}/${id}`, {
-        method: 'DELETE', headers: Auth.authHeaders(),
-      });
-      if (!res.ok) throw new Error('Failed');
-      allProfiles = allProfiles.filter(p => p.id !== id);
-      renderProfiles();
-      showFlash(`"${name}" deleted`);
-    } catch {
-      showFlash('Failed to delete profile', 'error');
-    }
+  function confirmDelete(id, name) {
+    if (!confirm(`Delete "${name}"? This cannot be undone.`)) return;
+    removeProfile(id);
+    allProfiles = getProfiles();
+    renderProfiles();
+    showFlash(`"${name}" deleted`);
   }
 
-  // ── Modal Open / Close ────────────────────────────────────────────────────────
+  // ── Modal state ───────────────────────────────────────────────────────────────
+  let editingId         = null;
+  let modalResumeParsed = '';   // text extracted from uploaded resume file
+  let modalDocsUploaded = [];   // [{name, text, status}]
+
   function resetModal() {
     editingId = null;
     modalResumeParsed = '';
     modalDocsUploaded = [];
-
-    document.getElementById('f-name').value    = '';
-    document.getElementById('f-resume').value  = '';
-    document.getElementById('f-jd').value      = '';
-    document.getElementById('f-notes').value   = '';
+    document.getElementById('f-name').value   = '';
+    document.getElementById('f-resume').value = '';
+    document.getElementById('f-jd').value     = '';
+    document.getElementById('f-notes').value  = '';
     document.getElementById('resume-file').value = '';
     document.getElementById('docs-file').value   = '';
-
     clearResumeFile();
     switchResumeTab('upload');
     renderModalDocs();
+    hideModalMsg();
   }
 
   function openCreate() {
@@ -521,73 +511,61 @@
     setTimeout(() => document.getElementById('f-name').focus(), 80);
   }
 
-  async function openEdit(id) {
+  function openEdit(id) {
     resetModal();
+    const p = getProfiles().find(x => x.id === id);
+    if (!p) { showFlash('Profile not found', 'error'); return; }
+
     editingId = id;
     document.getElementById('modal-title').textContent = 'Edit Profile';
     document.getElementById('save-btn').textContent    = 'Update Profile';
-    document.getElementById('overlay').classList.add('open');
 
-    try {
-      const res = await fetch(`${PROFILES_API}/${id}`, { headers: Auth.authHeaders() });
-      if (!res.ok) throw new Error('Not found');
-      const { profile } = await res.json();
+    document.getElementById('f-name').value = p.name;
+    document.getElementById('f-jd').value   = p.jobDescription || '';
 
-      document.getElementById('f-name').value = profile.name;
-      document.getElementById('f-jd').value   = profile.jobDescription || '';
-
-      if (profile.resumeText) {
-        // Show in paste tab
-        document.getElementById('f-resume').value = profile.resumeText;
-        switchResumeTab('paste');
-      }
-
-      // Populate supporting docs
-      if (profile.supportingDocs?.length) {
-        const notesDoc = profile.supportingDocs.find(d => d.name === 'Notes');
-        if (notesDoc) {
-          document.getElementById('f-notes').value = notesDoc.text;
-        }
-        // Other docs (non-Notes) shown as uploaded
-        const otherDocs = profile.supportingDocs.filter(d => d.name !== 'Notes');
-        modalDocsUploaded = otherDocs.map(d => ({ name: d.name, text: d.text, status: 'ok' }));
-        renderModalDocs();
-      }
-    } catch(err) {
-      closeModal();
-      showFlash('Could not load profile for editing', 'error');
+    if (p.resumeText) {
+      document.getElementById('f-resume').value = p.resumeText;
+      switchResumeTab('paste');
     }
+
+    if (p.supportingDocs?.length) {
+      const notesDoc = p.supportingDocs.find(d => d.name === 'Notes');
+      if (notesDoc) document.getElementById('f-notes').value = notesDoc.text;
+      const otherDocs = p.supportingDocs.filter(d => d.name !== 'Notes');
+      modalDocsUploaded = otherDocs.map(d => ({ name: d.name, text: d.text, status: 'ok' }));
+      renderModalDocs();
+    }
+
+    document.getElementById('overlay').classList.add('open');
   }
 
   function closeModal() {
     document.getElementById('overlay').classList.remove('open');
-    editingId = null;
   }
 
   function handleOverlayClick(e) {
     if (e.target === document.getElementById('overlay')) closeModal();
   }
 
-  // ── Resume Tabs ───────────────────────────────────────────────────────────────
+  // ── Resume tab switching ──────────────────────────────────────────────────────
   function switchResumeTab(tab) {
     document.getElementById('panel-upload').style.display = tab === 'upload' ? '' : 'none';
     document.getElementById('panel-paste').style.display  = tab === 'paste'  ? '' : 'none';
     document.getElementById('tab-upload').className = 'field-tab' + (tab === 'upload' ? ' on' : '');
     document.getElementById('tab-paste').className  = 'field-tab' + (tab === 'paste'  ? ' on' : '');
-    if (tab === 'upload') { /* keep modalResumeParsed if already loaded */ }
   }
 
-  // ── Resume PDF Upload ─────────────────────────────────────────────────────────
-  function ev(e, id, over) {
+  // ── Resume file upload ────────────────────────────────────────────────────────
+  function zoneDrag(e, id, over) {
     e.preventDefault();
     document.getElementById(id).classList.toggle('over', over);
   }
 
   function dropResume(e) {
     e.preventDefault();
-    document.getElementById('resume-drop').classList.remove('over');
+    document.getElementById('resume-zone').classList.remove('over');
     const file = e.dataTransfer.files[0];
-    if (file?.type === 'application/pdf') handleResumeFile(file);
+    if (file) handleResumeFile(file);
   }
 
   function pickResume(e) {
@@ -596,66 +574,63 @@
   }
 
   async function handleResumeFile(file) {
-    if (file.type !== 'application/pdf') { alert('Please upload a PDF file.'); return; }
-
-    const drop   = document.getElementById('resume-drop');
+    const zone   = document.getElementById('resume-zone');
     const loaded = document.getElementById('resume-loaded');
-    const loadedName = document.getElementById('resume-loaded-name');
-    const loadedSub  = document.getElementById('resume-loaded-sub');
+    const lName  = document.getElementById('resume-loaded-name');
+    const lSub   = document.getElementById('resume-loaded-sub');
 
-    drop.style.display = 'none';
+    zone.style.display = 'none';
     loaded.classList.add('show');
-    loadedName.textContent = file.name;
-    loadedSub.textContent  = 'Parsing…';
+    lName.textContent = file.name;
+    lSub.textContent  = 'Parsing…';
+    lSub.style.color  = '';
     modalResumeParsed = '';
+    hideModalMsg();
 
     try {
-      const form = new FormData();
-      form.append('resume', file);
-      const res = await fetch('/api/interview/parse-resume', { method: 'POST', body: form });
+      const form = new FormData(); form.append('resume', file);
+      const res  = await fetch('/api/interview/parse-resume', { method: 'POST', body: form });
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || 'Parse failed');
       modalResumeParsed = data.text;
       const kb = Math.round(data.text.length / 1024);
-      loadedSub.textContent = `✓ Parsed (${kb} KB of text)`;
+      lSub.textContent = `✓ Parsed — ${kb} KB of text extracted`;
     } catch(err) {
-      loadedSub.textContent = '⚠️ Parse failed — ' + err.message;
-      loadedSub.style.color = '#f87171';
+      lSub.textContent = '⚠️ ' + err.message;
+      lSub.style.color = '#f87171';
+      showModalMsg('Could not parse this file. Try "Paste Text" mode instead.', 'error');
     }
   }
 
   function clearResumeFile() {
     modalResumeParsed = '';
-    document.getElementById('resume-file').value = '';
-    document.getElementById('resume-drop').style.display = '';
+    document.getElementById('resume-file').value   = '';
+    document.getElementById('resume-zone').style.display = '';
     document.getElementById('resume-loaded').classList.remove('show');
     document.getElementById('resume-loaded-sub').style.color = '';
   }
 
-  // ── Supporting Docs Upload ────────────────────────────────────────────────────
+  // ── Supporting docs upload ────────────────────────────────────────────────────
   function dropDocs(e) {
     e.preventDefault();
-    document.getElementById('docs-drop').classList.remove('over');
-    const files = [...e.dataTransfer.files].filter(f => f.type === 'application/pdf');
-    if (files.length) handleDocFiles(files);
+    document.getElementById('docs-zone').classList.remove('over');
+    handleDocFiles([...e.dataTransfer.files]);
   }
 
   function pickDocs(e) {
-    const files = [...e.target.files];
-    if (files.length) handleDocFiles(files);
+    handleDocFiles([...e.target.files]);
     e.target.value = '';
   }
 
   async function handleDocFiles(files) {
     for (const file of files) {
-      if (file.type !== 'application/pdf') continue;
       if (modalDocsUploaded.find(d => d.name === file.name)) continue;
       const doc = { name: file.name, text: '', status: 'parsing' };
       modalDocsUploaded.push(doc);
       renderModalDocs();
       try {
         const form = new FormData(); form.append('resume', file);
-        const res = await fetch('/api/interview/parse-resume', { method: 'POST', body: form });
+        const res  = await fetch('/api/interview/parse-resume', { method: 'POST', body: form });
         const data = await res.json();
         if (!res.ok) throw new Error(data.message || 'Parse failed');
         doc.text = data.text; doc.status = 'ok';
@@ -677,27 +652,32 @@
     modalDocsUploaded.forEach(doc => {
       const row = document.createElement('div');
       row.className = 'doc-row';
-      const status = doc.status === 'parsing' ? '<span class="doc-row-status parsing">⏳ Parsing…</span>'
-                   : doc.status === 'ok'      ? '<span class="doc-row-status ok">✓ Ready</span>'
-                   : `<span class="doc-row-status err">⚠️ ${doc.error || 'Error'}</span>`;
+      const status = doc.status === 'parsing'
+        ? '<span class="doc-row-status parsing">⏳ Parsing…</span>'
+        : doc.status === 'ok'
+        ? '<span class="doc-row-status ok">✓ Ready</span>'
+        : `<span class="doc-row-status err" title="${escHtml(doc.error||'')}">⚠️ Error</span>`;
       row.innerHTML = `
-        <span class="doc-row-icon">📄</span>
+        <span>📄</span>
         <span class="doc-row-name" title="${escHtml(doc.name)}">${escHtml(doc.name)}</span>
         ${status}
-        <button class="doc-row-remove" onclick="removeModalDoc(${JSON.stringify(doc.name)})" title="Remove">✕</button>`;
+        <button class="doc-row-remove" onclick="removeModalDoc(${JSON.stringify(doc.name)})">✕</button>`;
       list.appendChild(row);
     });
   }
 
-  // ── Save Modal ────────────────────────────────────────────────────────────────
-  async function saveModal() {
+  // ── Save ──────────────────────────────────────────────────────────────────────
+  function saveModal() {
     const name = document.getElementById('f-name').value.trim();
-    if (!name) { document.getElementById('f-name').focus(); alert('Please enter a profile name.'); return; }
+    if (!name) {
+      document.getElementById('f-name').focus();
+      showModalMsg('Please enter a profile name.', 'error');
+      return;
+    }
 
-    // Gather resume text
+    // Collect resume text
     let resumeText = '';
-    const uploadTab = document.getElementById('tab-upload').classList.contains('on');
-    if (uploadTab) {
+    if (document.getElementById('tab-upload').classList.contains('on')) {
       resumeText = modalResumeParsed;
     } else {
       resumeText = document.getElementById('f-resume').value.trim();
@@ -705,38 +685,30 @@
 
     const jobDescription = document.getElementById('f-jd').value.trim();
 
-    // Gather supporting docs
-    const notesText = document.getElementById('f-notes').value.trim();
+    const notesText    = document.getElementById('f-notes').value.trim();
     const supportingDocs = [
       ...modalDocsUploaded.filter(d => d.status === 'ok').map(d => ({ name: d.name, text: d.text })),
       ...(notesText ? [{ name: 'Notes', text: notesText }] : []),
     ];
 
     const btn = document.getElementById('save-btn');
-    btn.disabled = true;
-    btn.textContent = 'Saving…';
+    btn.disabled = true; btn.textContent = 'Saving…';
 
     try {
-      const body = { name, resumeText, jobDescription, supportingDocs };
-      const url    = editingId ? `${PROFILES_API}/${editingId}` : PROFILES_API;
-      const method = editingId ? 'PUT' : 'POST';
-
-      const res = await fetch(url, {
-        method,
-        headers: { 'Content-Type': 'application/json', ...Auth.authHeaders() },
-        body: JSON.stringify(body),
-      });
-
-      if (!res.ok) {
-        const e = await res.json();
-        throw new Error(e.error || e.message || 'Save failed');
+      const data = { name, resumeText, jobDescription, supportingDocs };
+      if (editingId) {
+        updateProfileById(editingId, data);
+        closeModal();
+        showFlash(`"${name}" updated`);
+      } else {
+        createProfile(data);
+        closeModal();
+        showFlash(`"${name}" saved successfully`);
       }
-
-      closeModal();
-      showFlash(editingId ? `"${name}" updated` : `"${name}" saved`);
-      await loadProfiles();
+      allProfiles = getProfiles();
+      renderProfiles();
     } catch(err) {
-      showFlash(err.message, 'error');
+      showModalMsg(err.message || 'Failed to save profile', 'error');
     } finally {
       btn.disabled = false;
       btn.textContent = editingId ? 'Update Profile' : 'Save Profile';
@@ -744,7 +716,7 @@
   }
 
   // ── Init ──────────────────────────────────────────────────────────────────────
-  document.addEventListener('DOMContentLoaded', loadProfiles);
+  document.addEventListener('DOMContentLoaded', loadAndRender);
 </script>
 </body>
 </html>

@@ -3,11 +3,32 @@ import multer from 'multer';
 import { z } from 'zod';
 import { getClient } from '../services/claudeService';
 import OpenAI, { toFile } from 'openai';
+import mammoth from 'mammoth';
+import path from 'path';
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const pdfParse: (buffer: Buffer) => Promise<{ text: string }> = require('pdf-parse');
 
 const router = Router();
-const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 * 1024 * 1024 } });
+
+// Accept PDF and Word documents; reject everything else
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 10 * 1024 * 1024 },
+  fileFilter: (_req, file, cb) => {
+    const allowedMimes = [
+      'application/pdf',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document', // .docx
+      'application/msword',        // .doc (legacy — we'll attempt mammoth)
+      'application/octet-stream',  // some browsers send this for .docx
+    ];
+    const ext = path.extname(file.originalname).toLowerCase();
+    if (allowedMimes.includes(file.mimetype) || ext === '.pdf' || ext === '.docx' || ext === '.doc') {
+      cb(null, true);
+    } else {
+      cb(new Error('Only PDF and Word (.docx) files are supported'));
+    }
+  },
+});
 
 const SYSTEM_PROMPT = `You are an expert interview coach. Given a candidate's resume and a job description, answer interview questions exactly as the candidate should speak them aloud.
 
@@ -20,22 +41,37 @@ Rules:
 - No bullet points, no headers — just flowing spoken words
 - End with a brief connector that ties back to the role`;
 
-// POST /api/interview/parse-resume — accepts PDF, returns extracted text
+// POST /api/interview/parse-resume — accepts PDF or Word (.docx), returns extracted text
 router.post('/parse-resume', upload.single('resume'), async (req: Request, res: Response) => {
   if (!req.file) {
     res.status(400).json({ message: 'No file uploaded', code: 'NO_FILE' });
     return;
   }
-  if (req.file.mimetype !== 'application/pdf') {
-    res.status(400).json({ message: 'Only PDF files are supported', code: 'INVALID_TYPE' });
+
+  const ext = path.extname(req.file.originalname).toLowerCase();
+  const isDocx = ext === '.docx' || ext === '.doc'
+    || req.file.mimetype === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+    || req.file.mimetype === 'application/msword';
+  const isPdf  = ext === '.pdf' || req.file.mimetype === 'application/pdf';
+
+  if (!isDocx && !isPdf) {
+    res.status(400).json({ message: 'Only PDF and Word (.docx) files are supported', code: 'INVALID_TYPE' });
     return;
   }
+
   try {
-    const data = await pdfParse(req.file.buffer);
-    res.json({ text: data.text.trim() });
+    if (isDocx) {
+      const result = await mammoth.extractRawText({ buffer: req.file.buffer });
+      const text = result.value.trim();
+      if (!text) throw new Error('Could not extract text from Word document');
+      res.json({ text });
+    } else {
+      const data = await pdfParse(req.file.buffer);
+      res.json({ text: data.text.trim() });
+    }
   } catch (err) {
-    console.error('PDF parse error:', err);
-    res.status(500).json({ message: 'Failed to parse PDF', code: 'PARSE_ERROR' });
+    console.error('Document parse error:', err);
+    res.status(500).json({ message: 'Failed to parse document — try pasting the text instead', code: 'PARSE_ERROR' });
   }
 });
 
