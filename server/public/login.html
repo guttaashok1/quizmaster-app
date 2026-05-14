@@ -8,99 +8,59 @@
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎙️</text></svg>" />
   <link rel="stylesheet" href="/styles.css" />
   <style>
-    body {
-      background: #f8fafc;
-      display: flex;
-      flex-direction: column;
-      min-height: 100vh;
-    }
-
+    body { display: flex; flex-direction: column; min-height: 100vh; }
     .auth-wrap {
       flex: 1;
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: 48px 24px;
+      padding: 40px 24px;
     }
-
     .auth-card {
       width: 100%;
-      max-width: 440px;
-      background: #ffffff;
-      border: 1px solid #e2e8f0;
-      border-radius: 20px;
-      padding: 44px 40px;
-      box-shadow: 0 4px 24px rgba(0,0,0,0.07), 0 1px 4px rgba(0,0,0,0.04);
+      max-width: 420px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 36px;
     }
-
     .auth-logo {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 10px;
-      margin-bottom: 32px;
-      text-decoration: none;
+      display: flex; align-items: center; justify-content: center;
+      gap: 10px; margin-bottom: 28px;
     }
     .auth-logo .icon {
-      width: 44px; height: 44px;
-      background: linear-gradient(135deg, #1a56db, #38bdf8);
-      border-radius: 12px;
+      width: 42px; height: 42px;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      border-radius: 11px;
       display: flex; align-items: center; justify-content: center;
-      font-size: 22px;
-      box-shadow: 0 4px 14px rgba(26,86,219,0.3);
+      font-size: 20px;
     }
-    .auth-logo span {
-      font-size: 18px; font-weight: 800; color: #0f172a;
-    }
-
-    .auth-title {
-      font-size: 24px; font-weight: 800; margin-bottom: 6px;
-      color: #0f172a; text-align: center;
-    }
-    .auth-sub {
-      color: #64748b; font-size: 14px; margin-bottom: 32px;
-      text-align: center; line-height: 1.6;
-    }
-
-    .btn-submit {
-      width: 100%;
-      background: #1a56db; color: #fff;
-      padding: 13px; border-radius: 10px;
-      font-size: 15px; font-weight: 700;
-      cursor: pointer; border: none;
-      transition: background 0.2s, box-shadow 0.2s, transform 0.2s;
-      margin-top: 6px;
-      font-family: var(--font);
-    }
-    .btn-submit:hover:not(:disabled) {
-      background: #1244b4;
-      box-shadow: 0 6px 20px rgba(26,86,219,0.35);
-      transform: translateY(-1px);
-    }
-    .btn-submit:disabled { opacity: 0.45; cursor: not-allowed; }
-
-    .auth-footer {
-      margin-top: 24px; text-align: center;
-      font-size: 14px; color: #64748b;
-    }
-    .auth-footer a { color: #1a56db; font-weight: 600; }
+    .auth-logo span { font-size: 18px; font-weight: 800; }
+    .auth-title { font-size: 22px; font-weight: 800; margin-bottom: 6px; }
+    .auth-sub { color: var(--text-muted); font-size: 14px; margin-bottom: 28px; }
+    .auth-footer { margin-top: 22px; text-align: center; font-size: 14px; color: var(--text-muted); }
+    .auth-footer a { color: var(--accent); font-weight: 600; }
     .auth-footer a:hover { text-decoration: underline; }
-
-    /* Light footer bar */
-    .page-footer {
-      background: #f8fafc;
-      border-top: 1px solid #e2e8f0;
-      padding: 18px 48px;
-      text-align: center;
-      font-size: 13px;
-      color: #94a3b8;
+    .btn-submit {
+      width: 100%; background: var(--accent); color: #fff;
+      padding: 13px; border-radius: 8px; font-size: 15px; font-weight: 700;
+      cursor: pointer; border: none; transition: box-shadow 0.2s;
+      margin-top: 4px;
+    }
+    .btn-submit:hover:not(:disabled) { box-shadow: 0 0 20px rgba(108,99,255,0.4); }
+    .btn-submit:disabled { opacity: 0.4; cursor: not-allowed; }
+    .divider {
+      display: flex; align-items: center; gap: 12px;
+      margin: 20px 0; color: var(--text-muted); font-size: 12px;
+    }
+    .divider::before, .divider::after {
+      content: ''; flex: 1; height: 1px; background: var(--border);
     }
   </style>
 </head>
 <body>
 
-<!-- Nav -->
-<nav class="nav nav-light">
+<nav class="nav">
   <div class="nav-inner">
     <a href="/" class="nav-logo">
       <div class="icon">🎙️</div>
@@ -116,17 +76,17 @@
 
 <div class="auth-wrap">
   <div class="auth-card">
-    <a href="/" class="auth-logo">
+    <div class="auth-logo">
       <div class="icon">🎙️</div>
       <span>Interview Coach</span>
-    </a>
+    </div>
 
     <div class="auth-title">Welcome back</div>
     <div class="auth-sub">Sign in to access your AI interview coach</div>
 
     <div class="form-error" id="error-msg"></div>
 
-    <form id="login-form" class="light-form" onsubmit="handleLogin(event)">
+    <form id="login-form" onsubmit="handleLogin(event)">
       <div class="form-group">
         <label class="form-label" for="identifier">Username or Email</label>
         <input class="form-input" id="identifier" type="text" placeholder="Enter your username or email" autocomplete="username" required />
@@ -144,8 +104,8 @@
   </div>
 </div>
 
-<footer class="page-footer">
-  © 2026 Interview Coach
+<footer class="footer">
+  <div>© 2026 Interview Coach</div>
 </footer>
 
 <script src="/auth.js"></script>
