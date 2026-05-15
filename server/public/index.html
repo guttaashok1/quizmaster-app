@@ -491,6 +491,196 @@
       .footer-grid { grid-template-columns: 1fr; gap: 28px; }
       .footer-bottom { flex-direction: column; text-align: center; }
     }
+
+    /* ════════════════════════════════════════
+       HOW IT WORKS — video + 3 step cards
+    ════════════════════════════════════════ */
+    .hiw-section {
+      padding: 100px 48px;
+      border-bottom: 1px solid rgba(255,255,255,0.07);
+      position: relative;
+    }
+    .hiw-inner { max-width: 1100px; margin: 0 auto; }
+
+    .hiw-header { text-align: center; margin-bottom: 60px; }
+    .hiw-eyebrow {
+      font-size: 11px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase;
+      color: #38bdf8; margin-bottom: 18px;
+      display: inline-flex; align-items: center; gap: 8px;
+      background: rgba(14,165,233,0.12); border: 1px solid rgba(14,165,233,0.28);
+      padding: 5px 16px; border-radius: 999px;
+    }
+    .hiw-header h2 {
+      font-size: clamp(28px, 3.5vw, 44px);
+      font-weight: 900; letter-spacing: -0.8px; line-height: 1.15;
+      margin-bottom: 16px;
+    }
+    .hiw-header p {
+      font-size: 16px; color: rgba(255,255,255,0.55);
+      max-width: 520px; margin: 0 auto; line-height: 1.75;
+    }
+
+    /* ── Video container ── */
+    .hiw-video-wrap { margin-bottom: 64px; }
+
+    .hiw-video-frame {
+      position: relative;
+      width: 100%; aspect-ratio: 16/9;
+      border-radius: 20px; overflow: hidden;
+      border: 1px solid rgba(14,165,233,0.28);
+      box-shadow:
+        0 0 0 1px rgba(14,165,233,0.10),
+        0 40px 100px rgba(0,0,0,0.55),
+        0 0 100px rgba(14,165,233,0.12),
+        0 0 200px rgba(110,30,200,0.08);
+      background: #060d23;
+    }
+
+    /* macOS-style window bar */
+    .hiw-video-bar {
+      position: absolute; top: 0; left: 0; right: 0; z-index: 3;
+      height: 38px;
+      background: rgba(6,13,35,0.90);
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+      display: flex; align-items: center; padding: 0 16px; gap: 7px;
+    }
+    .hiw-dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
+
+    /* Animated app mockup behind the overlay */
+    .hiw-video-bg {
+      position: absolute; inset: 38px 0 0 0;
+      background: linear-gradient(135deg, rgba(6,18,55,0.97) 0%, rgba(20,6,55,0.95) 100%);
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center; gap: 16px;
+      padding: 32px;
+      overflow: hidden;
+    }
+    /* Decorative blobs inside the video frame */
+    .hiw-video-bg::before {
+      content: '';
+      position: absolute; left: -10%; top: -10%;
+      width: 50%; height: 120%;
+      background: radial-gradient(ellipse, rgba(0,180,240,0.22) 0%, transparent 65%);
+      pointer-events: none;
+    }
+    .hiw-video-bg::after {
+      content: '';
+      position: absolute; right: -5%; bottom: -20%;
+      width: 45%; height: 100%;
+      background: radial-gradient(ellipse, rgba(110,30,200,0.20) 0%, transparent 65%);
+      pointer-events: none;
+    }
+    /* Fake UI inside the video frame */
+    .hiw-mock {
+      position: relative; z-index: 1;
+      display: flex; gap: 20px; align-items: flex-start; width: 100%; max-width: 680px;
+    }
+    .hiw-mock-left {
+      flex: 1;
+      background: rgba(255,255,255,0.05); border: 1px solid rgba(14,165,233,0.20);
+      border-radius: 14px; padding: 18px;
+    }
+    .hiw-mock-right {
+      flex: 1;
+      background: rgba(255,255,255,0.05); border: 1px solid rgba(167,139,250,0.22);
+      border-radius: 14px; padding: 18px;
+    }
+    .hiw-mock-label {
+      font-size: 9px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase;
+      color: #38bdf8; margin-bottom: 10px; display: flex; align-items: center; gap: 6px;
+    }
+    .hiw-mock-label.purple { color: #c4b5fd; }
+    .hiw-mock-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; animation: huipulse 1.5s infinite; }
+    .hiw-mock-line { height: 7px; border-radius: 4px; background: rgba(255,255,255,0.10); margin-bottom: 7px; }
+    .hiw-mock-bullet {
+      display: flex; gap: 7px; font-size: 11px; color: rgba(255,255,255,0.65);
+      margin-bottom: 6px; line-height: 1.5;
+    }
+    .hiw-mock-bullet::before { content: '→'; color: #38bdf8; flex-shrink: 0; font-weight: 700; }
+    .hiw-mock-bullet.anim { animation: fadeInUp 0.5s ease both; }
+    .hiw-mock-bullet:nth-child(2) { animation-delay: 0.6s; }
+    .hiw-mock-bullet:nth-child(3) { animation-delay: 1.2s; }
+    .hiw-mock-bullet:nth-child(4) { animation-delay: 1.8s; }
+    @keyframes fadeInUp { from { opacity:0; transform: translateY(6px); } to { opacity:1; transform: none; } }
+
+    /* Play button overlay */
+    .hiw-video-overlay {
+      position: absolute; inset: 0; z-index: 10;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      background: rgba(6,13,35,0.50);
+      backdrop-filter: blur(2px);
+      cursor: pointer;
+      transition: background 0.25s;
+    }
+    .hiw-video-overlay:hover { background: rgba(6,13,35,0.35); }
+    .hiw-play-btn {
+      width: 88px; height: 88px;
+      background: linear-gradient(135deg, #0ea5e9, #a78bfa);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      margin-bottom: 18px;
+      box-shadow: 0 0 48px rgba(14,165,233,0.55), 0 0 96px rgba(167,139,250,0.28);
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .hiw-video-overlay:hover .hiw-play-btn {
+      transform: scale(1.10);
+      box-shadow: 0 0 64px rgba(14,165,233,0.70), 0 0 120px rgba(167,139,250,0.40);
+    }
+    .hiw-play-icon {
+      width: 0; height: 0;
+      border-style: solid; border-width: 13px 0 13px 24px;
+      border-color: transparent transparent transparent #fff;
+      margin-left: 5px;
+    }
+    .hiw-video-label { font-size: 16px; font-weight: 700; color: #fff; margin-bottom: 6px; }
+    .hiw-video-sub { font-size: 13px; color: rgba(255,255,255,0.50); }
+
+    /* YouTube iframe (hidden until play) */
+    .hiw-video-frame iframe {
+      position: absolute; inset: 0; width: 100%; height: 100%;
+      border: none; display: none;
+    }
+    .hiw-video-frame.playing iframe { display: block; }
+    .hiw-video-frame.playing .hiw-video-overlay,
+    .hiw-video-frame.playing .hiw-video-bar,
+    .hiw-video-frame.playing .hiw-video-bg { display: none; }
+
+    /* ── Step cards ── */
+    .hiw-steps { display: grid; grid-template-columns: repeat(3,1fr); gap: 24px; }
+    .hiw-step {
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.11);
+      border-radius: 20px; padding: 30px 26px;
+      position: relative; overflow: hidden;
+      transition: border-color 0.22s, transform 0.22s, box-shadow 0.22s;
+    }
+    .hiw-step:hover {
+      border-color: rgba(14,165,233,0.42);
+      transform: translateY(-4px);
+      box-shadow: 0 16px 48px rgba(0,0,0,0.30), 0 0 32px rgba(14,165,233,0.10);
+    }
+    /* Top gradient accent bar */
+    .hiw-step::before {
+      content: '';
+      position: absolute; top: 0; left: 0; right: 0; height: 2px;
+      background: linear-gradient(90deg, #0ea5e9, #a78bfa);
+    }
+    .hiw-step-icon { font-size: 30px; margin-bottom: 14px; display: block; }
+    .hiw-step-num {
+      font-size: 10px; font-weight: 800; letter-spacing: 1.5px; text-transform: uppercase;
+      background: linear-gradient(135deg, #38bdf8, #a78bfa);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 10px;
+    }
+    .hiw-step h3 { font-size: 18px; font-weight: 800; margin-bottom: 10px; }
+    .hiw-step p { font-size: 14px; color: rgba(255,255,255,0.56); line-height: 1.68; }
+
+    @media (max-width: 768px) {
+      .hiw-section { padding: 64px 24px; }
+      .hiw-steps { grid-template-columns: 1fr; }
+    }
   </style>
 </head>
 <body>
@@ -504,7 +694,7 @@
     </a>
     <div class="nav-links">
       <a href="/#features" class="nav-link">Features</a>
-      <a href="/about.html" class="nav-link">About</a>
+      <a href="/#how-it-works" class="nav-link">How It Works</a>
       <a href="/pricing.html" class="nav-link">Pricing</a>
       <div id="nav-auth" style="display:flex;align-items:center;gap:8px"></div>
     </div>
@@ -617,6 +807,90 @@
     </div>
   </div>
 </div>
+
+<!-- ═══ HOW IT WORKS ═══ -->
+<section class="hiw-section" id="how-it-works">
+  <div class="hiw-inner">
+
+    <div class="hiw-header">
+      <div class="hiw-eyebrow">✦ How It Works</div>
+      <h2>From zero to confident<br>in <span class="gradient-text">3 simple steps</span></h2>
+      <p>Watch how Interview Coach turns your resume and a job description into real-time, tailored answers — in seconds.</p>
+    </div>
+
+    <!-- ── Video player ── -->
+    <div class="hiw-video-wrap">
+      <div class="hiw-video-frame" id="hiw-frame">
+
+        <!-- macOS-style window chrome -->
+        <div class="hiw-video-bar">
+          <div class="hiw-dot" style="background:#ff5f57"></div>
+          <div class="hiw-dot" style="background:#febc2e"></div>
+          <div class="hiw-dot" style="background:#28c840"></div>
+          <span style="font-size:12px;color:rgba(255,255,255,0.30);margin-left:10px">Interview Coach — Live Session</span>
+        </div>
+
+        <!-- Animated app UI mockup visible behind the overlay -->
+        <div class="hiw-video-bg">
+          <div class="hiw-mock">
+            <div class="hiw-mock-left">
+              <div class="hiw-mock-label">✓ Resume Parsed</div>
+              <div class="hiw-mock-line" style="width:90%"></div>
+              <div class="hiw-mock-line" style="width:72%"></div>
+              <div class="hiw-mock-line" style="width:82%"></div>
+              <div class="hiw-mock-line" style="width:60%"></div>
+              <div style="display:flex;gap:6px;margin-top:12px;flex-wrap:wrap">
+                <span style="background:rgba(14,165,233,0.15);border:1px solid rgba(14,165,233,0.30);border-radius:999px;padding:3px 10px;font-size:10px;color:#7dd3fc">Python</span>
+                <span style="background:rgba(14,165,233,0.15);border:1px solid rgba(14,165,233,0.30);border-radius:999px;padding:3px 10px;font-size:10px;color:#7dd3fc">AWS</span>
+                <span style="background:rgba(167,139,250,0.15);border:1px solid rgba(167,139,250,0.30);border-radius:999px;padding:3px 10px;font-size:10px;color:#c4b5fd">Team Lead</span>
+              </div>
+            </div>
+            <div class="hiw-mock-right">
+              <div class="hiw-mock-label purple"><div class="hiw-mock-dot"></div> Streaming answer</div>
+              <div class="hiw-mock-bullet anim">Led team of 5 engineers through critical migration</div>
+              <div class="hiw-mock-bullet anim">Reduced deployment time by 60% in 3 months</div>
+              <div class="hiw-mock-bullet anim">Zero production incidents post-launch</div>
+              <div class="hiw-mock-bullet anim">Exactly the experience this role requires</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Play button overlay -->
+        <div class="hiw-video-overlay" id="hiw-overlay" onclick="hiwPlay()">
+          <div class="hiw-play-btn"><div class="hiw-play-icon"></div></div>
+          <div class="hiw-video-label">Watch the 90-second demo</div>
+          <div class="hiw-video-sub">See voice recognition + AI answers in action</div>
+        </div>
+
+        <!-- YouTube iframe (injected on play) -->
+        <iframe id="hiw-iframe" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen></iframe>
+      </div>
+    </div>
+
+    <!-- ── Step cards ── -->
+    <div class="hiw-steps">
+      <div class="hiw-step">
+        <span class="hiw-step-icon">📄</span>
+        <div class="hiw-step-num">Step 01</div>
+        <h3>Upload your resume</h3>
+        <p>Drop your PDF or Word doc and paste a job description. Interview Coach reads both so every answer is built around your real experience and the specific role.</p>
+      </div>
+      <div class="hiw-step">
+        <span class="hiw-step-icon">🎙️</span>
+        <div class="hiw-step-num">Step 02</div>
+        <h3>Ask any question</h3>
+        <p>Speak naturally or type. The AI detects behavioral, technical, and situational questions and instantly starts crafting your personalised answer.</p>
+      </div>
+      <div class="hiw-step">
+        <span class="hiw-step-icon">⚡</span>
+        <div class="hiw-step-num">Step 03</div>
+        <h3>Get your tailored answer</h3>
+        <p>Four sharp STAR-method bullets stream in real time — grounded in your resume, matched to the role. Read, rehearse, and walk in confident.</p>
+      </div>
+    </div>
+
+  </div>
+</section>
 
 <!-- ═══ FEATURE 1: Voice ═══ -->
 <section class="feature-section">
@@ -781,9 +1055,32 @@
 <script src="/auth.js"></script>
 <script>
   document.addEventListener('DOMContentLoaded', () => {
-
     Auth.renderNav();
   });
+
+  /**
+   * How It Works video player.
+   *
+   * To embed your own video:
+   *   1. Upload to YouTube and grab the video ID (the part after ?v= in the URL).
+   *   2. Replace null below with your video ID string, e.g. 'dQw4w9WgXcQ'
+   */
+  const HIW_YOUTUBE_ID = null; // ← paste your YouTube video ID here
+
+  function hiwPlay() {
+    const frame    = document.getElementById('hiw-frame');
+    const overlay  = document.getElementById('hiw-overlay');
+    const iframe   = document.getElementById('hiw-iframe');
+
+    if (HIW_YOUTUBE_ID) {
+      // Load the YouTube video
+      iframe.src = `https://www.youtube.com/embed/${HIW_YOUTUBE_ID}?autoplay=1&rel=0&modestbranding=1`;
+      frame.classList.add('playing');
+    } else {
+      // No video yet — take them straight to the app
+      window.location.href = '/register.html';
+    }
+  }
 </script>
 </body>
 </html>
