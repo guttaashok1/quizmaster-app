@@ -1068,17 +1068,17 @@
   const HIW_YOUTUBE_ID = null; // ← paste your YouTube video ID here
 
   function hiwPlay() {
-    const frame    = document.getElementById('hiw-frame');
-    const overlay  = document.getElementById('hiw-overlay');
-    const iframe   = document.getElementById('hiw-iframe');
+    const frame   = document.getElementById('hiw-frame');
+    const overlay = document.getElementById('hiw-overlay');
+    const iframe  = document.getElementById('hiw-iframe');
 
     if (HIW_YOUTUBE_ID) {
-      // Load the YouTube video
+      // Load the YouTube video and hide everything else
       iframe.src = `https://www.youtube.com/embed/${HIW_YOUTUBE_ID}?autoplay=1&rel=0&modestbranding=1`;
       frame.classList.add('playing');
     } else {
-      // No video yet — take them straight to the app
-      window.location.href = '/register.html';
+      // No video yet — dismiss the overlay so the animated mockup is fully visible
+      overlay.style.display = 'none';
     }
   }
 </script>
