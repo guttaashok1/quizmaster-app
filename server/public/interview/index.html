@@ -613,6 +613,7 @@
     if (!profiles || profiles.length === 0) {
       document.getElementById('profile-picker').style.display = 'none';
       document.getElementById('empty-state').style.display = '';
+      onProfileChange(); // ensure button is disabled
       return;
     }
 
@@ -620,13 +621,18 @@
     document.getElementById('empty-state').style.display = 'none';
     profiles.forEach(p => sel.appendChild(new Option(p.name, p.id)));
 
-    // Auto-load if redirected from profiles page via "Load in Coach"
+    // Auto-select the only profile, or the one redirected from profiles page
     const autoId = sessionStorage.getItem('loadProfileId');
     if (autoId) {
       sessionStorage.removeItem('loadProfileId');
       sel.value = autoId;
-      if (sel.value) { onProfileChange(); beginSession(); }
+    } else if (profiles.length === 1) {
+      sel.value = profiles[0].id; // auto-select when there's exactly one profile
     }
+
+    onProfileChange(); // sync button state with whatever is now selected
+
+    if (autoId && sel.value) beginSession();
   }
 
   function onProfileChange() {

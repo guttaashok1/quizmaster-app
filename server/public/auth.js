@@ -63,7 +63,7 @@ window.Auth = (() => {
 
   function logout() {
     clearToken();
-    window.location.href = '/';
+    window.location.href = '/login.html';
   }
 
   // ── Auth header helper ─────────────────────────────────────────────────────
