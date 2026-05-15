@@ -306,12 +306,22 @@
     .answer-header {
       display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;
     }
-    .answer-title { display: flex; align-items: center; gap: 9px; font-size: 15px; font-weight: 700; }
-    .answer-badge {
-      width: 26px; height: 26px; border-radius: 8px;
-      background: var(--green); color: #000; font-size: 12px; font-weight: 800;
-      display: flex; align-items: center; justify-content: center;
+    .answer-title { display: flex; align-items: center; gap: 9px; }
+    .answer-title-label {
+      font-size: 11px; font-weight: 700; letter-spacing: 0.09em;
+      text-transform: uppercase; color: var(--accent);
     }
+    .stream-dot {
+      width: 7px; height: 7px; border-radius: 50%; background: var(--accent);
+      flex-shrink: 0; animation: blink 1s infinite; display: none;
+    }
+    .stream-dot.on { display: block; }
+    .answer-badge {
+      width: 22px; height: 22px; border-radius: 6px;
+      background: var(--green); color: #000; font-size: 11px; font-weight: 800;
+      display: none; align-items: center; justify-content: center;
+    }
+    .answer-badge.on { display: flex; }
     .answer-actions { display: flex; gap: 8px; }
     .btn-action {
       padding: 7px 14px; border-radius: 8px; font-size: 13px; font-weight: 600;
@@ -319,16 +329,28 @@
       transition: all 0.2s;
     }
     .btn-action:hover { border-color: var(--accent); color: var(--text); }
+
+    /* Answer bullet list */
     .answer-box {
       background: var(--surface2); border: 1.5px solid var(--border);
-      border-radius: 10px; padding: 18px;
-      font-size: 15px; line-height: 1.8; color: var(--text); white-space: pre-wrap;
-      min-height: 80px;
+      border-radius: 10px; padding: 6px 18px;
+      min-height: 80px; transition: border-color 0.25s;
     }
     .answer-box.stream { border-color: var(--accent); }
+    .answer-bullet {
+      display: flex; align-items: flex-start; gap: 14px;
+      padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.05);
+    }
+    .answer-bullet:last-child { border-bottom: none; }
+    .bullet-arrow {
+      color: var(--accent); font-size: 15px; font-weight: 800;
+      flex-shrink: 0; margin-top: 2px; user-select: none;
+    }
+    .bullet-text { font-size: 15px; line-height: 1.65; color: var(--text); }
+    .answer-plain { font-size: 14px; color: var(--muted); padding: 10px 0; }
     .cursor {
-      display: inline-block; width: 2px; height: 1.1em;
-      background: var(--accent); margin-left: 1px;
+      display: inline-block; width: 2px; height: 1em;
+      background: var(--accent); margin-left: 2px;
       vertical-align: text-bottom; animation: blink 0.7s step-end infinite;
     }
     .cursor.off { display: none; }
@@ -485,8 +507,9 @@
   <div class="answer-card" id="answer-card">
     <div class="answer-header">
       <div class="answer-title">
-        <div class="answer-badge">✓</div>
-        AI Coach Answer
+        <div class="stream-dot" id="stream-dot"></div>
+        <div class="answer-badge" id="answer-badge">✓</div>
+        <span class="answer-title-label" id="answer-title-label">AI Coach Answer</span>
       </div>
       <div class="answer-actions" id="answer-actions" style="display:none">
         <button class="btn-action" id="speak-btn" onclick="speakAnswer()">🔊 Read Aloud</button>
@@ -495,7 +518,7 @@
       </div>
     </div>
     <div class="answer-box" id="answer-box">
-      <span id="answer-text"></span><span class="cursor off" id="cursor"></span>
+      <div id="answer-text"></div><span class="cursor off" id="cursor"></span>
     </div>
   </div>
 
@@ -685,8 +708,9 @@
 
     // Reset answer card
     document.getElementById('answer-card').classList.remove('show');
-    document.getElementById('answer-text').textContent = '';
+    document.getElementById('answer-text').innerHTML = '';
     document.getElementById('answer-box').className = 'answer-box';
+    setAnswerStreaming(false);
 
     // Reset mic panel
     setMicTx('');
@@ -918,6 +942,47 @@
     clearTimeout(sysTimer); sysAcc = ''; sysInterim = ''; setSysTx('', '');
   }
 
+  // ── Answer rendering ──────────────────────────────────────────────────────────
+  function safeHtml(s) {
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  // Parse streamed text and render bullet rows (→ lines) + any plain text
+  function renderAnswerBullets(text) {
+    const atext  = document.getElementById('answer-text');
+    const cursor = document.getElementById('cursor');
+    const lines  = text.split('\n');
+
+    let html = '';
+    lines.forEach((line, i) => {
+      const trimmed = line.trim();
+      if (!trimmed) return;
+      if (trimmed.startsWith('→')) {
+        const content = safeHtml(trimmed.slice(1).trim());
+        // Append the blinking cursor inside the last line while streaming
+        const isLast = (i === lines.length - 1) || lines.slice(i + 1).every(l => !l.trim());
+        const cur = isLast ? `<span class="cursor" id="cursor"></span>` : '';
+        html += `<div class="answer-bullet"><span class="bullet-arrow">→</span><span class="bullet-text">${content}${cur}</span></div>`;
+      } else {
+        html += `<div class="answer-plain">${safeHtml(trimmed)}</div>`;
+      }
+    });
+
+    atext.innerHTML = html;
+    // cursor is now inside a bullet (if streaming); keep standalone one hidden
+    const standaloneCursor = document.getElementById('cursor');
+    if (!standaloneCursor) {
+      // cursor was rendered inside a bullet — nothing to do
+    }
+  }
+
+  function setAnswerStreaming(on) {
+    document.getElementById('stream-dot').classList.toggle('on', on);
+    document.getElementById('answer-badge').classList.toggle('on', !on);
+    document.getElementById('answer-title-label').textContent = on ? 'Streaming Answer' : 'Answer Ready';
+    document.getElementById('answer-actions').style.display = on ? 'none' : '';
+  }
+
   // ── Answer Streaming ──────────────────────────────────────────────────────────
   function getSupportingDocsText() {
     return (supportingDocs || []).filter(d => d.text)
@@ -945,18 +1010,15 @@
     stopSpeaking();
     streamCtrl = new AbortController();
 
-    const card    = document.getElementById('answer-card');
-    const box     = document.getElementById('answer-box');
-    const atext   = document.getElementById('answer-text');
-    const cursor  = document.getElementById('cursor');
-    const actions = document.getElementById('answer-actions');
+    const card   = document.getElementById('answer-card');
+    const box    = document.getElementById('answer-box');
+    const atext  = document.getElementById('answer-text');
 
     card.classList.add('show');
     card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-    atext.textContent = ''; fullAnswer = '';
-    cursor.className  = 'cursor';
-    box.className     = 'answer-box stream';
-    actions.style.display = 'none';
+    atext.innerHTML = ''; fullAnswer = '';
+    box.className = 'answer-box stream';
+    setAnswerStreaming(true);
 
     const docsText = getSupportingDocsText();
 
@@ -976,12 +1038,18 @@
           if (!line.startsWith('data:')) continue;
           const raw = line.slice(5).trim();
           if (raw === '[DONE]') {
-            cursor.className = 'cursor off'; box.className = 'answer-box'; actions.style.display = '';
+            box.className = 'answer-box';
+            setAnswerStreaming(false);
+            renderAnswerBullets(fullAnswer); // final clean render (no inline cursor)
             return 'done';
           }
           try {
             const d = JSON.parse(raw);
-            if (d.text) { fullAnswer += d.text; atext.textContent = fullAnswer; box.scrollTop = box.scrollHeight; }
+            if (d.text) {
+              fullAnswer += d.text;
+              renderAnswerBullets(fullAnswer);
+              box.scrollTop = box.scrollHeight;
+            }
             if (d.error) return d.error;
           } catch(_) {}
         }
@@ -992,13 +1060,14 @@
     try {
       const result = await doStream(streamCtrl);
       if (result === 'overloaded') {
-        atext.textContent = '⏳ Claude is busy — retrying in 5 seconds…';
+        atext.innerHTML = '<div class="answer-plain">⏳ Claude is busy — retrying in 5 seconds…</div>';
         if (voiceMode === 'system') setSysStatus('⏳ Claude busy — retrying…');
         await new Promise(r => setTimeout(r, 5000));
         if (!streamCtrl) return;
         streamCtrl = new AbortController();
-        atext.textContent = ''; fullAnswer = '';
-        cursor.className = 'cursor'; box.className = 'answer-box stream';
+        atext.innerHTML = ''; fullAnswer = '';
+        box.className = 'answer-box stream';
+        setAnswerStreaming(true);
         const result2 = await doStream(streamCtrl);
         if (result2 && result2 !== 'done') showAnswerError('⚠️ ' + result2);
       } else if (result && result !== 'done') {
@@ -1014,10 +1083,9 @@
 
   function showAnswerError(text) {
     document.getElementById('answer-card').classList.add('show');
-    document.getElementById('answer-text').textContent = text;
-    document.getElementById('cursor').className = 'cursor off';
+    document.getElementById('answer-text').innerHTML = `<div class="answer-plain">${safeHtml(text)}</div>`;
     document.getElementById('answer-box').className = 'answer-box';
-    document.getElementById('answer-actions').style.display = 'none';
+    setAnswerStreaming(false);
   }
 
   // ── TTS ───────────────────────────────────────────────────────────────────────

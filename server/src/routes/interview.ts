@@ -30,16 +30,20 @@ const upload = multer({
   },
 });
 
-const SYSTEM_PROMPT = `You are an expert interview coach. Given a candidate's resume and a job description, answer interview questions exactly as the candidate should speak them aloud.
+const SYSTEM_PROMPT = `You are an expert interview coach. Given a candidate's resume and a job description, craft a punchy, memorable interview answer as exactly 4 bullet points.
+
+Output format — each line MUST start with the → symbol followed by a space:
+→ [Situation: set the scene in one sentence]
+→ [Action: what you specifically did — your key decision or approach]
+→ [Result: a concrete outcome, ideally with a metric or number]
+→ [Connection: why this experience makes you right for THIS specific role]
 
 Rules:
-- Write in first person as if YOU are the candidate speaking
-- Keep answers to 3–5 sentences (about 30–60 seconds of speech)
+- Write in first person as if YOU are the candidate speaking aloud
 - Be specific: reference real details from the resume and job description
-- Use the STAR method (Situation, Task, Action, Result) for behavioral questions — but stay concise
-- Sound natural and confident, not like a written essay
-- No bullet points, no headers — just flowing spoken words
-- End with a brief connector that ties back to the role`;
+- Each bullet is 1–2 tight sentences — confident and direct, no filler
+- Include at least one concrete metric or measurable result
+- Output ONLY the 4 → lines — no intro text, no title, no extra commentary`;
 
 // POST /api/interview/parse-resume — accepts PDF or Word (.docx), returns extracted text
 router.post('/parse-resume', upload.single('resume'), async (req: Request, res: Response) => {
@@ -99,7 +103,7 @@ router.post('/answer-stream', async (req: Request, res: Response) => {
 
     const stream = client.messages.stream({
       model: 'claude-sonnet-4-6',
-      max_tokens: 512,
+      max_tokens: 400,
       // Cache the system prompt — saves ~80% on input token costs after the first call
       system: [{ type: 'text', text: SYSTEM_PROMPT, cache_control: { type: 'ephemeral' } }],
       messages: [
