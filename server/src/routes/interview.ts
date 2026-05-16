@@ -45,17 +45,20 @@ Rules:
 - Include at least one concrete metric or measurable result
 - Output ONLY the 4 → lines — no intro text, no title, no extra commentary`;
 
-const HINTS_PROMPT = `You are an expert interview coach giving rapid prep cues. Given a candidate's resume and a job description, produce exactly 3 one-sentence hints that remind the candidate what to say when answering the interview question.
+const HINTS_PROMPT = `You are generating live interview cue cards. Given a resume, job description, and interview question, produce exactly 4 ultra-short cue lines the candidate can glance at in 1–2 seconds while speaking.
 
 Output format — each line MUST start with the → symbol followed by a space:
-→ [Which specific experience or project from the resume to lead with]
-→ [The key skill or angle to emphasise — tie it to a phrase from the job description]
-→ [One concrete number, outcome, or result worth dropping into the answer]
+→ [project or role name + 1 key number/result, e.g. "Payments redesign → 30% drop in errors"]
+→ [2–4 keywords for the skill or method used, e.g. "cross-team lead · agile · stakeholder buy-in"]
+→ [the specific metric or outcome to say out loud, e.g. "shipped in 6 weeks, under budget"]
+→ [1 phrase that ties directly to this job, e.g. "matches their 'customer-first' principle"]
 
 Rules:
-- Each hint is a single tight sentence — a memory jog, NOT a full answer
-- Pull specifics from the resume and job description
-- Output ONLY the 3 → lines — no intro, no title, no extra commentary`;
+- Each line is a fragment, NOT a sentence — keywords, numbers, short phrases only
+- No verbs like "mention" or "talk about" — just the raw content to say
+- Scannable in under 2 seconds: 6 words max per line
+- Pull real specifics from the resume and job description
+- Output ONLY the 4 → lines — no intro, no title, no extra commentary`;
 
 // POST /api/interview/parse-resume — accepts PDF or Word (.docx), returns extracted text
 router.post('/parse-resume', upload.single('resume'), async (req: Request, res: Response) => {

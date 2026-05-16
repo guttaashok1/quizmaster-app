@@ -467,7 +467,7 @@
     <span class="ast-label">Answer style</span>
     <div class="ast-pills">
       <button class="ast-pill on"    id="ast-full"  onclick="setAnswerStyle('full')">📝 Full Answer</button>
-      <button class="ast-pill hints" id="ast-hints" onclick="setAnswerStyle('hints')">💡 Quick Hints</button>
+      <button class="ast-pill hints" id="ast-hints" onclick="setAnswerStyle('hints')">⚡ Cue Cards</button>
     </div>
   </div>
 
@@ -1030,8 +1030,8 @@
     document.getElementById('stream-dot').classList.toggle('on', on);
     document.getElementById('answer-badge').classList.toggle('on', !on);
     document.getElementById('answer-title-label').textContent = on
-      ? (isHints ? '💡 Getting Hints…' : 'Streaming Answer')
-      : (isHints ? '💡 Hints Ready'    : 'Answer Ready');
+      ? (isHints ? '⚡ Getting Cues…' : 'Streaming Answer')
+      : (isHints ? '⚡ Cue Cards'     : 'Answer Ready');
     document.getElementById('answer-actions').style.display = on ? 'none' : '';
   }
 
