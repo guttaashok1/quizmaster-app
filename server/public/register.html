@@ -133,8 +133,31 @@
 
 <script src="/auth.js"></script>
 <script>
-  document.addEventListener('DOMContentLoaded', () => {
-    if (Auth.getSession()) window.location.href = '/interview/';
+  document.addEventListener('DOMContentLoaded', async () => {
+    // ?logout=1 — escape hatch to clear a stale session and stay on this page
+    if (new URLSearchParams(location.search).get('logout') === '1') {
+      Auth.clearSession();
+      history.replaceState(null, '', '/register.html');
+      return;
+    }
+
+    // No token → show the registration form immediately
+    const session = Auth.getSession();
+    if (!session) return;
+
+    // Verify the stored token is still accepted by the server
+    try {
+      const res = await fetch('/api/interview-auth/session', {
+        headers: Auth.authHeaders(),
+      });
+      if (res.ok) {
+        window.location.href = '/interview/';
+      } else {
+        Auth.clearSession(); // stale token — show form
+      }
+    } catch {
+      window.location.href = '/interview/';
+    }
   });
 
   async function handleRegister(e) {

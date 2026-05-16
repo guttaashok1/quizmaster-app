@@ -122,9 +122,37 @@
 
 <script src="/auth.js"></script>
 <script>
-  document.addEventListener('DOMContentLoaded', () => {
-    // Redirect if already logged in
-    if (Auth.getSession()) window.location.href = '/interview/';
+  document.addEventListener('DOMContentLoaded', async () => {
+    // ?logout=1  — force-clear any stale token and stay on the login page.
+    // Auth.logout() navigates here with this flag so we don't loop.
+    if (new URLSearchParams(location.search).get('logout') === '1') {
+      Auth.clearSession();
+      history.replaceState(null, '', '/login.html');
+      return;
+    }
+
+    // Quick client-side check: no token → show the form immediately
+    const session = Auth.getSession();
+    if (!session) return;
+
+    // Token present — verify server-side before redirecting.
+    // This catches stale tokens signed with an old JWT_SECRET.
+    try {
+      const res = await fetch('/api/interview-auth/session', {
+        headers: Auth.authHeaders(),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        // Valid session — send admins to the dashboard, others to the app
+        window.location.href = data.role === 'admin' ? '/admin.html' : '/interview/';
+      } else {
+        // Server rejected the token (expired / wrong secret) — clear it
+        Auth.clearSession();
+      }
+    } catch {
+      // Network error — optimistically trust the client-side session
+      window.location.href = '/interview/';
+    }
   });
 
   async function handleLogin(e) {
