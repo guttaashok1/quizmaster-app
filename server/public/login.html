@@ -174,7 +174,9 @@
       btn.disabled = false;
       btn.textContent = 'Sign In';
     } else {
-      window.location.href = '/interview/';
+      // Admins go straight to their dashboard; everyone else to the coach
+      const role = result.session?.role;
+      window.location.href = role === 'admin' ? '/admin.html' : '/interview/';
     }
   }
 </script>

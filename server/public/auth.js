@@ -173,8 +173,12 @@ window.Auth = (() => {
     if (!el) return;
     const session = getSession();
     if (session) {
+      const adminLink = session.role === 'admin'
+        ? `<a href="/admin.html" class="btn-nav-outline" style="color:#a78bfa;border-color:#a78bfa">⚙️ Admin</a>`
+        : '';
       el.innerHTML = `
         <span class="nav-user">👤 ${session.username}</span>
+        ${adminLink}
         <a href="/interview/" class="btn-nav-filled">Open Coach</a>
         <button onclick="Auth.logout()" class="btn-nav-outline">Log out</button>
       `;
