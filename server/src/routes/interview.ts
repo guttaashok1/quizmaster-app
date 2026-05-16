@@ -45,6 +45,18 @@ Rules:
 - Include at least one concrete metric or measurable result
 - Output ONLY the 4 → lines — no intro text, no title, no extra commentary`;
 
+const HINTS_PROMPT = `You are an expert interview coach giving rapid prep cues. Given a candidate's resume and a job description, produce exactly 3 one-sentence hints that remind the candidate what to say when answering the interview question.
+
+Output format — each line MUST start with the → symbol followed by a space:
+→ [Which specific experience or project from the resume to lead with]
+→ [The key skill or angle to emphasise — tie it to a phrase from the job description]
+→ [One concrete number, outcome, or result worth dropping into the answer]
+
+Rules:
+- Each hint is a single tight sentence — a memory jog, NOT a full answer
+- Pull specifics from the resume and job description
+- Output ONLY the 3 → lines — no intro, no title, no extra commentary`;
+
 // POST /api/interview/parse-resume — accepts PDF or Word (.docx), returns extracted text
 router.post('/parse-resume', upload.single('resume'), async (req: Request, res: Response) => {
   if (!req.file) {
@@ -84,6 +96,7 @@ const AnswerSchema = z.object({
   jobDescription: z.string().min(10, 'Job description is too short'),
   question: z.string().min(3, 'Question is too short'),
   supportingDocs: z.string().optional(), // extracted text from extra uploaded PDFs
+  mode: z.enum(['answer', 'hints']).default('answer'),
 });
 
 // POST /api/interview/answer-stream — streams a spoken interview answer via SSE
@@ -94,18 +107,21 @@ router.post('/answer-stream', async (req: Request, res: Response) => {
   res.flushHeaders();
 
   try {
-    const { resume, jobDescription, question, supportingDocs } = AnswerSchema.parse(req.body);
+    const { resume, jobDescription, question, supportingDocs, mode } = AnswerSchema.parse(req.body);
     const client = getClient();
 
     const docsSection = supportingDocs && supportingDocs.trim()
       ? `\n\nSUPPORTING DOCUMENTS (portfolio, cover letter, certifications, etc.):\n${supportingDocs}`
       : '';
 
+    const chosenPrompt = mode === 'hints' ? HINTS_PROMPT : SYSTEM_PROMPT;
+    const maxTokens    = mode === 'hints' ? 200 : 400;
+
     const stream = client.messages.stream({
       model: 'claude-sonnet-4-6',
-      max_tokens: 400,
+      max_tokens: maxTokens,
       // Cache the system prompt — saves ~80% on input token costs after the first call
-      system: [{ type: 'text', text: SYSTEM_PROMPT, cache_control: { type: 'ephemeral' } }],
+      system: [{ type: 'text', text: chosenPrompt, cache_control: { type: 'ephemeral' } }],
       messages: [
         {
           role: 'user',

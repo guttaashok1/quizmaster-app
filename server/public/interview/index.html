@@ -355,6 +355,25 @@
     }
     .cursor.off { display: none; }
 
+    /* ── Answer style toggle ──────────────────────────────────────────────────── */
+    .ast-wrap {
+      display: flex; align-items: center; gap: 10px;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 11px; padding: 6px 10px 6px 14px;
+    }
+    .ast-label { font-size: 12px; font-weight: 600; color: var(--muted); white-space: nowrap; }
+    .ast-pills { display: flex; gap: 4px; }
+    .ast-pill {
+      padding: 5px 14px; border-radius: 8px; font-size: 13px; font-weight: 600;
+      cursor: pointer; border: 1px solid transparent;
+      background: transparent; color: var(--muted); transition: all 0.18s;
+    }
+    .ast-pill.on {
+      background: var(--surface2); color: var(--text);
+      border-color: var(--border); box-shadow: 0 1px 4px rgba(0,0,0,0.35);
+    }
+    .ast-pill.on.hints { color: #fbbf24; border-color: rgba(251,191,36,0.3); }
+
     @media (max-width: 600px) {
       .nav { padding: 0 14px; }
       .session-wrap { padding: 16px 14px 60px; gap: 14px; }
@@ -362,6 +381,7 @@
       .setup-title { font-size: 26px; }
       .setup-btns { flex-direction: column; }
       .mode-btn { font-size: 13px; }
+      .ast-label { display: none; }
     }
   </style>
 </head>
@@ -440,6 +460,15 @@
   <div class="mode-toggle">
     <button class="mode-btn on" id="mode-mic" onclick="setMode('mic')">🎙️ My Microphone</button>
     <button class="mode-btn"    id="mode-sys" onclick="setMode('system')">🖥️ System Audio</button>
+  </div>
+
+  <!-- Answer style toggle -->
+  <div class="ast-wrap">
+    <span class="ast-label">Answer style</span>
+    <div class="ast-pills">
+      <button class="ast-pill on"    id="ast-full"  onclick="setAnswerStyle('full')">📝 Full Answer</button>
+      <button class="ast-pill hints" id="ast-hints" onclick="setAnswerStyle('hints')">💡 Quick Hints</button>
+    </div>
   </div>
 
   <!-- ── MIC PANEL ──────────────────────────────────────────────────────────── -->
@@ -567,6 +596,7 @@
 
   // Answer
   let streamCtrl = null, fullAnswer = '', utterance = null;
+  let answerStyle = 'full'; // 'full' | 'hints'
 
   // ── Profile List — API-first with localStorage fallback ───────────────────────
   async function loadProfileList() {
@@ -743,8 +773,9 @@
     document.getElementById('session').classList.remove('on');
     document.getElementById('setup').style.display = '';
 
-    // Reset mode
+    // Reset mode and answer style
     setMode('mic');
+    setAnswerStyle('full');
     updateQuota();
     loadProfileList();
   }
@@ -757,6 +788,18 @@
     document.getElementById('mic-panel').style.display = mode === 'mic' ? '' : 'none';
     document.getElementById('sys-panel').style.display = mode === 'system' ? '' : 'none';
     if (mode === 'mic' && sysCapturing) stopSys(true);
+  }
+
+  // ── Answer Style Toggle ───────────────────────────────────────────────────────
+  function setAnswerStyle(style) {
+    answerStyle = style;
+    const fullBtn  = document.getElementById('ast-full');
+    const hintsBtn = document.getElementById('ast-hints');
+    fullBtn.classList.toggle('on',  style === 'full');
+    fullBtn.classList.remove('hints');
+    hintsBtn.classList.toggle('on', style === 'hints');
+    // keep the amber colour on the hints pill when it's active
+    if (style === 'hints') hintsBtn.classList.add('hints');
   }
 
   // ── Mic Mode ──────────────────────────────────────────────────────────────────
@@ -983,9 +1026,12 @@
   }
 
   function setAnswerStreaming(on) {
+    const isHints = answerStyle === 'hints';
     document.getElementById('stream-dot').classList.toggle('on', on);
     document.getElementById('answer-badge').classList.toggle('on', !on);
-    document.getElementById('answer-title-label').textContent = on ? 'Streaming Answer' : 'Answer Ready';
+    document.getElementById('answer-title-label').textContent = on
+      ? (isHints ? '💡 Getting Hints…' : 'Streaming Answer')
+      : (isHints ? '💡 Hints Ready'    : 'Answer Ready');
     document.getElementById('answer-actions').style.display = on ? 'none' : '';
   }
 
@@ -1032,7 +1078,7 @@
       const res = await fetch('/api/interview/answer-stream', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ resume: resumeText, jobDescription, question, supportingDocs: docsText }),
+        body: JSON.stringify({ resume: resumeText, jobDescription, question, supportingDocs: docsText, mode: answerStyle === 'hints' ? 'hints' : 'answer' }),
         signal: ctrl.signal,
       });
       const reader = res.body.getReader(); const dec = new TextDecoder(); let buf = '';
