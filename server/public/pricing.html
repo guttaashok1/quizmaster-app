@@ -70,9 +70,10 @@
       <li><span class="check">✓</span><span>Read aloud answers</span></li>
     </ul>
     <div class="pricing-btns">
-      <a href="#" id="stripe-monthly-btn" class="pricing-btn-primary">Subscribe Monthly — $12/mo</a>
-      <a href="#" id="stripe-lifetime-btn" class="pricing-btn-outline">Buy Lifetime — $79</a>
+      <button onclick="startCheckout('monthly')" id="stripe-monthly-btn" class="pricing-btn-primary">Subscribe Monthly — $12/mo</button>
+      <button onclick="startCheckout('lifetime')" id="stripe-lifetime-btn" class="pricing-btn-outline">Buy Lifetime — $79</button>
     </div>
+    <div id="stripe-error" style="display:none;color:#ff8080;font-size:13px;text-align:center;margin-top:10px"></div>
   </div>
 </div>
 
@@ -109,9 +110,55 @@
 <script src="/auth.js"></script>
 <script>
   document.addEventListener('DOMContentLoaded', () => {
-
     Auth.renderNav();
+    // Show success/cancel banners from Stripe redirect
+    const params = new URLSearchParams(location.search);
+    if (params.get('upgraded') === '1') {
+      showBanner('🎉 You\'re now on Pro! Enjoy unlimited questions.', '#0ea5e9');
+    }
+    if (params.get('cancelled') === '1') {
+      showBanner('Checkout cancelled — no charge was made.', '#888');
+    }
   });
+
+  function showBanner(msg, color) {
+    const b = document.createElement('div');
+    b.style.cssText = `position:fixed;top:72px;left:50%;transform:translateX(-50%);
+      background:rgba(6,13,35,0.95);border:1px solid ${color};color:#fff;
+      padding:12px 28px;border-radius:999px;font-size:14px;font-weight:600;
+      z-index:9999;box-shadow:0 8px 32px rgba(0,0,0,0.4)`;
+    b.textContent = msg;
+    document.body.appendChild(b);
+    setTimeout(() => b.remove(), 5000);
+  }
+
+  async function startCheckout(plan) {
+    const session = Auth.getSession();
+    if (!session) {
+      sessionStorage.setItem('postLoginRedirect', '/pricing.html');
+      window.location.href = '/login.html';
+      return;
+    }
+    const btns = document.querySelectorAll('#stripe-monthly-btn, #stripe-lifetime-btn');
+    btns.forEach(b => { b.disabled = true; b.style.opacity = '0.6'; });
+    const errEl = document.getElementById('stripe-error');
+    errEl.style.display = 'none';
+
+    try {
+      const res = await fetch('/api/stripe/create-checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...Auth.authHeaders() },
+        body: JSON.stringify({ plan }),
+      });
+      const data = await res.json();
+      if (!res.ok || data.error) throw new Error(data.error || 'Checkout failed');
+      window.location.href = data.url;
+    } catch (err) {
+      errEl.textContent = err.message;
+      errEl.style.display = 'block';
+      btns.forEach(b => { b.disabled = false; b.style.opacity = '1'; });
+    }
+  }
 </script>
 </body>
 </html>

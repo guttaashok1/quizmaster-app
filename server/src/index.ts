@@ -1,6 +1,7 @@
 import { config } from 'dotenv';
 import { resolve } from 'path';
 config({ path: resolve(__dirname, '../.env') });
+import * as Sentry from '@sentry/node';
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
@@ -12,7 +13,18 @@ import authRouter from './routes/auth';
 import interviewRouter from './routes/interview';
 import interviewAuthRouter from './routes/interviewAuth';
 import profilesRouter from './routes/profiles';
+import stripeRouter from './routes/stripe';
 import { initDatabase } from './services/database';
+
+// ── Sentry error monitoring (optional — set SENTRY_DSN to enable) ─────────────
+if (process.env.SENTRY_DSN) {
+  Sentry.init({
+    dsn: process.env.SENTRY_DSN,
+    tracesSampleRate: 0.1,
+    environment: process.env.VERCEL ? 'production' : 'development',
+  });
+  console.log('[sentry] Initialized');
+}
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -22,16 +34,20 @@ app.use(helmet({
   contentSecurityPolicy: {
     directives: {
       defaultSrc:  ["'self'"],
-      scriptSrc:   ["'self'", "'unsafe-inline'", 'cdn.jsdelivr.net'],  // transformers.js CDN
+      scriptSrc:   ["'self'", "'unsafe-inline'", 'cdn.jsdelivr.net'],
       styleSrc:    ["'self'", "'unsafe-inline'", 'fonts.googleapis.com'],
       fontSrc:     ["'self'", 'fonts.gstatic.com'],
-      imgSrc:      ["'self'", 'data:', 'blob:'],
+      imgSrc:      ["'self'", 'data:', 'blob:', 'https://images.unsplash.com'],
       mediaSrc:    ["'self'", 'blob:'],
-      connectSrc:  ["'self'", 'huggingface.co', '*.huggingface.co', 'cdn.jsdelivr.net'],
+      frameSrc:    ["'self'", 'https://www.youtube.com', 'https://js.stripe.com'],
+      connectSrc:  ["'self'", 'huggingface.co', '*.huggingface.co', 'cdn.jsdelivr.net',
+                    'https://api.resend.com'],
       workerSrc:   ["'self'", 'blob:'],
+      scriptSrcElem: ["'self'", "'unsafe-inline'", 'cdn.jsdelivr.net',
+                      'https://js.stripe.com'],
     },
   },
-  crossOriginEmbedderPolicy: false, // needed for SharedArrayBuffer / WASM in some browsers
+  crossOriginEmbedderPolicy: false,
 }));
 
 // ── Gzip compression ───────────────────────────────────────────────────────
@@ -56,6 +72,11 @@ app.use(cors({
   },
   credentials: true,
 }));
+
+// ── Stripe webhook raw-body pre-parser ─────────────────────────────────────
+// express.raw() runs first for webhook path and sets req._body=true,
+// so the express.json() below skips it — preserving the raw buffer Stripe needs.
+app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }));
 
 app.use(express.json({ limit: '5mb' })); // profiles can contain large resume/JD text
 
@@ -111,6 +132,7 @@ app.use('/api/auth', authRouter);
 app.use('/api/interview', interviewRouter);
 app.use('/api/interview-auth', interviewAuthRouter);
 app.use('/api/profiles', profilesRouter);
+app.use('/api/stripe', stripeRouter);
 
 // ── 404 fallback for unknown API routes ───────────────────────────────────
 app.use('/api/*', (_req, res) => {
@@ -121,6 +143,11 @@ app.use('/api/*', (_req, res) => {
 app.use((_req, res) => {
   res.status(404).sendFile(resolve(__dirname, '../public/404.html'));
 });
+
+// ── Sentry error handler (must be AFTER all routes) ───────────────────────
+if (process.env.SENTRY_DSN) {
+  Sentry.setupExpressErrorHandler(app);
+}
 
 // ── Export for Vercel serverless ───────────────────────────────────────────
 export default app;
