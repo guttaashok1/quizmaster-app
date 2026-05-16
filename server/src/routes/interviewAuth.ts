@@ -82,8 +82,13 @@ async function ensureTables(pool: Pool): Promise<void> {
       plan                   VARCHAR(20)   NOT NULL DEFAULT 'free',
       stripe_customer_id     VARCHAR(100),
       stripe_subscription_id VARCHAR(100),
+      beta_expires_at        TIMESTAMPTZ,
       created_at             TIMESTAMPTZ   NOT NULL DEFAULT NOW()
     )
+  `);
+  // Add beta_expires_at if upgrading an existing DB that didn't have it
+  await pool.query(`
+    ALTER TABLE interview_users ADD COLUMN IF NOT EXISTS beta_expires_at TIMESTAMPTZ
   `);
 
   await pool.query(`
@@ -110,31 +115,32 @@ async function ensureTables(pool: Pool): Promise<void> {
 }
 
 async function _seedAdmin(pool: Pool): Promise<void> {
-  const check = await pool.query(
-    'SELECT 1 FROM interview_users WHERE username = $1', ['admin']
-  );
-  if ((check.rowCount ?? 0) > 0) return;
-
   const adminPass = process.env.ADMIN_PASSWORD;
   if (!adminPass) {
-    console.warn('[interviewAuth] ADMIN_PASSWORD not set — admin account not seeded. Set ADMIN_PASSWORD env var.');
+    console.warn('[interviewAuth] ADMIN_PASSWORD not set — admin account not created/updated. Set ADMIN_PASSWORD env var.');
     return;
   }
   const salt = crypto.randomBytes(16).toString('hex');
   const hash = pbkdf2(adminPass, salt);
+  // Upsert: create admin if missing OR update password if ADMIN_PASSWORD changed
   await pool.query(
     `INSERT INTO interview_users (username, email, password_hash, salt, role, plan)
      VALUES ('admin', 'admin@interviewcoach.ai', $1, $2, 'admin', 'pro')
-     ON CONFLICT (username) DO NOTHING`,
+     ON CONFLICT (username)
+     DO UPDATE SET password_hash = EXCLUDED.password_hash,
+                   salt          = EXCLUDED.salt,
+                   role          = 'admin',
+                   plan          = 'pro'`,
     [hash, salt]
   );
-  console.log('[interviewAuth] Admin account seeded from ADMIN_PASSWORD env var');
+  console.log('[interviewAuth] Admin account synced from ADMIN_PASSWORD env var');
 }
 
 // ── In-memory fallback (local dev without DATABASE_URL) ───────────────────────
 interface IUser {
   username: string; email: string; passwordHash: string; salt: string;
-  role: 'admin' | 'user'; plan: 'free' | 'pro';
+  role: 'admin' | 'user'; plan: 'free' | 'pro' | 'beta';
+  betaExpiresAt?: string;
   createdAt: string; questionsUsed: Record<string, number>;
 }
 const memUsers = new Map<string, IUser>();
@@ -171,6 +177,19 @@ function verifyToken(token: string): jwt.JwtPayload | null {
 }
 
 function todayKey(): string { return new Date().toISOString().slice(0, 10); }
+
+/** Check DB for whether a user has unlimited quota right now (admin / pro / active beta). */
+async function checkUnlimited(pool: Pool | null, payload: jwt.JwtPayload): Promise<boolean> {
+  if (payload.role === 'admin' || payload.plan === 'pro') return true;
+  if (payload.plan === 'beta' && pool) {
+    const r = await pool.query(
+      'SELECT beta_expires_at FROM interview_users WHERE username = $1', [payload.username]
+    );
+    const exp = r.rows[0]?.beta_expires_at;
+    return exp != null && new Date(exp) > new Date();
+  }
+  return false;
+}
 
 // ── POST /register ────────────────────────────────────────────────────────────
 router.post('/register', registerLimiter, async (req: Request, res: Response) => {
@@ -419,8 +438,8 @@ router.post('/question-used', async (req: Request, res: Response) => {
   if (pool) {
     try {
       await ensureTables(pool);
-      const isUnlimited = payload.role === 'admin' || payload.plan === 'pro';
-      if (!isUnlimited) {
+      const unlimited = await checkUnlimited(pool, payload);
+      if (!unlimited) {
         await pool.query(
           `INSERT INTO interview_questions_used (username, date, count) VALUES ($1, $2, 1)
            ON CONFLICT (username, date)
@@ -433,7 +452,7 @@ router.post('/question-used', async (req: Request, res: Response) => {
         [payload.username, today]
       );
       const used = Number(r.rows[0]?.count ?? 0);
-      return void res.json({ used, remaining: isUnlimited ? 999 : Math.max(0, 10 - used) });
+      return void res.json({ used, remaining: unlimited ? 999 : Math.max(0, 10 - used) });
     } catch (err) {
       console.error('question-used error:', err);
       return void res.status(500).json({ error: 'Failed to record usage' });
@@ -441,10 +460,10 @@ router.post('/question-used', async (req: Request, res: Response) => {
   } else {
     const user = memUsers.get(payload.username.toLowerCase());
     if (!user) return void res.status(404).json({ error: 'User not found' });
-    const isUnlimited = payload.role === 'admin' || payload.plan === 'pro';
-    if (!isUnlimited) user.questionsUsed[today] = (user.questionsUsed[today] ?? 0) + 1;
+    const unlimited = payload.role === 'admin' || payload.plan === 'pro';
+    if (!unlimited) user.questionsUsed[today] = (user.questionsUsed[today] ?? 0) + 1;
     const used = user.questionsUsed[today] ?? 0;
-    return void res.json({ used, remaining: isUnlimited ? 999 : Math.max(0, 10 - used) });
+    return void res.json({ used, remaining: unlimited ? 999 : Math.max(0, 10 - used) });
   }
 });
 
@@ -455,27 +474,28 @@ router.get('/quota', async (req: Request, res: Response) => {
   const payload = verifyToken(auth.slice(7));
   if (!payload) return void res.status(401).json({ error: 'Session expired' });
 
-  const isUnlimited = payload.role === 'admin' || payload.plan === 'pro';
   const today = todayKey();
   const pool  = getPool();
 
   if (pool) {
     try {
       await ensureTables(pool);
+      const unlimited = await checkUnlimited(pool, payload);
       const r = await pool.query(
         'SELECT count FROM interview_questions_used WHERE username = $1 AND date = $2',
         [payload.username, today]
       );
       const used = Number(r.rows[0]?.count ?? 0);
-      return void res.json({ used, remaining: isUnlimited ? 999 : Math.max(0, 10 - used), unlimited: isUnlimited });
+      return void res.json({ used, remaining: unlimited ? 999 : Math.max(0, 10 - used), unlimited });
     } catch (err) {
       console.error('quota error:', err);
       return void res.status(500).json({ error: 'Failed to get quota' });
     }
   } else {
+    const unlimited = payload.role === 'admin' || payload.plan === 'pro';
     const user = memUsers.get(payload.username.toLowerCase());
     const used = user?.questionsUsed[today] ?? 0;
-    return void res.json({ used, remaining: isUnlimited ? 999 : Math.max(0, 10 - used), unlimited: isUnlimited });
+    return void res.json({ used, remaining: unlimited ? 999 : Math.max(0, 10 - used), unlimited });
   }
 });
 

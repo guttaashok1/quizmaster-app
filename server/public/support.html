@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Support — Interview Coach</title>
+  <meta name="description" content="Get help with Interview Coach. Browse FAQs or contact our support team directly." />
+  <meta name="robots" content="index, follow" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎙️</text></svg>" />
+  <link rel="stylesheet" href="/styles.css" />
+  <style>
+    /* ── Page layout ── */
+    .support-hero {
+      text-align: center;
+      padding: 64px 24px 48px;
+      max-width: 640px;
+      margin: 0 auto;
+    }
+    .support-hero h1 {
+      font-size: 38px; font-weight: 900; letter-spacing: -0.5px; margin-bottom: 12px;
+    }
+    .support-hero p {
+      font-size: 16px; color: var(--text-muted); line-height: 1.7;
+    }
+
+    .support-body {
+      max-width: 1120px;
+      margin: 0 auto;
+      padding: 0 48px 100px;
+      display: grid;
+      grid-template-columns: 1fr 400px;
+      gap: 40px;
+      align-items: start;
+    }
+
+    /* ── FAQ ── */
+    .faq-col h2 {
+      font-size: 22px; font-weight: 800; margin-bottom: 20px;
+      padding-bottom: 12px; border-bottom: 1px solid var(--border);
+    }
+
+    .accordion-item {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-radius: 12px;
+      margin-bottom: 10px;
+      overflow: hidden;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .accordion-item.open {
+      border-color: rgba(14,165,233,0.35);
+      box-shadow: 0 0 0 1px rgba(14,165,233,0.15);
+    }
+
+    .accordion-trigger {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 18px 20px;
+      background: none;
+      border: none;
+      color: var(--text);
+      font-family: var(--font);
+      font-size: 15px;
+      font-weight: 600;
+      text-align: left;
+      cursor: pointer;
+      line-height: 1.45;
+      transition: color 0.18s;
+    }
+    .accordion-trigger:hover { color: var(--accent2); }
+    .accordion-item.open .accordion-trigger { color: var(--accent2); }
+
+    .accordion-chevron {
+      flex-shrink: 0;
+      width: 18px; height: 18px;
+      display: flex; align-items: center; justify-content: center;
+      color: var(--text-muted);
+      transition: transform 0.22s, color 0.18s;
+    }
+    .accordion-item.open .accordion-chevron {
+      transform: rotate(180deg);
+      color: var(--accent);
+    }
+    .accordion-chevron svg {
+      width: 14px; height: 14px; stroke: currentColor; fill: none;
+      stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round;
+    }
+
+    .accordion-body {
+      display: none;
+      padding: 0 20px 18px;
+      font-size: 14px;
+      color: var(--text-muted);
+      line-height: 1.72;
+      border-top: 1px solid rgba(255,255,255,0.06);
+    }
+    .accordion-item.open .accordion-body { display: block; }
+    .accordion-body a { color: var(--accent); text-decoration: underline; text-underline-offset: 2px; }
+    .accordion-body a:hover { color: var(--accent2); }
+
+    /* ── Contact column ── */
+    .contact-col {
+      position: sticky;
+      top: 80px;
+    }
+
+    .contact-col h2 {
+      font-size: 22px; font-weight: 800; margin-bottom: 20px;
+      padding-bottom: 12px; border-bottom: 1px solid var(--border);
+    }
+
+    .contact-info-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-radius: 14px;
+      padding: 22px 24px;
+      margin-bottom: 20px;
+    }
+    .contact-info-row {
+      display: flex; align-items: flex-start; gap: 12px;
+      margin-bottom: 14px;
+    }
+    .contact-info-row:last-child { margin-bottom: 0; }
+    .contact-info-icon {
+      font-size: 18px; flex-shrink: 0; margin-top: 1px;
+    }
+    .contact-info-text { font-size: 14px; line-height: 1.6; }
+    .contact-info-text .label {
+      display: block; font-size: 11px; font-weight: 700; color: var(--text-muted);
+      text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 3px;
+    }
+    .contact-info-text a {
+      color: var(--accent);
+      text-decoration: underline; text-underline-offset: 2px;
+      transition: color 0.15s;
+    }
+    .contact-info-text a:hover { color: var(--accent2); }
+    .contact-info-text .muted { color: var(--text-muted); }
+
+    /* ── Contact form card ── */
+    .contact-form-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-radius: 14px;
+      padding: 24px;
+    }
+    .contact-form-card h3 {
+      font-size: 16px; font-weight: 700; margin-bottom: 18px;
+    }
+
+    .contact-submit-btn {
+      width: 100%;
+      padding: 13px 20px;
+      border-radius: 999px;
+      font-size: 14px; font-weight: 700;
+      font-family: var(--font);
+      cursor: pointer; border: none;
+      background: linear-gradient(135deg, var(--accent) 0%, var(--accent3) 100%);
+      color: #fff;
+      transition: box-shadow 0.2s, transform 0.18s, opacity 0.2s;
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+    }
+    .contact-submit-btn:hover:not(:disabled) {
+      box-shadow: 0 0 28px rgba(14,165,233,0.5), 0 0 56px rgba(167,139,250,0.2);
+      transform: translateY(-1px);
+    }
+    .contact-submit-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+    .contact-error {
+      background: rgba(255,79,79,0.1);
+      border: 1px solid rgba(255,79,79,0.28);
+      border-radius: 10px;
+      padding: 11px 14px;
+      font-size: 13px; color: #ff8080;
+      margin-bottom: 14px;
+      display: none;
+    }
+    .contact-success {
+      text-align: center;
+      padding: 16px 0 4px;
+      display: none;
+    }
+    .contact-success .s-icon { font-size: 40px; margin-bottom: 10px; line-height: 1; }
+    .contact-success .s-title { font-size: 16px; font-weight: 800; margin-bottom: 6px; }
+    .contact-success .s-msg { font-size: 13px; color: var(--text-muted); line-height: 1.6; }
+    .contact-success .s-reset {
+      margin-top: 14px;
+      display: inline-flex; align-items: center; gap: 5px;
+      font-size: 13px; font-weight: 600; color: var(--accent);
+      cursor: pointer; background: none; border: none; font-family: var(--font);
+      padding: 0; text-decoration: underline; text-underline-offset: 2px;
+    }
+
+    /* ── Spinner ── */
+    .spinner {
+      width: 15px; height: 15px;
+      border: 2.5px solid rgba(255,255,255,0.35);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      flex-shrink: 0;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Mobile responsive ── */
+    @media (max-width: 900px) {
+      .support-body {
+        grid-template-columns: 1fr;
+        padding: 0 24px 80px;
+        gap: 32px;
+      }
+      .contact-col { position: static; }
+      .support-hero { padding: 48px 20px 36px; }
+      .support-hero h1 { font-size: 30px; }
+    }
+    @media (max-width: 480px) {
+      .support-hero h1 { font-size: 26px; }
+      .accordion-trigger { font-size: 14px; padding: 16px; }
+      .accordion-body { padding: 0 16px 16px; }
+    }
+  </style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="/" class="nav-logo">
+      <div class="icon">🎙️</div>
+      Interview Coach
+    </a>
+    <div class="nav-links">
+      <a href="/" class="nav-link">Home</a>
+      <a href="/pricing.html" class="nav-link">Pricing</a>
+      <a href="/feedback.html" class="nav-link">Feedback</a>
+      <div id="nav-auth" style="display:flex;align-items:center;gap:8px"></div>
+    </div>
+  </div>
+</nav>
+
+<!-- Hero -->
+<section class="support-hero">
+  <h1>How can we <span class="gradient-text">help?</span></h1>
+  <p>Browse the FAQ or send us a message — we typically respond within 24 hours.</p>
+</section>
+
+<!-- Two-column body -->
+<div class="support-body">
+
+  <!-- ─── Left: FAQ ─── -->
+  <div class="faq-col">
+    <h2>Frequently Asked Questions</h2>
+
+    <!-- 1 -->
+    <div class="accordion-item open">
+      <button class="accordion-trigger" aria-expanded="true">
+        How do I get started?
+        <span class="accordion-chevron"><svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg></span>
+      </button>
+      <div class="accordion-body">
+        Create a profile with your resume and target job description, then head to the
+        <a href="/interview/">Interview page</a>. Speak any question aloud and the AI will respond
+        with a tailored, confident answer in real time based on your actual experience.
+      </div>
+    </div>
+
+    <!-- 2 -->
+    <div class="accordion-item">
+      <button class="accordion-trigger" aria-expanded="false">
+        What is the daily question limit?
+        <span class="accordion-chevron"><svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg></span>
+      </button>
+      <div class="accordion-body">
+        The <strong style="color:var(--text)">Free plan</strong> includes 10 AI-generated answers per day. The
+        counter resets at midnight in your local timezone. <strong style="color:var(--text)">Pro</strong> and
+        <strong style="color:var(--text)">Beta</strong> plans have unlimited daily answers. Check your remaining
+        quota in the Interview page header.
+      </div>
+    </div>
+
+    <!-- 3 -->
+    <div class="accordion-item">
+      <button class="accordion-trigger" aria-expanded="false">
+        How do I upload my resume?
+        <span class="accordion-chevron"><svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg></span>
+      </button>
+      <div class="accordion-body">
+        Go to <strong style="color:var(--text)">Profiles</strong>, then create or edit a profile. You can paste
+        your resume text directly or upload a PDF or Word document (.docx). Your resume is used only
+        for that session and is never stored permanently on our servers.
+      </div>
+    </div>
+
+    <!-- 4 -->
+    <div class="accordion-item">
+      <button class="accordion-trigger" aria-expanded="false">
+        What are Cue Cards vs One-Liners?
+        <span class="accordion-chevron"><svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg></span>
+      </button>
+      <div class="accordion-body">
+        <strong style="color:var(--text)">Cue Cards</strong> are ultra-short keyword fragments — 3–5 words — designed
+        to glance at mid-interview without breaking eye contact. They serve as memory anchors for your talking
+        points. <strong style="color:var(--text)">One-Liners</strong> are complete, polished sentences you can
+        speak directly. Both formats are generated for every answer so you can choose what works best for you
+        in the moment.
+      </div>
+    </div>
+
+    <!-- 5 -->
+    <div class="accordion-item">
+      <button class="accordion-trigger" aria-expanded="false">
+        Is my resume data stored?
+        <span class="accordion-chevron"><svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg></span>
+      </button>
+      <div class="accordion-body">
+        No. Your resume text and job description are sent to the AI model solely to generate your answer and
+        are immediately discarded afterwards. We never store or log the content of your resume or job
+        description on our servers. Your profile name and settings are saved, but not the document text.
+      </div>
+    </div>
+
+    <!-- 6 -->
+    <div class="accordion-item">
+      <button class="accordion-trigger" aria-expanded="false">
+        How do I cancel my subscription?
+        <span class="accordion-chevron"><svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg></span>
+      </button>
+      <div class="accordion-body">
+        Email <a href="mailto:support@interviewcoach.ai">support@interviewcoach.ai</a> with your username and
+        a cancellation request. Monthly subscribers retain full Pro access until the end of their current
+        billing period. We'll send a confirmation email within 24 hours.
+      </div>
+    </div>
+
+    <!-- 7 -->
+    <div class="accordion-item">
+      <button class="accordion-trigger" aria-expanded="false">
+        I found a bug — how do I report it?
+        <span class="accordion-chevron"><svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg></span>
+      </button>
+      <div class="accordion-body">
+        Use the <a href="/feedback.html">Feedback page</a> and select "Bug Report" — it's the fastest way for
+        us to triage issues. Alternatively, email <a href="mailto:support@interviewcoach.ai">support@interviewcoach.ai</a>
+        with a description of the bug, the steps to reproduce it, and your browser/OS version.
+      </div>
+    </div>
+
+    <!-- 8 -->
+    <div class="accordion-item">
+      <button class="accordion-trigger" aria-expanded="false">
+        Can I use this on my phone?
+        <span class="accordion-chevron"><svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg></span>
+      </button>
+      <div class="accordion-body">
+        Yes! Interview Coach is fully responsive and works on modern mobile browsers. Microphone access is
+        required for voice questions — when prompted, tap "Allow" to grant the browser permission. Safari on
+        iOS and Chrome on Android are both supported.
+      </div>
+    </div>
+
+  </div><!-- /.faq-col -->
+
+  <!-- ─── Right: Contact ─── -->
+  <div class="contact-col">
+    <h2>Get in Touch</h2>
+
+    <!-- Contact info card -->
+    <div class="contact-info-card">
+      <div class="contact-info-row">
+        <div class="contact-info-icon">✉️</div>
+        <div class="contact-info-text">
+          <span class="label">Support Email</span>
+          <a href="mailto:support@interviewcoach.ai">support@interviewcoach.ai</a>
+        </div>
+      </div>
+      <div class="contact-info-row">
+        <div class="contact-info-icon">⏱️</div>
+        <div class="contact-info-text">
+          <span class="label">Response Time</span>
+          <span class="muted">We typically respond within 24 hours.</span>
+        </div>
+      </div>
+      <div class="contact-info-row">
+        <div class="contact-info-icon">🐛</div>
+        <div class="contact-info-text">
+          <span class="label">Bug Reports</span>
+          <a href="/feedback.html">Use the Feedback page</a>
+          <span class="muted"> for fastest triage.</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Contact form card -->
+    <div class="contact-form-card">
+      <h3>Send us a message</h3>
+
+      <!-- Success state -->
+      <div class="contact-success" id="contact-success">
+        <div class="s-icon">✅</div>
+        <div class="s-title">Message sent!</div>
+        <div class="s-msg">We'll get back to you within 24 hours at the email you provided.</div>
+        <button class="s-reset" id="contact-reset">Send another message</button>
+      </div>
+
+      <!-- Form -->
+      <div id="contact-form">
+        <div class="contact-error" id="contact-error"></div>
+
+        <div class="form-group">
+          <label class="form-label" for="c-name">Name <span style="font-weight:400;opacity:0.6">(optional)</span></label>
+          <input type="text" class="form-input" id="c-name" placeholder="Your name" autocomplete="name" />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="c-email">Email <span id="email-required-label" style="font-weight:400;opacity:0.6"></span></label>
+          <input type="email" class="form-input" id="c-email" placeholder="you@example.com" autocomplete="email" />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="c-msg">Message</label>
+          <textarea class="form-input" id="c-msg" placeholder="How can we help?" style="min-height:110px;resize:vertical;" required minlength="10"></textarea>
+        </div>
+
+        <button class="contact-submit-btn" id="contact-submit" type="button">
+          Send Message →
+        </button>
+      </div>
+
+    </div><!-- /.contact-form-card -->
+  </div><!-- /.contact-col -->
+
+</div><!-- /.support-body -->
+
+<footer class="footer">
+  © 2026 Interview Coach
+  <div class="footer-links">
+    <a href="/privacy.html">Privacy</a>
+    <a href="/terms.html">Terms</a>
+    <a href="/feedback.html">Feedback</a>
+    <a href="/about.html">About</a>
+  </div>
+</footer>
+
+<script src="/auth.js"></script>
+<script>
+(function () {
+
+  /* ═══════════════════════════════
+     1. Auth + Nav
+  ═══════════════════════════════ */
+  document.addEventListener('DOMContentLoaded', () => {
+    Auth.renderNav();
+
+    const session = Auth.getSession();
+    const emailInput  = document.getElementById('c-email');
+    const emailLabel  = document.getElementById('email-required-label');
+
+    if (session && session.email) {
+      emailInput.value = session.email;
+      emailLabel.textContent = '(pre-filled)';
+    } else {
+      emailLabel.textContent = '(required)';
+    }
+  });
+
+  /* ═══════════════════════════════
+     2. Accordion
+  ═══════════════════════════════ */
+  const accordionItems = document.querySelectorAll('.accordion-item');
+
+  accordionItems.forEach(item => {
+    const trigger = item.querySelector('.accordion-trigger');
+    trigger.addEventListener('click', () => {
+      const isOpen = item.classList.contains('open');
+
+      // Close all
+      accordionItems.forEach(i => {
+        i.classList.remove('open');
+        i.querySelector('.accordion-trigger').setAttribute('aria-expanded', 'false');
+      });
+
+      // Open clicked (unless it was already open — toggle off)
+      if (!isOpen) {
+        item.classList.add('open');
+        trigger.setAttribute('aria-expanded', 'true');
+      }
+    });
+  });
+
+  /* ═══════════════════════════════
+     3. Contact form
+  ═══════════════════════════════ */
+  const contactForm    = document.getElementById('contact-form');
+  const contactSuccess = document.getElementById('contact-success');
+  const contactError   = document.getElementById('contact-error');
+  const contactSubmit  = document.getElementById('contact-submit');
+  const contactReset   = document.getElementById('contact-reset');
+  const nameInput      = document.getElementById('c-name');
+  const emailInput     = document.getElementById('c-email');
+  const msgInput       = document.getElementById('c-msg');
+
+  contactSubmit.addEventListener('click', sendContactMessage);
+
+  contactReset.addEventListener('click', () => {
+    contactSuccess.style.display = 'none';
+    contactForm.style.display = '';
+    msgInput.value = '';
+    showContactError(null);
+  });
+
+  async function sendContactMessage() {
+    const name    = nameInput.value.trim();
+    const email   = emailInput.value.trim();
+    const message = msgInput.value.trim();
+
+    const session = Auth.getSession();
+    const emailRequired = !session;
+
+    /* Validate */
+    if (emailRequired && !email) {
+      showContactError('Please enter your email address so we can reply.');
+      emailInput.focus();
+      return;
+    }
+    if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      showContactError('Please enter a valid email address.');
+      emailInput.focus();
+      return;
+    }
+    if (message.length < 10) {
+      showContactError('Please enter at least 10 characters in your message.');
+      msgInput.focus();
+      return;
+    }
+
+    showContactError(null);
+    setContactLoading(true);
+
+    const payload = {
+      type:     'support',
+      message,
+      name:     name || null,
+      email:    email || (session ? session.email : null),
+      username: session ? session.username : null,
+      page:     window.location.pathname,
+      rating:   null,
+    };
+
+    try {
+      const res = await fetch('/api/feedback', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json', ...Auth.authHeaders() },
+        body:    JSON.stringify(payload),
+      });
+
+      if (!res.ok) {
+        let msg = 'Server error — please try again.';
+        try { const d = await res.json(); if (d.error) msg = d.error; } catch {}
+        throw new Error(msg);
+      }
+
+      /* Success */
+      contactForm.style.display = 'none';
+      contactSuccess.style.display = 'block';
+
+    } catch (err) {
+      setContactLoading(false);
+      showContactError(err.message || 'Could not send your message. Please try again.');
+    }
+  }
+
+  function setContactLoading(on) {
+    if (on) {
+      contactSubmit.disabled = true;
+      contactSubmit.innerHTML = '<span class="spinner"></span> Sending…';
+    } else {
+      contactSubmit.disabled = false;
+      contactSubmit.innerHTML = 'Send Message →';
+    }
+  }
+
+  function showContactError(msg) {
+    if (!msg) {
+      contactError.style.display = 'none';
+      contactError.textContent = '';
+    } else {
+      contactError.textContent = msg;
+      contactError.style.display = 'block';
+    }
+  }
+
+})();
+</script>
+</body>
+</html>

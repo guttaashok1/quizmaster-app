@@ -14,6 +14,7 @@ import interviewRouter from './routes/interview';
 import interviewAuthRouter from './routes/interviewAuth';
 import profilesRouter from './routes/profiles';
 import stripeRouter from './routes/stripe';
+import adminRouter, { feedbackRouter } from './routes/admin';
 import { initDatabase } from './services/database';
 
 // ── Sentry error monitoring (optional — set SENTRY_DSN to enable) ─────────────
@@ -133,6 +134,8 @@ app.use('/api/interview', interviewRouter);
 app.use('/api/interview-auth', interviewAuthRouter);
 app.use('/api/profiles', profilesRouter);
 app.use('/api/stripe', stripeRouter);
+app.use('/api/admin', adminRouter);
+app.use('/api/feedback', feedbackRouter);
 
 // ── 404 fallback for unknown API routes ───────────────────────────────────
 app.use('/api/*', (_req, res) => {

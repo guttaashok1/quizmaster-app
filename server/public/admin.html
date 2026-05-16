@@ -4,10 +4,370 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Admin Dashboard — Interview Coach</title>
+  <meta name="robots" content="noindex, nofollow" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎙️</text></svg>" />
   <link rel="stylesheet" href="/styles.css" />
+  <style>
+    /* ── Page shell ── */
+    body { display: flex; flex-direction: column; min-height: 100vh; }
+    .admin-body { flex: 1; }
+
+    /* ── Tab bar ── */
+    .tab-bar {
+      display: flex;
+      gap: 6px;
+      padding: 20px 48px 0;
+      max-width: 1280px;
+      margin: 0 auto;
+    }
+    .tab-btn {
+      padding: 9px 22px;
+      border-radius: 999px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      border: 1.5px solid rgba(255,255,255,0.14);
+      background: rgba(255,255,255,0.04);
+      color: rgba(255,255,255,0.55);
+      transition: all 0.18s;
+      font-family: var(--font);
+    }
+    .tab-btn:hover {
+      border-color: rgba(255,255,255,0.28);
+      color: rgba(255,255,255,0.85);
+      background: rgba(255,255,255,0.07);
+    }
+    .tab-btn.active {
+      background: linear-gradient(135deg, var(--accent), var(--accent3));
+      border-color: transparent;
+      color: #fff;
+      box-shadow: 0 0 22px rgba(14,165,233,0.40), 0 0 44px rgba(167,139,250,0.18);
+    }
+
+    /* ── Tab sections ── */
+    .tab-section { display: none; }
+    .tab-section.active { display: block; }
+
+    /* ── Page header ── */
+    .admin-header {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 28px 48px 0;
+    }
+    .admin-title { font-size: 30px; font-weight: 900; letter-spacing: -0.5px; }
+    .admin-sub { color: var(--text-muted); font-size: 14px; margin-top: 6px; }
+
+    /* ── Stat cards ── */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin-bottom: 28px;
+    }
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--accent);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border-radius: 14px;
+      padding: 22px 24px;
+      transition: transform 0.18s, box-shadow 0.18s;
+    }
+    .stat-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 32px rgba(0,0,0,0.25), 0 0 24px rgba(14,165,233,0.10);
+    }
+    .stat-card:nth-child(2) { border-left-color: var(--accent2); }
+    .stat-card:nth-child(3) { border-left-color: var(--accent3); }
+    .stat-card:nth-child(4) { border-left-color: #34d399; }
+    .stat-card:nth-child(5) { border-left-color: #f59e0b; }
+    .stat-card:nth-child(6) { border-left-color: #f87171; }
+    .stat-num {
+      font-size: 40px;
+      font-weight: 900;
+      letter-spacing: -1px;
+      line-height: 1;
+      color: #fff;
+      margin-bottom: 8px;
+    }
+    .stat-label {
+      font-size: 13px;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+
+    /* ── Bar chart ── */
+    .chart-section {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      backdrop-filter: blur(14px);
+      border-radius: 14px;
+      padding: 24px 28px;
+      margin-bottom: 28px;
+    }
+    .chart-title {
+      font-size: 15px;
+      font-weight: 700;
+      margin-bottom: 20px;
+      color: var(--text-muted);
+    }
+    .bar-chart {
+      display: flex;
+      align-items: flex-end;
+      gap: 6px;
+      height: 100px;
+    }
+    .bar-item {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      height: 100%;
+      justify-content: flex-end;
+    }
+    .bar-fill {
+      width: 100%;
+      min-height: 2px;
+      border-radius: 4px 4px 0 0;
+      background: linear-gradient(to top, var(--accent), var(--accent3));
+      transition: height 0.4s ease;
+    }
+    .bar-label {
+      font-size: 10px;
+      color: var(--text-muted);
+      white-space: nowrap;
+      transform: rotate(-45deg) translateX(-4px);
+      transform-origin: top left;
+      margin-top: 6px;
+    }
+    .bar-count {
+      font-size: 10px;
+      color: var(--text-muted);
+      margin-bottom: 2px;
+    }
+
+    /* ── Section wrapper ── */
+    .admin-section {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border-radius: 14px;
+      padding: 24px 28px;
+      margin-bottom: 24px;
+    }
+    .admin-section-title {
+      font-size: 16px;
+      font-weight: 700;
+      margin-bottom: 18px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid rgba(255,255,255,0.07);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* ── Search input ── */
+    .search-row {
+      margin-bottom: 16px;
+    }
+    .search-input {
+      width: 100%;
+      max-width: 360px;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.14);
+      border-radius: 10px;
+      color: var(--text);
+      font-family: var(--font);
+      font-size: 14px;
+      padding: 10px 14px;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .search-input:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(14,165,233,0.18);
+    }
+    .search-input::placeholder { color: rgba(255,255,255,0.35); }
+
+    /* ── Filter pills ── */
+    .filter-row {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 18px;
+      flex-wrap: wrap;
+    }
+    .filter-btn {
+      padding: 6px 16px;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      border: 1.5px solid rgba(255,255,255,0.14);
+      background: rgba(255,255,255,0.04);
+      color: rgba(255,255,255,0.55);
+      transition: all 0.18s;
+      font-family: var(--font);
+    }
+    .filter-btn:hover { border-color: rgba(255,255,255,0.28); color: rgba(255,255,255,0.85); }
+    .filter-btn.active {
+      background: rgba(14,165,233,0.18);
+      border-color: rgba(14,165,233,0.50);
+      color: var(--accent2);
+    }
+
+    /* ── Tables ── */
+    .data-table-wrap { overflow-x: auto; }
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 700px;
+    }
+    .data-table th {
+      padding: 10px 14px;
+      text-align: left;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      color: var(--text-muted);
+      border-bottom: 1px solid rgba(255,255,255,0.09);
+      white-space: nowrap;
+    }
+    .data-table td {
+      padding: 12px 14px;
+      font-size: 14px;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+      vertical-align: middle;
+    }
+    .data-table tbody tr:last-child td { border-bottom: none; }
+    .data-table tbody tr:hover { background: rgba(255,255,255,0.03); }
+
+    /* ── Plan badges ── */
+    .badge {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.2px;
+    }
+    .badge-free    { background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.55); border: 1px solid rgba(255,255,255,0.12); }
+    .badge-pro     { background: rgba(16,185,129,0.18); color: #6ee7b7; border: 1px solid rgba(16,185,129,0.35); }
+    .badge-beta    { background: rgba(245,158,11,0.18); color: #fcd34d; border: 1px solid rgba(245,158,11,0.35); }
+    .badge-beta-expired { background: rgba(239,68,68,0.14); color: #fca5a5; border: 1px solid rgba(239,68,68,0.30); }
+    .badge-admin   { background: rgba(14,165,233,0.18); color: var(--accent2); border: 1px solid rgba(14,165,233,0.35); }
+
+    /* Feedback type badges */
+    .badge-bug     { background: rgba(239,68,68,0.18); color: #fca5a5; border: 1px solid rgba(239,68,68,0.32); }
+    .badge-feature { background: rgba(139,92,246,0.18); color: #c4b5fd; border: 1px solid rgba(139,92,246,0.32); }
+    .badge-general { background: rgba(14,165,233,0.18); color: var(--accent2); border: 1px solid rgba(14,165,233,0.32); }
+    .badge-support { background: rgba(245,158,11,0.18); color: #fcd34d; border: 1px solid rgba(245,158,11,0.32); }
+
+    /* Feedback status badges */
+    .badge-new      { background: rgba(14,165,233,0.14); color: var(--accent2); border: 1px solid rgba(14,165,233,0.28); }
+    .badge-reviewed { background: rgba(245,158,11,0.14); color: #fcd34d; border: 1px solid rgba(245,158,11,0.28); }
+    .badge-resolved { background: rgba(16,185,129,0.14); color: #6ee7b7; border: 1px solid rgba(16,185,129,0.28); }
+
+    /* ── Action buttons ── */
+    .btn-action {
+      padding: 5px 13px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      border: 1px solid rgba(255,255,255,0.14);
+      background: rgba(255,255,255,0.05);
+      color: rgba(255,255,255,0.75);
+      transition: all 0.15s;
+      font-family: var(--font);
+      white-space: nowrap;
+    }
+    .btn-action:hover { border-color: rgba(255,255,255,0.30); background: rgba(255,255,255,0.09); color: #fff; }
+    .btn-action.danger { border-color: rgba(239,68,68,0.30); color: #fca5a5; background: rgba(239,68,68,0.08); }
+    .btn-action.danger:hover { border-color: rgba(239,68,68,0.55); background: rgba(239,68,68,0.14); }
+    .btn-action.primary { border-color: rgba(14,165,233,0.40); color: var(--accent2); background: rgba(14,165,233,0.10); }
+    .btn-action.primary:hover { border-color: rgba(14,165,233,0.65); background: rgba(14,165,233,0.18); }
+    .btn-action.success { border-color: rgba(16,185,129,0.35); color: #6ee7b7; background: rgba(16,185,129,0.08); }
+    .btn-action.success:hover { border-color: rgba(16,185,129,0.55); background: rgba(16,185,129,0.14); }
+    .actions-cell { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+
+    /* ── Inline beta grant form ── */
+    .inline-form-row {
+      background: rgba(14,165,233,0.07);
+      border: 1px solid rgba(14,165,233,0.22);
+      border-radius: 10px;
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .inline-form-row label { font-size: 13px; color: var(--text-muted); font-weight: 600; }
+    .inline-form-row input[type="number"] {
+      width: 80px;
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.16);
+      border-radius: 8px;
+      color: var(--text);
+      font-family: var(--font);
+      font-size: 14px;
+      padding: 7px 10px;
+    }
+    .inline-form-row input[type="number"]:focus { outline: none; border-color: var(--accent); }
+    .beta-form-wrap { display: none; }
+    .beta-form-wrap.open { display: block; padding-top: 8px; }
+
+    /* ── Message expand ── */
+    .msg-short { cursor: pointer; }
+    .msg-short:hover { color: var(--accent2); }
+    .msg-full { display: none; }
+    .msg-full.open { display: block; }
+
+    /* ── Loading / error states ── */
+    .state-row td {
+      padding: 28px 14px;
+      color: var(--text-muted);
+      font-style: italic;
+      font-size: 14px;
+    }
+    .state-error td { color: #fca5a5; }
+
+    /* ── Error banner ── */
+    .err-banner {
+      background: rgba(239,68,68,0.10);
+      border: 1px solid rgba(239,68,68,0.28);
+      border-radius: 10px;
+      padding: 12px 16px;
+      font-size: 14px;
+      color: #fca5a5;
+      margin-bottom: 16px;
+      display: none;
+    }
+
+    /* ── Content area ── */
+    .admin-content {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 28px 48px 80px;
+    }
+
+    /* ── Responsive ── */
+    @media (max-width: 900px) {
+      .stats-grid { grid-template-columns: repeat(2, 1fr); }
+      .tab-bar, .admin-header, .admin-content { padding-left: 20px; padding-right: 20px; }
+    }
+    @media (max-width: 540px) {
+      .stats-grid { grid-template-columns: repeat(2, 1fr); }
+      .stat-num { font-size: 32px; }
+    }
+  </style>
 </head>
 <body>
 
+<!-- ── Nav ── -->
 <nav class="nav">
   <div class="nav-inner">
     <a href="/" class="nav-logo">
@@ -16,153 +376,590 @@
     </a>
     <div class="nav-links">
       <a href="/" class="nav-link">Home</a>
-      <a href="/pricing.html" class="nav-link">Pricing</a>
+      <a href="/" class="nav-link">← Back to Home</a>
       <div id="nav-auth" style="display:flex;align-items:center;gap:8px"></div>
     </div>
   </div>
 </nav>
 
-<div class="page-wide">
-  <div style="margin-bottom:32px">
-    <h1 class="section-title">Admin Dashboard</h1>
-    <p class="section-sub">Manage users and monitor platform activity</p>
+<div class="admin-body">
+
+  <!-- ── Page header ── -->
+  <div class="admin-header">
+    <h1 class="admin-title">Admin Dashboard</h1>
+    <p class="admin-sub" id="admin-sub">Loading…</p>
   </div>
 
-  <!-- Metrics -->
-  <div class="metrics-grid">
-    <div class="metric-card">
-      <div class="metric-value" id="m-total">—</div>
-      <div class="metric-label">Total Users</div>
-    </div>
-    <div class="metric-card">
-      <div class="metric-value" id="m-pro">—</div>
-      <div class="metric-label">Pro Users</div>
-    </div>
-    <div class="metric-card">
-      <div class="metric-value" id="m-free">—</div>
-      <div class="metric-label">Free Users</div>
-    </div>
-    <div class="metric-card">
-      <div class="metric-value" id="m-questions">—</div>
-      <div class="metric-label">Questions Today</div>
-    </div>
+  <!-- ── Tab bar ── -->
+  <div class="tab-bar">
+    <button class="tab-btn active" onclick="switchTab('overview')">📊 Overview</button>
+    <button class="tab-btn" onclick="switchTab('users')">👥 Users</button>
+    <button class="tab-btn" onclick="switchTab('feedback')">💬 Feedback</button>
   </div>
 
-  <!-- Setup banner -->
-  <div class="setup-card" id="setup-banner">
-    <h3>⚡ Setup Supabase for full analytics</h3>
-    <p style="font-size:14px;color:var(--text-muted);margin-bottom:16px">Metrics below are approximate — based on this browser's localStorage only. Connect Supabase + Stripe for real server-side analytics and payments.</p>
-    <ol class="setup-steps">
-      <li>Go to <strong>supabase.com</strong> → create a project → copy the Project URL and anon key</li>
-      <li>Go to <strong>stripe.com</strong> → create an account → get your publishable key and secret key</li>
-      <li>Add to <strong>Vercel env vars</strong>: <code>SUPABASE_URL</code>, <code>SUPABASE_ANON_KEY</code>, <code>STRIPE_PUBLISHABLE_KEY</code>, <code>STRIPE_SECRET_KEY</code></li>
-      <li>Come back to <strong>redeploy</strong> — full analytics and payment webhooks will be live</li>
-    </ol>
-  </div>
+  <!-- ══════════════════════════════
+       TAB: OVERVIEW
+  ══════════════════════════════ -->
+  <div class="admin-content">
 
-  <!-- Recent Registrations -->
-  <div class="admin-section">
-    <div class="admin-section-title">Recent Registrations</div>
-    <table class="users-table">
-      <thead>
-        <tr>
-          <th>Username</th>
-          <th>Email</th>
-          <th>Plan</th>
-          <th>Role</th>
-          <th>Joined</th>
-        </tr>
-      </thead>
-      <tbody id="users-tbody">
-        <tr><td colspan="5" style="color:var(--text-muted);font-style:italic;padding:20px 16px">Loading…</td></tr>
-      </tbody>
-    </table>
-  </div>
+    <div id="tab-overview" class="tab-section active">
 
-  <!-- Supabase + Stripe setup instructions -->
-  <div class="admin-section">
-    <div class="admin-section-title">Supabase + Stripe Setup</div>
-    <ol class="setup-steps" style="list-style:none;counter-reset:setup-counter">
-      <li>Go to <strong style="color:var(--text)">supabase.com</strong> → create project → copy URL and anon key from Project Settings → API</li>
-      <li>Go to <strong style="color:var(--text)">stripe.com</strong> → create account → get publishable key and secret key from Developers → API keys</li>
-      <li>In <strong style="color:var(--text)">Vercel</strong>: Settings → Environment Variables → add <code>SUPABASE_URL</code>, <code>SUPABASE_ANON_KEY</code>, <code>STRIPE_PUBLISHABLE_KEY</code>, <code>STRIPE_SECRET_KEY</code></li>
-      <li>Redeploy from Vercel dashboard — Stripe webhooks and Supabase user sync will be active</li>
-    </ol>
-  </div>
-</div>
+      <!-- Error banner -->
+      <div class="err-banner" id="overview-err"></div>
 
+      <!-- Stat cards -->
+      <div class="stats-grid" id="stats-grid">
+        <div class="stat-card"><div class="stat-num" id="s-total">—</div><div class="stat-label">Total Users</div></div>
+        <div class="stat-card"><div class="stat-num" id="s-today-active">—</div><div class="stat-label">Today Active</div></div>
+        <div class="stat-card"><div class="stat-num" id="s-q-today">—</div><div class="stat-label">Questions Today</div></div>
+        <div class="stat-card"><div class="stat-num" id="s-q-week">—</div><div class="stat-label">Questions This Week</div></div>
+        <div class="stat-card"><div class="stat-num" id="s-new-week">—</div><div class="stat-label">New Users This Week</div></div>
+        <div class="stat-card"><div class="stat-num" id="s-open-feedback">—</div><div class="stat-label">Open Feedback</div></div>
+      </div>
+
+      <!-- Questions per day bar chart -->
+      <div class="chart-section">
+        <div class="chart-title">Questions per day — last 14 days</div>
+        <div class="err-banner" id="chart-err"></div>
+        <div class="bar-chart" id="bar-chart">
+          <div style="color:var(--text-muted);font-size:14px;font-style:italic">Loading chart…</div>
+        </div>
+      </div>
+
+    </div><!-- /tab-overview -->
+
+    <!-- ══════════════════════════════
+         TAB: USERS
+    ══════════════════════════════ -->
+    <div id="tab-users" class="tab-section">
+
+      <div class="admin-section">
+        <div class="admin-section-title">👥 All Users</div>
+
+        <div class="search-row">
+          <input
+            class="search-input"
+            id="user-search"
+            type="text"
+            placeholder="Filter by username or email…"
+            oninput="filterUsers()"
+          />
+        </div>
+
+        <div class="err-banner" id="users-err"></div>
+
+        <div class="data-table-wrap">
+          <table class="data-table" id="users-table">
+            <thead>
+              <tr>
+                <th>Username</th>
+                <th>Email</th>
+                <th>Plan</th>
+                <th>Beta Expires</th>
+                <th>Qs Today</th>
+                <th>Total Qs</th>
+                <th>Joined</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="users-tbody">
+              <tr class="state-row"><td colspan="8">Loading users…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div><!-- /tab-users -->
+
+    <!-- ══════════════════════════════
+         TAB: FEEDBACK
+    ══════════════════════════════ -->
+    <div id="tab-feedback" class="tab-section">
+
+      <div class="admin-section">
+        <div class="admin-section-title">💬 User Feedback</div>
+
+        <div class="filter-row" id="feedback-filters">
+          <button class="filter-btn active" onclick="setFeedbackFilter('all', this)">All</button>
+          <button class="filter-btn" onclick="setFeedbackFilter('new', this)">New</button>
+          <button class="filter-btn" onclick="setFeedbackFilter('reviewed', this)">Reviewed</button>
+          <button class="filter-btn" onclick="setFeedbackFilter('resolved', this)">Resolved</button>
+        </div>
+
+        <div class="err-banner" id="feedback-err"></div>
+
+        <div class="data-table-wrap">
+          <table class="data-table" id="feedback-table">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>User</th>
+                <th>Type</th>
+                <th>Message</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="feedback-tbody">
+              <tr class="state-row"><td colspan="6">Loading feedback…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div><!-- /tab-feedback -->
+
+  </div><!-- /admin-content -->
+</div><!-- /admin-body -->
+
+<!-- ── Footer ── -->
 <footer class="footer">
-  <div>© 2026 Interview Coach. Powered by Claude AI.</div>
+  <div>© 2026 Interview Coach. Powered by Claude AI (Anthropic).</div>
   <div class="footer-links">
     <a href="/">Home</a>
     <a href="/pricing.html">Pricing</a>
+    <a href="/privacy.html">Privacy</a>
   </div>
 </footer>
 
 <script src="/auth.js"></script>
 <script>
-  document.addEventListener('DOMContentLoaded', () => {
+  // ══════════════════════════════════════════════════════════
+  //  GLOBALS
+  // ══════════════════════════════════════════════════════════
+  let allUsers = [];
+  let currentFeedbackFilter = 'all';
+  let activeTab = 'overview';
 
+  // ══════════════════════════════════════════════════════════
+  //  INIT
+  // ══════════════════════════════════════════════════════════
+  document.addEventListener('DOMContentLoaded', async () => {
+    // Admin guard
+    const session = Auth.getSession();
+    if (!session) { window.location.href = '/login.html'; return; }
+    if (session.role !== 'admin') { window.location.href = '/login.html'; return; }
 
-    // Auth guard — must be logged in AND admin
-    const session = Auth.requireAuth();
-    if (!session) return; // requireAuth redirects to login
-    if (session.role !== 'admin') {
-      window.location.href = '/';
-      return;
-    }
-
+    // Render nav (shows username etc.)
     Auth.renderNav();
-    populateDashboard();
+
+    // Update subtitle with username
+    const sub = document.getElementById('admin-sub');
+    if (sub) sub.textContent = `Logged in as ${session.username} · manage users, feedback, and platform stats`;
+
+    // Load overview tab data on start
+    await loadOverview();
   });
 
-  function populateDashboard() {
-    const raw = localStorage.getItem('ic_users');
-    const users = raw ? JSON.parse(raw) : [];
+  // ══════════════════════════════════════════════════════════
+  //  TAB SWITCHING
+  // ══════════════════════════════════════════════════════════
+  function switchTab(name) {
+    // Hide all sections
+    document.querySelectorAll('.tab-section').forEach(s => s.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
 
-    const total = users.length;
-    const proCount = users.filter(u => u.plan === 'pro').length;
-    const freeCount = total - proCount;
+    // Show selected
+    document.getElementById('tab-' + name).classList.add('active');
+    document.querySelectorAll('.tab-btn').forEach(b => {
+      if (b.getAttribute('onclick').includes("'" + name + "'")) b.classList.add('active');
+    });
 
-    // Questions today — read from localStorage for this browser
-    const todayKey = 'ic_q_' + new Date().toISOString().slice(0, 10);
-    const questionsToday = parseInt(localStorage.getItem(todayKey) || '0');
+    activeTab = name;
 
-    document.getElementById('m-total').textContent = total;
-    document.getElementById('m-pro').textContent = proCount;
-    document.getElementById('m-free').textContent = freeCount;
-    document.getElementById('m-questions').textContent = questionsToday;
+    // Lazy-load data
+    if (name === 'users' && allUsers.length === 0) loadUsers();
+    if (name === 'feedback') loadFeedback(currentFeedbackFilter);
+  }
 
-    // Populate users table — most recent first
-    const tbody = document.getElementById('users-tbody');
-    if (users.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="5" style="color:var(--text-muted);font-style:italic;padding:20px 16px">No users found.</td></tr>';
+  // ══════════════════════════════════════════════════════════
+  //  HELPERS
+  // ══════════════════════════════════════════════════════════
+  function esc(str) {
+    return String(str ?? '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  function showErr(id, msg) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.textContent = msg;
+    el.style.display = 'block';
+  }
+
+  function hideErr(id) {
+    const el = document.getElementById(id);
+    if (el) el.style.display = 'none';
+  }
+
+  function fmtDate(iso) {
+    if (!iso) return '—';
+    try {
+      return new Date(iso).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+    } catch { return '—'; }
+  }
+
+  function fmtDateShort(iso) {
+    if (!iso) return '—';
+    try {
+      return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    } catch { return '—'; }
+  }
+
+  // ══════════════════════════════════════════════════════════
+  //  PLAN BADGE
+  // ══════════════════════════════════════════════════════════
+  function planBadge(plan, betaExpiresAt) {
+    if (plan === 'admin')  return `<span class="badge badge-admin">admin</span>`;
+    if (plan === 'pro')    return `<span class="badge badge-pro">pro</span>`;
+    if (plan === 'beta') {
+      if (betaExpiresAt && new Date(betaExpiresAt) < new Date()) {
+        return `<span class="badge badge-beta-expired">beta (expired)</span>`;
+      }
+      return `<span class="badge badge-beta">beta</span>`;
+    }
+    return `<span class="badge badge-free">free</span>`;
+  }
+
+  function typeBadge(type) {
+    const map = {
+      bug: 'badge-bug',
+      feature: 'badge-feature',
+      general: 'badge-general',
+      support: 'badge-support',
+    };
+    return `<span class="badge ${map[type] || 'badge-general'}">${esc(type || 'general')}</span>`;
+  }
+
+  function statusBadge(status) {
+    const map = {
+      new: 'badge-new',
+      reviewed: 'badge-reviewed',
+      resolved: 'badge-resolved',
+    };
+    return `<span class="badge ${map[status] || 'badge-new'}">${esc(status || 'new')}</span>`;
+  }
+
+  // ══════════════════════════════════════════════════════════
+  //  OVERVIEW — load stats + bar chart
+  // ══════════════════════════════════════════════════════════
+  async function loadOverview() {
+    hideErr('overview-err');
+    hideErr('chart-err');
+
+    // Stat cards
+    try {
+      const res = await fetch('/api/admin/stats', {
+        headers: { ...Auth.authHeaders(), 'Content-Type': 'application/json' },
+      });
+      if (!res.ok) throw new Error(`Stats API returned ${res.status}`);
+      const data = await res.json();
+
+      setValue('s-total',          data.totalUsers         ?? '—');
+      setValue('s-today-active',   data.todayActive        ?? '—');
+      setValue('s-q-today',        data.questionsToday     ?? '—');
+      setValue('s-q-week',         data.questionsThisWeek  ?? '—');
+      setValue('s-new-week',       data.newUsersThisWeek   ?? '—');
+      setValue('s-open-feedback',  data.openFeedback       ?? '—');
+    } catch (err) {
+      showErr('overview-err', 'Could not load stats: ' + err.message);
+      ['s-total','s-today-active','s-q-today','s-q-week','s-new-week','s-open-feedback'].forEach(id => setValue(id, '—'));
+    }
+
+    // Bar chart — questions per day last 14 days
+    // The stats endpoint may include a `dailyQuestions` array [{date, count}]
+    // Try to fetch it; fall back gracefully if the field isn't present.
+    try {
+      const res2 = await fetch('/api/admin/stats', {
+        headers: { ...Auth.authHeaders(), 'Content-Type': 'application/json' },
+      });
+      if (!res2.ok) throw new Error('Chart data unavailable');
+      const data2 = await res2.json();
+      const daily = Array.isArray(data2.dailyQuestions) ? data2.dailyQuestions : [];
+      renderBarChart(daily);
+    } catch (err) {
+      showErr('chart-err', 'Could not load chart: ' + err.message);
+      document.getElementById('bar-chart').innerHTML =
+        '<span style="color:var(--text-muted);font-size:13px;font-style:italic">Chart data unavailable</span>';
+    }
+  }
+
+  function setValue(id, val) {
+    const el = document.getElementById(id);
+    if (el) el.textContent = val;
+  }
+
+  function renderBarChart(daily) {
+    const chart = document.getElementById('bar-chart');
+    if (!daily || daily.length === 0) {
+      chart.innerHTML = '<span style="color:var(--text-muted);font-size:13px;font-style:italic">No data available yet</span>';
       return;
     }
 
-    const sorted = [...users].reverse();
-    tbody.innerHTML = sorted.map(u => {
-      const plan = u.plan || 'free';
-      const role = u.role || 'user';
-      const joined = u.createdAt ? new Date(u.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : '—';
+    const max = Math.max(...daily.map(d => d.count), 1);
+
+    chart.innerHTML = daily.map(d => {
+      const pct = Math.round((d.count / max) * 100);
+      const label = fmtDateShort(d.date);
       return `
-        <tr>
-          <td><strong>${escHtml(u.username)}</strong></td>
-          <td style="color:var(--text-muted)">${escHtml(u.email || '—')}</td>
-          <td><span class="plan-badge ${plan}">${plan}</span></td>
-          <td><span class="role-badge ${role}">${role}</span></td>
-          <td style="color:var(--text-muted)">${joined}</td>
+        <div class="bar-item">
+          <span class="bar-count" style="font-size:10px;color:var(--text-muted)">${d.count > 0 ? d.count : ''}</span>
+          <div class="bar-fill" style="height:${Math.max(pct, 2)}%"></div>
+          <span class="bar-label">${esc(label)}</span>
+        </div>
+      `;
+    }).join('');
+  }
+
+  // ══════════════════════════════════════════════════════════
+  //  USERS TAB
+  // ══════════════════════════════════════════════════════════
+  async function loadUsers() {
+    const tbody = document.getElementById('users-tbody');
+    tbody.innerHTML = '<tr class="state-row"><td colspan="8">Loading users…</td></tr>';
+    hideErr('users-err');
+
+    try {
+      const res = await fetch('/api/admin/users', {
+        headers: { ...Auth.authHeaders(), 'Content-Type': 'application/json' },
+      });
+      if (!res.ok) throw new Error(`Users API returned ${res.status}`);
+      const data = await res.json();
+      allUsers = Array.isArray(data) ? data : (data.users || []);
+      renderUsersTable(allUsers);
+    } catch (err) {
+      showErr('users-err', 'Could not load users: ' + err.message);
+      tbody.innerHTML = '<tr class="state-error"><td colspan="8">Failed to load users.</td></tr>';
+    }
+  }
+
+  function filterUsers() {
+    const q = document.getElementById('user-search').value.toLowerCase();
+    const filtered = allUsers.filter(u =>
+      (u.username || '').toLowerCase().includes(q) ||
+      (u.email || '').toLowerCase().includes(q)
+    );
+    renderUsersTable(filtered);
+  }
+
+  function renderUsersTable(users) {
+    const tbody = document.getElementById('users-tbody');
+
+    if (!users || users.length === 0) {
+      tbody.innerHTML = '<tr class="state-row"><td colspan="8">No users found.</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = users.map(u => {
+      const plan = u.plan || 'free';
+      const username = u.username || '—';
+      const email = u.email || '—';
+      const betaExp = u.beta_expires_at || null;
+      const betaExpStr = betaExp ? fmtDate(betaExp) : '—';
+      const joined = fmtDate(u.created_at || u.createdAt);
+      const qToday = u.questions_today ?? u.questionsToday ?? '—';
+      const qTotal = u.total_questions ?? u.totalQuestions ?? '—';
+      const isAdmin = plan === 'admin';
+      const isBeta = plan === 'beta';
+
+      // Actions: non-admin users get Grant Beta; beta users also get Revoke Beta
+      let actions = '';
+      if (!isAdmin) {
+        actions += `
+          <button class="btn-action primary" onclick="toggleBetaForm('${esc(username)}')">Grant Beta</button>
+        `;
+      }
+      if (isBeta) {
+        actions += `
+          <button class="btn-action danger" onclick="revokeBeta('${esc(username)}')">Revoke Beta</button>
+        `;
+      }
+
+      return `
+        <tr id="user-row-${esc(username)}">
+          <td><strong>${esc(username)}</strong></td>
+          <td style="color:var(--text-muted)">${esc(email)}</td>
+          <td>${planBadge(plan, betaExp)}</td>
+          <td style="color:var(--text-muted);font-size:13px">${esc(betaExpStr)}</td>
+          <td style="color:var(--text-muted)">${esc(String(qToday))}</td>
+          <td style="color:var(--text-muted)">${esc(String(qTotal))}</td>
+          <td style="color:var(--text-muted);font-size:13px">${esc(joined)}</td>
+          <td>
+            <div class="actions-cell">${actions}</div>
+            <div class="beta-form-wrap" id="beta-form-${esc(username)}">
+              <div class="inline-form-row">
+                <label for="beta-days-${esc(username)}">Days:</label>
+                <input
+                  type="number" id="beta-days-${esc(username)}"
+                  min="1" max="365" value="30"
+                />
+                <button class="btn-action primary" onclick="grantBeta('${esc(username)}')">Grant</button>
+                <button class="btn-action" onclick="toggleBetaForm('${esc(username)}')">Cancel</button>
+              </div>
+            </div>
+          </td>
         </tr>
       `;
     }).join('');
   }
 
-  function escHtml(str) {
-    return String(str)
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;');
+  function toggleBetaForm(username) {
+    const form = document.getElementById('beta-form-' + username);
+    if (!form) return;
+    form.classList.toggle('open');
+  }
+
+  async function grantBeta(username) {
+    const daysInput = document.getElementById('beta-days-' + username);
+    const days = parseInt(daysInput ? daysInput.value : 30, 10);
+    if (!days || days < 1 || days > 365) {
+      alert('Please enter a number of days between 1 and 365.');
+      return;
+    }
+
+    try {
+      const res = await fetch(`/api/admin/users/${encodeURIComponent(username)}/beta`, {
+        method: 'POST',
+        headers: { ...Auth.authHeaders(), 'Content-Type': 'application/json' },
+        body: JSON.stringify({ days }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || `Server returned ${res.status}`);
+      }
+      // Refresh users list
+      await loadUsers();
+    } catch (err) {
+      showErr('users-err', 'Failed to grant beta: ' + err.message);
+    }
+  }
+
+  async function revokeBeta(username) {
+    if (!confirm(`Revoke beta access for ${username}?`)) return;
+
+    try {
+      const res = await fetch(`/api/admin/users/${encodeURIComponent(username)}/beta`, {
+        method: 'DELETE',
+        headers: { ...Auth.authHeaders(), 'Content-Type': 'application/json' },
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || `Server returned ${res.status}`);
+      }
+      await loadUsers();
+    } catch (err) {
+      showErr('users-err', 'Failed to revoke beta: ' + err.message);
+    }
+  }
+
+  // ══════════════════════════════════════════════════════════
+  //  FEEDBACK TAB
+  // ══════════════════════════════════════════════════════════
+  async function loadFeedback(status) {
+    const tbody = document.getElementById('feedback-tbody');
+    tbody.innerHTML = '<tr class="state-row"><td colspan="6">Loading feedback…</td></tr>';
+    hideErr('feedback-err');
+
+    const qs = status && status !== 'all' ? `?status=${encodeURIComponent(status)}` : '';
+
+    try {
+      const res = await fetch(`/api/admin/feedback${qs}`, {
+        headers: { ...Auth.authHeaders(), 'Content-Type': 'application/json' },
+      });
+      if (!res.ok) throw new Error(`Feedback API returned ${res.status}`);
+      const data = await res.json();
+      const items = Array.isArray(data) ? data : (data.feedback || []);
+      renderFeedbackTable(items);
+    } catch (err) {
+      showErr('feedback-err', 'Could not load feedback: ' + err.message);
+      tbody.innerHTML = '<tr class="state-error"><td colspan="6">Failed to load feedback.</td></tr>';
+    }
+  }
+
+  function setFeedbackFilter(status, btn) {
+    currentFeedbackFilter = status;
+    document.querySelectorAll('#feedback-filters .filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    loadFeedback(status);
+  }
+
+  function renderFeedbackTable(items) {
+    const tbody = document.getElementById('feedback-tbody');
+
+    if (!items || items.length === 0) {
+      tbody.innerHTML = '<tr class="state-row"><td colspan="6">No feedback found.</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = items.map((item, idx) => {
+      const id = item.id || item._id || idx;
+      const date = fmtDate(item.created_at || item.createdAt);
+      const user = esc(item.username || item.user || '—');
+      const type = item.type || 'general';
+      const msg  = item.message || item.content || '';
+      const status = item.status || 'new';
+
+      const short = msg.length > 100 ? msg.slice(0, 100) + '…' : msg;
+      const hasMore = msg.length > 100;
+
+      const msgCell = hasMore
+        ? `<span class="msg-short" onclick="expandMsg('${id}')" title="Click to expand">${esc(short)}</span>
+           <div class="msg-full" id="msg-full-${id}">${esc(msg)}</div>`
+        : esc(msg);
+
+      let actions = '';
+      if (status !== 'reviewed' && status !== 'resolved') {
+        actions += `<button class="btn-action" onclick="patchFeedback('${id}', 'reviewed')">Mark Reviewed</button>`;
+      }
+      if (status !== 'resolved') {
+        actions += `<button class="btn-action success" onclick="patchFeedback('${id}', 'resolved')">Mark Resolved</button>`;
+      }
+
+      return `
+        <tr id="feedback-row-${id}">
+          <td style="color:var(--text-muted);font-size:13px;white-space:nowrap">${esc(date)}</td>
+          <td><strong>${user}</strong></td>
+          <td>${typeBadge(type)}</td>
+          <td style="max-width:320px;font-size:13px;color:rgba(255,255,255,0.80)">${msgCell}</td>
+          <td>${statusBadge(status)}</td>
+          <td><div class="actions-cell">${actions}</div></td>
+        </tr>
+      `;
+    }).join('');
+  }
+
+  function expandMsg(id) {
+    const full = document.getElementById('msg-full-' + id);
+    if (!full) return;
+    full.classList.toggle('open');
+    // hide the short version when expanded
+    const row = document.getElementById('feedback-row-' + id);
+    if (row) {
+      const short = row.querySelector('.msg-short');
+      if (short) short.style.display = full.classList.contains('open') ? 'none' : '';
+    }
+  }
+
+  async function patchFeedback(id, newStatus) {
+    hideErr('feedback-err');
+    try {
+      const res = await fetch(`/api/admin/feedback/${encodeURIComponent(id)}`, {
+        method: 'PATCH',
+        headers: { ...Auth.authHeaders(), 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: newStatus }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || `Server returned ${res.status}`);
+      }
+      // Reload with current filter
+      await loadFeedback(currentFeedbackFilter);
+    } catch (err) {
+      showErr('feedback-err', 'Failed to update feedback: ' + err.message);
+    }
   }
 </script>
 </body>

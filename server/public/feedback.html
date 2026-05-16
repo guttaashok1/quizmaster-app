@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Share Feedback — Interview Coach</title>
+  <meta name="description" content="Share your feedback with the Interview Coach team. Report bugs, request features, or tell us about your experience." />
+  <meta name="robots" content="noindex, follow" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎙️</text></svg>" />
+  <link rel="stylesheet" href="/styles.css" />
+  <style>
+    /* ── Page layout ── */
+    .feedback-page {
+      min-height: calc(100vh - 64px - 80px);
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding: 60px 24px 80px;
+    }
+
+    .feedback-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-radius: 20px;
+      padding: 40px 44px;
+      width: 100%;
+      max-width: 560px;
+    }
+
+    /* ── Header ── */
+    .feedback-header {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+    .feedback-header .icon-wrap {
+      width: 56px; height: 56px;
+      background: linear-gradient(135deg, var(--accent), var(--accent3));
+      border-radius: 16px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 26px;
+      margin: 0 auto 18px;
+      box-shadow: 0 0 32px rgba(14,165,233,0.35);
+    }
+    .feedback-header h1 {
+      font-size: 26px; font-weight: 800; letter-spacing: -0.3px;
+      margin-bottom: 8px;
+    }
+    .feedback-header p {
+      font-size: 15px; color: var(--text-muted);
+    }
+
+    /* ── Type selector ── */
+    .type-selector {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 24px;
+    }
+    .type-btn {
+      flex: 1;
+      min-width: 120px;
+      display: flex; align-items: center; justify-content: center; gap: 6px;
+      padding: 10px 14px;
+      border-radius: 999px;
+      font-size: 13px; font-weight: 600;
+      cursor: pointer;
+      border: 1.5px solid var(--border);
+      background: rgba(255,255,255,0.04);
+      color: var(--text-muted);
+      font-family: var(--font);
+      transition: all 0.18s;
+    }
+    .type-btn:hover {
+      border-color: rgba(255,255,255,0.28);
+      color: var(--text);
+      background: rgba(255,255,255,0.07);
+    }
+    .type-btn.active {
+      border-color: var(--accent);
+      color: var(--accent2);
+      background: rgba(14,165,233,0.12);
+      box-shadow: 0 0 0 1px rgba(14,165,233,0.25);
+    }
+
+    /* ── Submitting-as notice ── */
+    .submitting-as {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-bottom: 18px;
+      display: flex; align-items: center; gap: 5px;
+    }
+    .submitting-as strong { color: var(--accent2); font-weight: 600; }
+
+    /* ── Textarea ── */
+    textarea.form-input {
+      resize: vertical;
+      min-height: 120px;
+      line-height: 1.65;
+    }
+
+    /* ── Star rating ── */
+    .rating-row {
+      margin-bottom: 24px;
+    }
+    .rating-label {
+      display: block; font-size: 13px; font-weight: 600;
+      color: var(--text-muted); margin-bottom: 10px; letter-spacing: 0.2px;
+    }
+    .stars {
+      display: flex; gap: 6px;
+    }
+    .star {
+      font-size: 28px;
+      cursor: pointer;
+      color: rgba(255,255,255,0.18);
+      transition: color 0.14s, transform 0.12s;
+      line-height: 1;
+      user-select: none;
+    }
+    .star:hover, .star.lit {
+      color: #f59e0b;
+    }
+    .star:hover { transform: scale(1.18); }
+    .rating-hint {
+      font-size: 12px; color: var(--text-muted);
+      margin-top: 8px; min-height: 18px;
+    }
+
+    /* ── Submit button ── */
+    .submit-btn {
+      width: 100%;
+      padding: 14px 24px;
+      border-radius: 999px;
+      font-size: 15px; font-weight: 700;
+      font-family: var(--font);
+      cursor: pointer; border: none;
+      background: linear-gradient(135deg, var(--accent) 0%, var(--accent3) 100%);
+      color: #fff;
+      transition: box-shadow 0.2s, transform 0.18s, opacity 0.2s;
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+    }
+    .submit-btn:hover:not(:disabled) {
+      box-shadow: 0 0 36px rgba(14,165,233,0.55), 0 0 72px rgba(167,139,250,0.22);
+      transform: translateY(-2px);
+    }
+    .submit-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+    /* ── States ── */
+    .state-panel {
+      display: none;
+      text-align: center;
+      padding: 16px 0 8px;
+    }
+    .state-icon { font-size: 52px; margin-bottom: 14px; line-height: 1; }
+    .state-title { font-size: 20px; font-weight: 800; margin-bottom: 8px; }
+    .state-msg { font-size: 15px; color: var(--text-muted); margin-bottom: 24px; line-height: 1.65; }
+    .state-link {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 11px 24px; border-radius: 999px;
+      font-size: 14px; font-weight: 600;
+      background: rgba(14,165,233,0.14); color: var(--accent2);
+      border: 1px solid rgba(14,165,233,0.3);
+      text-decoration: none;
+      transition: background 0.18s, box-shadow 0.18s;
+    }
+    .state-link:hover {
+      background: rgba(14,165,233,0.22);
+      box-shadow: 0 0 20px rgba(14,165,233,0.3);
+    }
+
+    .error-box {
+      background: rgba(255,79,79,0.1);
+      border: 1px solid rgba(255,79,79,0.28);
+      border-radius: 10px;
+      padding: 12px 16px;
+      font-size: 13px; color: #ff8080;
+      margin-bottom: 16px;
+      display: none;
+    }
+
+    /* ── Spinner ── */
+    .spinner {
+      width: 16px; height: 16px;
+      border: 2.5px solid rgba(255,255,255,0.35);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      flex-shrink: 0;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Mobile ── */
+    @media (max-width: 600px) {
+      .feedback-card { padding: 28px 20px; }
+      .type-btn { min-width: 0; font-size: 12px; padding: 9px 10px; }
+      .feedback-header h1 { font-size: 22px; }
+    }
+  </style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="/" class="nav-logo">
+      <div class="icon">🎙️</div>
+      Interview Coach
+    </a>
+    <div class="nav-links">
+      <a href="/" class="nav-link">Home</a>
+      <a href="/pricing.html" class="nav-link">Pricing</a>
+      <a href="/support.html" class="nav-link">Support</a>
+      <div id="nav-auth" style="display:flex;align-items:center;gap:8px"></div>
+    </div>
+  </div>
+</nav>
+
+<main class="feedback-page">
+  <div class="feedback-card">
+
+    <!-- Header -->
+    <div class="feedback-header">
+      <div class="icon-wrap">💬</div>
+      <h1>Share Your <span class="gradient-text">Feedback</span></h1>
+      <p>Help us improve Interview Coach</p>
+    </div>
+
+    <!-- Form -->
+    <div id="feedback-form">
+
+      <!-- Type selector -->
+      <div class="type-selector" id="type-selector">
+        <button class="type-btn active" data-type="bug">🐛 Bug Report</button>
+        <button class="type-btn" data-type="feature">✨ Feature Request</button>
+        <button class="type-btn" data-type="general">💬 General Feedback</button>
+      </div>
+
+      <!-- Logged-in notice -->
+      <div id="submitting-as" class="submitting-as" style="display:none">
+        <span>Submitting as:</span>
+        <strong id="submitting-username"></strong>
+      </div>
+
+      <!-- Error -->
+      <div class="error-box" id="error-box"></div>
+
+      <!-- Message -->
+      <div class="form-group">
+        <label class="form-label" for="feedback-msg">Your feedback</label>
+        <textarea
+          class="form-input"
+          id="feedback-msg"
+          placeholder="Describe your experience…"
+          required
+          minlength="10"
+        ></textarea>
+        <div id="char-hint" style="font-size:12px;color:var(--text-muted);margin-top:6px;min-height:18px;"></div>
+      </div>
+
+      <!-- Star rating -->
+      <div class="rating-row">
+        <span class="rating-label">Overall rating <span style="font-weight:400;opacity:0.6">(optional)</span></span>
+        <div class="stars" id="stars">
+          <span class="star" data-val="1">★</span>
+          <span class="star" data-val="2">★</span>
+          <span class="star" data-val="3">★</span>
+          <span class="star" data-val="4">★</span>
+          <span class="star" data-val="5">★</span>
+        </div>
+        <div class="rating-hint" id="rating-hint"></div>
+      </div>
+
+      <!-- Submit -->
+      <button class="submit-btn" id="submit-btn" type="button">
+        Send Feedback →
+      </button>
+
+    </div>
+
+    <!-- Success state -->
+    <div class="state-panel" id="success-panel">
+      <div class="state-icon">✅</div>
+      <div class="state-title">Thank you!</div>
+      <div class="state-msg">Your feedback has been received.<br>We read every submission and use it to make Interview Coach better.</div>
+      <a href="/interview/" class="state-link">← Back to Interview</a>
+    </div>
+
+    <!-- Error state (full) -->
+    <div class="state-panel" id="error-panel">
+      <div class="state-icon">⚠️</div>
+      <div class="state-title">Something went wrong</div>
+      <div class="state-msg" id="error-panel-msg">We could not send your feedback. Please try again.</div>
+      <button class="state-link" id="retry-btn" style="border:none;cursor:pointer;font-family:var(--font);">Try Again</button>
+    </div>
+
+  </div>
+</main>
+
+<footer class="footer">
+  © 2026 Interview Coach
+  <div class="footer-links">
+    <a href="/privacy.html">Privacy</a>
+    <a href="/terms.html">Terms</a>
+    <a href="/support.html">Support</a>
+    <a href="/about.html">About</a>
+  </div>
+</footer>
+
+<script src="/auth.js"></script>
+<script>
+(function () {
+  /* ── State ── */
+  let selectedType = 'bug';
+  let selectedRating = 0;
+
+  const ratingLabels = ['', 'Poor', 'Fair', 'Good', 'Great', 'Excellent'];
+
+  /* ── DOM refs ── */
+  const typeButtons   = document.querySelectorAll('.type-btn');
+  const starsEl       = document.getElementById('stars');
+  const starEls       = starsEl.querySelectorAll('.star');
+  const ratingHint    = document.getElementById('rating-hint');
+  const msgEl         = document.getElementById('feedback-msg');
+  const charHint      = document.getElementById('char-hint');
+  const errorBox      = document.getElementById('error-box');
+  const submitBtn     = document.getElementById('submit-btn');
+  const feedbackForm  = document.getElementById('feedback-form');
+  const successPanel  = document.getElementById('success-panel');
+  const errorPanel    = document.getElementById('error-panel');
+  const errorPanelMsg = document.getElementById('error-panel-msg');
+  const retryBtn      = document.getElementById('retry-btn');
+
+  /* ── Auth ── */
+  document.addEventListener('DOMContentLoaded', () => {
+    Auth.renderNav();
+    const session = Auth.getSession();
+    if (session) {
+      document.getElementById('submitting-as').style.display = 'flex';
+      document.getElementById('submitting-username').textContent = session.username;
+    }
+  });
+
+  /* ── Type selector ── */
+  typeButtons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      typeButtons.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      selectedType = btn.dataset.type;
+    });
+  });
+
+  /* ── Star rating ── */
+  function renderStars(highlighted) {
+    starEls.forEach(s => {
+      const v = parseInt(s.dataset.val, 10);
+      s.classList.toggle('lit', v <= highlighted);
+    });
+    ratingHint.textContent = highlighted > 0 ? ratingLabels[highlighted] : '';
+  }
+
+  starEls.forEach(s => {
+    s.addEventListener('mouseenter', () => renderStars(parseInt(s.dataset.val, 10)));
+    s.addEventListener('mouseleave', () => renderStars(selectedRating));
+    s.addEventListener('click', () => {
+      const val = parseInt(s.dataset.val, 10);
+      // Toggle off if clicking same star
+      selectedRating = selectedRating === val ? 0 : val;
+      renderStars(selectedRating);
+    });
+  });
+
+  /* ── Char counter ── */
+  msgEl.addEventListener('input', () => {
+    const len = msgEl.value.trim().length;
+    if (len < 10) {
+      charHint.textContent = `${10 - len} more character${10 - len === 1 ? '' : 's'} needed`;
+      charHint.style.color = 'rgba(255,79,79,0.8)';
+    } else {
+      charHint.textContent = '';
+    }
+  });
+
+  /* ── Submit ── */
+  submitBtn.addEventListener('click', submitFeedback);
+
+  retryBtn.addEventListener('click', () => {
+    errorPanel.style.display = 'none';
+    feedbackForm.style.display = '';
+  });
+
+  async function submitFeedback() {
+    /* Validate */
+    const message = msgEl.value.trim();
+    if (message.length < 10) {
+      showError('Please enter at least 10 characters.');
+      msgEl.focus();
+      return;
+    }
+
+    hideError();
+    setLoading(true);
+
+    const session = Auth.getSession();
+    const payload = {
+      type:     selectedType,
+      message,
+      rating:   selectedRating || null,
+      username: session ? session.username : null,
+      page:     window.location.pathname,
+    };
+
+    try {
+      const res = await fetch('/api/feedback', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json', ...Auth.authHeaders() },
+        body:    JSON.stringify(payload),
+      });
+
+      if (!res.ok) {
+        let msg = 'Server error — please try again.';
+        try { const d = await res.json(); if (d.error) msg = d.error; } catch {}
+        throw new Error(msg);
+      }
+
+      /* Success */
+      feedbackForm.style.display = 'none';
+      successPanel.style.display = 'block';
+
+    } catch (err) {
+      setLoading(false);
+      const msg = err.message || 'Could not send feedback. Please try again.';
+      // Show inline error first; if form is already hidden fall back to panel
+      if (feedbackForm.style.display !== 'none') {
+        showError(msg);
+      } else {
+        errorPanelMsg.textContent = msg;
+        errorPanel.style.display = 'block';
+      }
+    }
+  }
+
+  function setLoading(on) {
+    if (on) {
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = '<span class="spinner"></span> Sending…';
+    } else {
+      submitBtn.disabled = false;
+      submitBtn.innerHTML = 'Send Feedback →';
+    }
+  }
+
+  function showError(msg) {
+    errorBox.textContent = msg;
+    errorBox.style.display = 'block';
+  }
+
+  function hideError() {
+    errorBox.style.display = 'none';
+    errorBox.textContent = '';
+  }
+})();
+</script>
+</body>
+</html>
