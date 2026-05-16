@@ -45,6 +45,21 @@ Rules:
 - Include at least one concrete metric or measurable result
 - Output ONLY the 4 → lines — no intro text, no title, no extra commentary`;
 
+const ONE_LINER_PROMPT = `You are an expert interview coach. Given a candidate's resume and a job description, produce exactly 4 punchy one-liner statements the candidate can speak directly in an interview — one per bullet.
+
+Output format — each line MUST start with the → symbol followed by a space:
+→ [one tight, confident sentence — first person, present or past tense]
+→ [one tight, confident sentence — first person, present or past tense]
+→ [one tight, confident sentence — first person, present or past tense]
+→ [one tight, confident sentence — first person, present or past tense]
+
+Rules:
+- Each line is ONE sentence only — no sub-clauses, no semicolons
+- Write as if speaking aloud: direct, confident, no filler words
+- Include a concrete number or outcome in at least 2 of the 4 lines
+- Reference specifics from the resume and job description
+- Output ONLY the 4 → lines — no intro text, no title, no extra commentary`;
+
 const HINTS_PROMPT = `You are generating live interview cue cards. Given a resume, job description, and interview question, produce exactly 4 ultra-short cue lines the candidate can glance at in 1–2 seconds while speaking.
 
 Output format — each line MUST start with the → symbol followed by a space:
@@ -99,7 +114,7 @@ const AnswerSchema = z.object({
   jobDescription: z.string().min(10, 'Job description is too short'),
   question: z.string().min(3, 'Question is too short'),
   supportingDocs: z.string().optional(), // extracted text from extra uploaded PDFs
-  mode: z.enum(['answer', 'hints']).default('answer'),
+  mode: z.enum(['answer', 'one-liner', 'hints']).default('answer'),
 });
 
 // POST /api/interview/answer-stream — streams a spoken interview answer via SSE
@@ -117,7 +132,9 @@ router.post('/answer-stream', async (req: Request, res: Response) => {
       ? `\n\nSUPPORTING DOCUMENTS (portfolio, cover letter, certifications, etc.):\n${supportingDocs}`
       : '';
 
-    const chosenPrompt = mode === 'hints' ? HINTS_PROMPT : SYSTEM_PROMPT;
+    const chosenPrompt = mode === 'hints' ? HINTS_PROMPT
+                       : mode === 'one-liner' ? ONE_LINER_PROMPT
+                       : SYSTEM_PROMPT;
     const maxTokens    = mode === 'hints' ? 200 : 400;
 
     const stream = client.messages.stream({

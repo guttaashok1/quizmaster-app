@@ -372,7 +372,8 @@
       background: var(--surface2); color: var(--text);
       border-color: var(--border); box-shadow: 0 1px 4px rgba(0,0,0,0.35);
     }
-    .ast-pill.on.hints { color: #fbbf24; border-color: rgba(251,191,36,0.3); }
+    .ast-pill.on.one-liner { color: #34d399; border-color: rgba(52,211,153,0.3); }
+    .ast-pill.on.hints     { color: #fbbf24; border-color: rgba(251,191,36,0.3); }
 
     @media (max-width: 600px) {
       .nav { padding: 0 14px; }
@@ -466,8 +467,9 @@
   <div class="ast-wrap">
     <span class="ast-label">Answer style</span>
     <div class="ast-pills">
-      <button class="ast-pill on"    id="ast-full"  onclick="setAnswerStyle('full')">📝 Full Answer</button>
-      <button class="ast-pill hints" id="ast-hints" onclick="setAnswerStyle('hints')">⚡ Cue Cards</button>
+      <button class="ast-pill on"         id="ast-full"     onclick="setAnswerStyle('full')">📝 Full Answer</button>
+      <button class="ast-pill one-liner"  id="ast-one-liner" onclick="setAnswerStyle('one-liner')">💬 One-Liners</button>
+      <button class="ast-pill hints"      id="ast-hints"    onclick="setAnswerStyle('hints')">⚡ Cue Cards</button>
     </div>
   </div>
 
@@ -793,13 +795,9 @@
   // ── Answer Style Toggle ───────────────────────────────────────────────────────
   function setAnswerStyle(style) {
     answerStyle = style;
-    const fullBtn  = document.getElementById('ast-full');
-    const hintsBtn = document.getElementById('ast-hints');
-    fullBtn.classList.toggle('on',  style === 'full');
-    fullBtn.classList.remove('hints');
-    hintsBtn.classList.toggle('on', style === 'hints');
-    // keep the amber colour on the hints pill when it's active
-    if (style === 'hints') hintsBtn.classList.add('hints');
+    document.getElementById('ast-full').classList.toggle('on',      style === 'full');
+    document.getElementById('ast-one-liner').classList.toggle('on', style === 'one-liner');
+    document.getElementById('ast-hints').classList.toggle('on',     style === 'hints');
   }
 
   // ── Mic Mode ──────────────────────────────────────────────────────────────────
@@ -1026,12 +1024,14 @@
   }
 
   function setAnswerStreaming(on) {
-    const isHints = answerStyle === 'hints';
     document.getElementById('stream-dot').classList.toggle('on', on);
     document.getElementById('answer-badge').classList.toggle('on', !on);
-    document.getElementById('answer-title-label').textContent = on
-      ? (isHints ? '⚡ Getting Cues…' : 'Streaming Answer')
-      : (isHints ? '⚡ Cue Cards'     : 'Answer Ready');
+    const labels = {
+      'answer':    [on ? 'Streaming Answer'  : 'Answer Ready',    ''],
+      'one-liner': [on ? '💬 Getting Lines…' : '💬 One-Liners',   ''],
+      'hints':     [on ? '⚡ Getting Cues…'  : '⚡ Cue Cards',    ''],
+    };
+    document.getElementById('answer-title-label').textContent = (labels[answerStyle] || labels['answer'])[0];
     document.getElementById('answer-actions').style.display = on ? 'none' : '';
   }
 
@@ -1078,7 +1078,7 @@
       const res = await fetch('/api/interview/answer-stream', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ resume: resumeText, jobDescription, question, supportingDocs: docsText, mode: answerStyle === 'hints' ? 'hints' : 'answer' }),
+        body: JSON.stringify({ resume: resumeText, jobDescription, question, supportingDocs: docsText, mode: answerStyle === 'hints' ? 'hints' : answerStyle === 'one-liner' ? 'one-liner' : 'answer' }),
         signal: ctrl.signal,
       });
       const reader = res.body.getReader(); const dec = new TextDecoder(); let buf = '';
