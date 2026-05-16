@@ -46,6 +46,9 @@ app.use(helmet({
       workerSrc:   ["'self'", 'blob:'],
       scriptSrcElem: ["'self'", "'unsafe-inline'", 'cdn.jsdelivr.net',
                       'https://js.stripe.com'],
+      // Helmet adds 'none' by default, which blocks onsubmit/onclick/etc.
+      // We need 'unsafe-inline' here so inline event handlers work.
+      scriptSrcAttr: ["'unsafe-inline'"],
     },
   },
   crossOriginEmbedderPolicy: false,
