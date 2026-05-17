@@ -3,19 +3,19 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
-  --bg: #060d23;
-  --surface: rgba(255,255,255,0.07);
-  --surface2: rgba(255,255,255,0.11);
-  --border: rgba(255,255,255,0.13);
-  --accent: #0ea5e9;
-  --accent2: #38bdf8;
-  --accent3: #a78bfa;
-  --accent-glow: rgba(14,165,233,0.20);
-  --text: #ffffff;
-  --text-muted: rgba(255,255,255,0.58);
-  --danger: #ff4f4f;
-  --success: #38bdf8;
-  --radius: 16px;
+  --bg: #09090b;           /* zinc-950: industry-standard dark SaaS near-black */
+  --surface: rgba(255,255,255,0.045);
+  --surface2: rgba(255,255,255,0.08);
+  --border: rgba(255,255,255,0.09);
+  --accent: #6366f1;       /* indigo — more professional than electric cyan */
+  --accent2: #818cf8;      /* indigo-400 */
+  --accent3: #a78bfa;      /* violet — kept for warmth */
+  --accent-glow: rgba(99,102,241,0.18);
+  --text: #fafafa;
+  --text-muted: rgba(255,255,255,0.50);
+  --danger: #f87171;
+  --success: #34d399;
+  --radius: 12px;
   --font: 'Space Grotesk', system-ui, -apple-system, sans-serif;
 }
 
@@ -27,7 +27,7 @@ body {
   line-height: 1.6;
 }
 
-/* Dataflix-style vivid blob background */
+/* Professional SaaS gradient — subtle top bloom, clean corners */
 body::before {
   content: '';
   position: fixed;
@@ -35,9 +35,12 @@ body::before {
   z-index: -1;
   pointer-events: none;
   background:
-    radial-gradient(ellipse 68% 88% at -8% 54%, rgba(0,180,240,0.54) 0%, rgba(0,120,200,0.22) 44%, transparent 65%),
-    radial-gradient(ellipse 58% 70% at 50% 78%, rgba(110,30,200,0.50) 0%, rgba(70,15,160,0.20) 43%, transparent 62%),
-    radial-gradient(ellipse 32% 42% at 102% 2%, rgba(6,18,55,0.70) 0%, transparent 52%),
+    /* Primary bloom: indigo at top-center — low opacity, wide spread */
+    radial-gradient(ellipse 100% 55% at 50% -5%, rgba(99,102,241,0.22) 0%, transparent 60%),
+    /* Soft violet accent — bottom-left, very subtle */
+    radial-gradient(ellipse 55% 40% at -5% 100%, rgba(139,92,246,0.10) 0%, transparent 55%),
+    /* Subtle cyan whisper — top-right corner */
+    radial-gradient(ellipse 35% 30% at 105% 5%, rgba(14,165,233,0.08) 0%, transparent 50%),
     var(--bg);
 }
 
@@ -46,10 +49,10 @@ a { color: inherit; text-decoration: none; }
 /* ── Nav ── */
 .nav {
   position: sticky; top: 0; z-index: 100;
-  background: rgba(6,13,35,0.62);
-  backdrop-filter: blur(28px);
-  -webkit-backdrop-filter: blur(28px);
-  border-bottom: 1px solid rgba(255,255,255,0.10);
+  background: rgba(9,9,11,0.75);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(255,255,255,0.08);
 }
 .nav-inner {
   max-width: 1200px; margin: 0 auto;
@@ -63,10 +66,10 @@ a { color: inherit; text-decoration: none; }
 .nav-logo .icon {
   width: 34px; height: 34px;
   background: linear-gradient(135deg, var(--accent), var(--accent3));
-  border-radius: 9px;
+  border-radius: 8px;
   display: flex; align-items: center; justify-content: center;
   font-size: 16px;
-  box-shadow: 0 0 18px rgba(14,165,233,0.45);
+  box-shadow: 0 0 14px rgba(99,102,241,0.30);
 }
 .nav-links { display: flex; align-items: center; gap: 4px; margin-left: auto; }
 .nav-link {
@@ -94,7 +97,7 @@ a { color: inherit; text-decoration: none; }
   border: none; transition: box-shadow 0.2s, transform 0.2s;
 }
 .btn-nav-filled:hover {
-  box-shadow: 0 0 24px rgba(14,165,233,0.55), 0 0 48px rgba(167,139,250,0.20);
+  box-shadow: 0 0 18px rgba(99,102,241,0.40);
   transform: translateY(-1px);
 }
 
@@ -110,11 +113,11 @@ a { color: inherit; text-decoration: none; }
   color: #fff;
 }
 .btn-primary:hover {
-  box-shadow: 0 0 36px rgba(14,165,233,0.55), 0 0 72px rgba(167,139,250,0.22);
+  box-shadow: 0 0 24px rgba(99,102,241,0.40), 0 4px 20px rgba(0,0,0,0.3);
   transform: translateY(-2px);
 }
 .btn-secondary { background: linear-gradient(135deg, var(--accent2), var(--accent)); color: #fff; }
-.btn-secondary:hover { box-shadow: 0 0 24px rgba(14,165,233,0.50); transform: translateY(-1px); }
+.btn-secondary:hover { box-shadow: 0 0 18px rgba(99,102,241,0.35); transform: translateY(-1px); }
 .btn-outline {
   background: rgba(255,255,255,0.06);
   border: 1px solid rgba(255,255,255,0.18);
@@ -129,9 +132,8 @@ a { color: inherit; text-decoration: none; }
 .card {
   background: var(--surface);
   border: 1px solid var(--border);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
   border-radius: var(--radius); padding: 28px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.3), 0 0 0 1px rgba(255,255,255,0.04) inset;
 }
 
 /* ── Form elements ── */
