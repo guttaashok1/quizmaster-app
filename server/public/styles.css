@@ -27,7 +27,7 @@ body {
   line-height: 1.6;
 }
 
-/* Professional SaaS gradient — subtle top bloom, clean corners */
+/* Professional SaaS gradient — indigo top bloom + corner accents */
 body::before {
   content: '';
   position: fixed;
@@ -35,12 +35,12 @@ body::before {
   z-index: -1;
   pointer-events: none;
   background:
-    /* Primary bloom: indigo at top-center — low opacity, wide spread */
-    radial-gradient(ellipse 100% 55% at 50% -5%, rgba(99,102,241,0.22) 0%, transparent 60%),
-    /* Soft violet accent — bottom-left, very subtle */
-    radial-gradient(ellipse 55% 40% at -5% 100%, rgba(139,92,246,0.10) 0%, transparent 55%),
-    /* Subtle cyan whisper — top-right corner */
-    radial-gradient(ellipse 35% 30% at 105% 5%, rgba(14,165,233,0.08) 0%, transparent 50%),
+    /* Primary bloom: indigo top-center */
+    radial-gradient(ellipse 110% 65% at 50% -8%, rgba(99,102,241,0.28) 0%, transparent 62%),
+    /* Violet lower-left accent */
+    radial-gradient(ellipse 60% 45% at -8% 100%, rgba(139,92,246,0.14) 0%, transparent 55%),
+    /* Indigo top-right whisper */
+    radial-gradient(ellipse 40% 35% at 108% 0%, rgba(99,102,241,0.12) 0%, transparent 50%),
     var(--bg);
 }
 
