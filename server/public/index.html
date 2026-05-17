@@ -22,55 +22,68 @@
   <meta name="twitter:image" content="https://interview-coach-seven-lovat.vercel.app/og-image.png" />
   <!-- Favicon -->
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎙️</text></svg>" />
-  <link rel="stylesheet" href="/styles.css?v=3" />
+  <link rel="stylesheet" href="/styles.css?v=4" />
   <style>
     /* ════════════════════════════════════════
-       HERO — Dataflix-style: blobs show through,
-       text left / oval-framed photo + cards right
+       HERO — Full-bleed GenZ team background
     ════════════════════════════════════════ */
     .hero {
       position: relative;
-      min-height: 90vh;
+      min-height: 100vh;
       display: flex;
       align-items: center;
       overflow: hidden;
       border-bottom: 1px solid rgba(255,255,255,0.09);
+      /* Full-bleed team photo */
+      background-image: url('https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=1920&q=80&auto=format&fit=crop');
+      background-size: cover;
+      background-position: center 35%;
     }
 
-    /* ── Dot-grid texture — fades in over the right (art) half ── */
+    /* ── Dark gradient overlay — strong left, fades right ── */
     .hero::before {
       content: '';
       position: absolute; inset: 0; z-index: 1;
       pointer-events: none;
-      background-image: radial-gradient(circle, rgba(148,163,184,0.10) 1px, transparent 1px);
-      background-size: 28px 28px;
-      -webkit-mask-image: radial-gradient(ellipse 85% 100% at 70% 50%, black 0%, transparent 68%);
-      mask-image: radial-gradient(ellipse 85% 100% at 70% 50%, black 0%, transparent 68%);
+      background:
+        linear-gradient(105deg,
+          rgba(9,9,11,0.94) 0%,
+          rgba(9,9,11,0.78) 38%,
+          rgba(9,9,11,0.45) 62%,
+          rgba(9,9,11,0.20) 100%
+        ),
+        linear-gradient(to bottom,
+          rgba(9,9,11,0.30) 0%,
+          rgba(9,9,11,0.70) 100%
+        );
     }
 
-    /* ── Indigo + violet glow behind art panel ── */
+    /* ── Dot-grid texture over the whole hero ── */
     .hero::after {
       content: '';
-      position: absolute; inset: 0; z-index: 1;
+      position: absolute; inset: 0; z-index: 2;
       pointer-events: none;
-      background:
-        radial-gradient(ellipse 60% 75% at 75% 50%, rgba(99,102,241,0.22) 0%, transparent 65%),
-        radial-gradient(ellipse 38% 55% at 76% 52%, rgba(139,92,246,0.15) 0%, transparent 55%);
+      background-image: radial-gradient(circle, rgba(255,255,255,0.055) 1px, transparent 1px);
+      background-size: 28px 28px;
+      -webkit-mask-image: radial-gradient(ellipse 100% 100% at 50% 50%, black 0%, transparent 80%);
+      mask-image: radial-gradient(ellipse 100% 100% at 50% 50%, black 0%, transparent 80%);
     }
 
-    /* ── Hero inner two-column grid ── */
+    /* ── Hero inner — single wide column ── */
     .hero-inner {
       position: relative;
       z-index: 10;
       max-width: 1280px;
       margin: 0 auto;
-      padding: 80px 48px;
+      padding: 130px 64px 110px;
       width: 100%;
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 60px;
-      align-items: center;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
     }
+
+    /* constrain text so it doesn't stretch full width */
+    .hero-content { max-width: 680px; }
 
     /* ── Hero text content (left column) ── */
     .hero-eyebrow {
@@ -150,63 +163,23 @@
     }
     .btn-hero-outline:hover { border-color: rgba(255,255,255,0.55); background: rgba(255,255,255,0.10); }
 
-    /* ── Right panel: oval photo + floating UI cards ── */
-    .hero-art-panel {
-      position: relative;
-      height: 500px;
+    /* ── Hero stats row — quick social proof below CTAs ── */
+    .hero-stats-row {
+      display: flex; gap: 36px; margin-top: 44px; flex-wrap: wrap;
     }
-
-    /* Hero photo frame — rounded rect with layered glow */
-    .hero-oval {
-      position: absolute;
-      top: 50%; left: 50%;
-      transform: translate(-50%, -50%);
-      width: 310px; height: 420px;
-      border-radius: 28px;
-      overflow: hidden;
-      border: 1.5px solid rgba(255,255,255,0.14);
-      box-shadow:
-        0 0 0 1px rgba(99,102,241,0.20),
-        0 0 0 18px rgba(99,102,241,0.06),
-        0 0 80px rgba(99,102,241,0.30),
-        0 0 160px rgba(139,92,246,0.18),
-        0 32px 80px rgba(0,0,0,0.55);
-      background: rgba(12,10,30,0.6);
+    .hero-stat {
+      display: flex; flex-direction: column; gap: 3px;
     }
-    .hero-oval img {
-      width: 100%; height: 100%;
-      object-fit: cover; object-position: center 15%;
-      filter: brightness(0.95) saturate(1.05) contrast(1.02);
+    .hero-stat-num {
+      font-size: 26px; font-weight: 900; letter-spacing: -0.5px; color: #fff;
     }
-
-    /* floating UI cards — positioned around the photo */
-    .hero-ui-card {
-      position: absolute;
-      background: rgba(15,12,35,0.80);
-      border: 1px solid rgba(255,255,255,0.10);
-      backdrop-filter: blur(24px);
-      -webkit-backdrop-filter: blur(24px);
-      border-radius: 14px;
-      padding: 14px 18px;
-      box-shadow: 0 8px 40px rgba(0,0,0,0.45), 0 0 0 1px rgba(99,102,241,0.12) inset;
+    .hero-stat-num span { color: #818cf8; }
+    .hero-stat-label {
+      font-size: 12px; color: rgba(255,255,255,0.45); font-weight: 500;
     }
-    .hui-card-1 { top: 10px; right: 0; width: 255px; }
-    .hui-card-2 { bottom: 60px; right: 20px; width: 285px; }
-    .hui-card-3 { bottom: 10px; left: 0; width: 235px; }
-
-    .hui-label {
-      font-size: 10px; font-weight: 700; letter-spacing: 1px;
-      text-transform: uppercase; color: #818cf8; margin-bottom: 8px;
-      display: flex; align-items: center; gap: 6px;
+    .hero-stats-divider {
+      width: 1px; background: rgba(255,255,255,0.12); align-self: stretch;
     }
-    .hui-pulse { width: 6px; height: 6px; border-radius: 50%; background: #818cf8; animation: huipulse 1.6s ease-in-out infinite; }
-    @keyframes huipulse { 0%,100%{opacity:1} 50%{opacity:0.2} }
-    .hui-text { font-size: 13px; color: rgba(255,255,255,0.78); line-height: 1.55; }
-    .hui-line { height: 7px; border-radius: 4px; background: rgba(255,255,255,0.10); margin-bottom: 6px; }
-    .hui-mini-bars { display: flex; align-items: flex-end; gap: 3px; height: 32px; margin-top: 8px; }
-    .hui-mini-bar { width: 6px; border-radius: 3px; background: linear-gradient(to top, #6366f1, #a78bfa); }
-    .hui-bullet { display: flex; gap: 7px; font-size: 12px; color: rgba(255,255,255,0.70); margin-bottom: 5px; line-height: 1.5; }
-    .hui-bullet::before { content: '→'; color: #818cf8; flex-shrink: 0; font-weight: 700; }
 
     /* ════════════════════════════════════════
        CATEGORY CARDS — horizontal scroll
@@ -489,15 +462,9 @@
     /* ════════════════════════════════════════
        RESPONSIVE
     ════════════════════════════════════════ */
-    @media (max-width: 1024px) {
-      .hui-card-1, .hui-card-2, .hui-card-3 { display: none; }
-      .hero-oval { width: 260px; height: 340px; }
-    }
     @media (max-width: 900px) {
-      .hero { min-height: auto; }
-      .hero-inner { grid-template-columns: 1fr; gap: 48px; padding: 60px 32px 48px; }
-      .hero-art-panel { height: 360px; }
-      .hero-oval { width: 240px; height: 310px; }
+      .hero-inner { padding: 100px 32px 80px; }
+      .hero-content { max-width: 100%; }
       .feature-inner { grid-template-columns: 1fr; gap: 40px; }
       .feature-inner.reverse { direction: ltr; }
       .stats-inner { grid-template-columns: 1fr; }
@@ -506,10 +473,12 @@
       .categories { padding: 36px 0 36px 24px; }
     }
     @media (max-width: 640px) {
-      .hero-inner, .feature-section, .stats-section, .cta-section { padding-left: 20px; padding-right: 20px; }
+      .hero-inner { padding: 90px 24px 70px; }
+      .hero-inner, .feature-section, .stats-section, .cta-section { padding-left: 24px; padding-right: 24px; }
       .hero h1 { font-size: 36px; letter-spacing: -1px; }
-      .hero-art-panel { display: none; }
       .hero-pill-row { gap: 8px; }
+      .hero-stats-row { gap: 20px; }
+      .hero-stats-divider { display: none; }
       .site-footer { padding: 40px 20px 24px; }
       .footer-grid { grid-template-columns: 1fr; gap: 28px; }
       .footer-bottom { flex-direction: column; text-align: center; }
@@ -745,47 +714,23 @@
         <a href="/register.html" class="btn-hero-primary">Get Started Free →</a>
         <a href="/about.html" class="btn-hero-outline">See How It Works</a>
       </div>
-    </div>
 
-    <!-- Right column: oval-framed person + floating UI cards -->
-    <div class="hero-art-panel">
-
-      <!-- Oval person photo (Dataflix-style) -->
-      <div class="hero-oval">
-        <img src="https://images.unsplash.com/photo-1580489944761-15a19d654956?w=640&q=85&auto=format&fit=crop" alt="Professional interview coaching" />
-      </div>
-
-      <!-- Card 1: Resume parsed (top-right) -->
-      <div class="hero-ui-card hui-card-1">
-        <div class="hui-label">✓ Resume Parsed</div>
-        <div class="hui-line" style="width:88%"></div>
-        <div class="hui-line" style="width:70%"></div>
-        <div style="display:flex;gap:6px;margin-top:8px">
-          <span style="background:rgba(99,102,241,0.18);border:1px solid rgba(99,102,241,0.35);border-radius:999px;padding:3px 10px;font-size:11px;color:#a5b4fc">Python</span>
-          <span style="background:rgba(99,102,241,0.18);border:1px solid rgba(99,102,241,0.35);border-radius:999px;padding:3px 10px;font-size:11px;color:#a5b4fc">AWS</span>
-          <span style="background:rgba(167,139,250,0.18);border:1px solid rgba(167,139,250,0.35);border-radius:999px;padding:3px 10px;font-size:11px;color:#c4b5fd">Lead</span>
+      <!-- Social proof stats below CTAs -->
+      <div class="hero-stats-row">
+        <div class="hero-stat">
+          <div class="hero-stat-num">12K<span>+</span></div>
+          <div class="hero-stat-label">Interviews practiced</div>
         </div>
-      </div>
-
-      <!-- Card 2: Streaming answer (bottom-right) -->
-      <div class="hero-ui-card hui-card-2">
-        <div class="hui-label"><div class="hui-pulse"></div> Streaming answer</div>
-        <div class="hui-bullet">Led team of 5 engineers through critical migration</div>
-        <div class="hui-bullet">Reduced deployment time by 60% in 3 months</div>
-        <div class="hui-bullet">Zero production incidents post-launch</div>
-        <div class="hui-mini-bars">
-          <div class="hui-mini-bar" style="height:20px"></div>
-          <div class="hui-mini-bar" style="height:28px"></div>
-          <div class="hui-mini-bar" style="height:32px"></div>
-          <div class="hui-mini-bar" style="height:26px"></div>
-          <div class="hui-mini-bar" style="height:18px"></div>
+        <div class="hero-stats-divider"></div>
+        <div class="hero-stat">
+          <div class="hero-stat-num">94<span>%</span></div>
+          <div class="hero-stat-label">Feel more confident</div>
         </div>
-      </div>
-
-      <!-- Card 3: Question detected (bottom-left) -->
-      <div class="hero-ui-card hui-card-3">
-        <div class="hui-label">🎙 Question Detected</div>
-        <div class="hui-text">"Tell me about a time you led a team under pressure…"</div>
+        <div class="hero-stats-divider"></div>
+        <div class="hero-stat">
+          <div class="hero-stat-num">Free<span>*</span></div>
+          <div class="hero-stat-label">No credit card needed</div>
+        </div>
       </div>
     </div>
   </div>
