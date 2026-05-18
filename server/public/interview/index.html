@@ -355,25 +355,29 @@
     }
     .cursor.off { display: none; }
 
-    /* ── Answer style toggle ──────────────────────────────────────────────────── */
-    .ast-wrap {
-      display: flex; align-items: center; gap: 10px;
-      background: var(--surface); border: 1px solid var(--border);
-      border-radius: 11px; padding: 6px 10px 6px 14px;
+    /* ── Answer tabs (inside answer card) ─────────────────────────────────────── */
+    .answer-tabs {
+      display: flex; gap: 3px; margin-bottom: 14px;
+      background: var(--surface2); border-radius: 10px; padding: 3px;
     }
-    .ast-label { font-size: 12px; font-weight: 600; color: var(--muted); white-space: nowrap; }
-    .ast-pills { display: flex; gap: 4px; }
-    .ast-pill {
-      padding: 5px 14px; border-radius: 8px; font-size: 13px; font-weight: 600;
-      cursor: pointer; border: 1px solid transparent;
-      background: transparent; color: var(--muted); transition: all 0.18s;
+    .answer-tab {
+      flex: 1; padding: 8px 10px; border: none; border-radius: 8px;
+      background: transparent; color: var(--muted); font-size: 13px; font-weight: 600;
+      cursor: pointer; transition: all 0.18s;
+      display: flex; align-items: center; justify-content: center; gap: 6px;
     }
-    .ast-pill.on {
-      background: var(--surface2); color: var(--text);
-      border-color: var(--border); box-shadow: 0 1px 4px rgba(0,0,0,0.35);
+    .answer-tab.active {
+      background: var(--surface); color: var(--text);
+      box-shadow: 0 1px 4px rgba(0,0,0,0.4);
     }
-    .ast-pill.on.one-liner { color: #34d399; border-color: rgba(52,211,153,0.3); }
-    .ast-pill.on.hints     { color: #fbbf24; border-color: rgba(251,191,36,0.3); }
+    .tab-dot {
+      width: 7px; height: 7px; border-radius: 50%;
+      background: var(--border); flex-shrink: 0; transition: background 0.3s;
+    }
+    .answer-tab.loading .tab-dot { background: var(--accent); animation: blink 0.6s infinite; }
+    .answer-tab.ready   .tab-dot { background: var(--green); animation: none; }
+    .answer-tab.active.loading .tab-dot { background: var(--accent); }
+    .answer-tab.active.ready   .tab-dot { background: var(--green); }
 
     @media (max-width: 600px) {
       .nav { padding: 0 14px; }
@@ -382,7 +386,6 @@
       .setup-title { font-size: 26px; }
       .setup-btns { flex-direction: column; }
       .mode-btn { font-size: 13px; }
-      .ast-label { display: none; }
     }
   </style>
 </head>
@@ -463,16 +466,6 @@
     <button class="mode-btn"    id="mode-sys" onclick="setMode('system')">🖥️ System Audio</button>
   </div>
 
-  <!-- Answer style toggle -->
-  <div class="ast-wrap">
-    <span class="ast-label">Answer style</span>
-    <div class="ast-pills">
-      <button class="ast-pill on"         id="ast-full"     onclick="setAnswerStyle('full')">📝 Full Answer</button>
-      <button class="ast-pill one-liner"  id="ast-one-liner" onclick="setAnswerStyle('one-liner')">💬 One-Liners</button>
-      <button class="ast-pill hints"      id="ast-hints"    onclick="setAnswerStyle('hints')">⚡ Cue Cards</button>
-    </div>
-  </div>
-
   <!-- ── MIC PANEL ──────────────────────────────────────────────────────────── -->
   <div class="voice-card" id="mic-panel">
     <div class="status-row">
@@ -548,6 +541,18 @@
         <button class="btn-action" onclick="copyAnswer()">📋 Copy</button>
       </div>
     </div>
+    <!-- Tab bar — shown after first answer -->
+    <div class="answer-tabs" id="answer-tabs" style="display:none">
+      <button class="answer-tab active" id="atab-full" onclick="setAnswerTab('full')">
+        <span class="tab-dot"></span>📝 Full Answer
+      </button>
+      <button class="answer-tab" id="atab-one-liner" onclick="setAnswerTab('one-liner')">
+        <span class="tab-dot"></span>💬 One-Liner
+      </button>
+      <button class="answer-tab" id="atab-hints" onclick="setAnswerTab('hints')">
+        <span class="tab-dot"></span>⚡ Cue Cards
+      </button>
+    </div>
     <div class="answer-box" id="answer-box">
       <div id="answer-text"></div><span class="cursor off" id="cursor"></span>
     </div>
@@ -597,8 +602,9 @@
   const SYS_SILENCE = 2500;
 
   // Answer
-  let streamCtrl = null, fullAnswer = '', utterance = null;
-  let answerStyle = 'full'; // 'full' | 'hints'
+  let streamCtrls = {}, answers = { full: '', 'one-liner': '', hints: '' }, utterance = null;
+  let answersReady = { full: false, 'one-liner': false, hints: false };
+  let activeTab = 'full';
 
   // ── Profile List — API-first with localStorage fallback ───────────────────────
   async function loadProfileList() {
@@ -737,17 +743,28 @@
     stopMic(true);
     stopSys(true);
     stopSpeaking();
-    if (streamCtrl) { streamCtrl.abort(); streamCtrl = null; }
+    Object.values(streamCtrls).forEach(c => c?.abort());
+    streamCtrls = {};
 
     // Reset state
     resumeText = ''; jobDescription = ''; supportingDocs = [];
     currentQ = ''; sysAcc = ''; sysInterim = '';
     recognition = null; isListening = false;
+    answers = { full: '', 'one-liner': '', hints: '' };
+    answersReady = { full: false, 'one-liner': false, hints: false };
+    activeTab = 'full';
 
     // Reset answer card
     document.getElementById('answer-card').classList.remove('show');
     document.getElementById('answer-text').innerHTML = '';
     document.getElementById('answer-box').className = 'answer-box';
+    document.getElementById('answer-tabs').style.display = 'none';
+    // Reset tab button states
+    ['full', 'one-liner', 'hints'].forEach(t => {
+      const el = document.getElementById('atab-' + t);
+      el.classList.remove('loading', 'ready');
+      el.classList.toggle('active', t === 'full');
+    });
     setAnswerStreaming(false);
 
     // Reset mic panel
@@ -775,9 +792,8 @@
     document.getElementById('session').classList.remove('on');
     document.getElementById('setup').style.display = '';
 
-    // Reset mode and answer style
+    // Reset mode
     setMode('mic');
-    setAnswerStyle('full');
     updateQuota();
     loadProfileList();
   }
@@ -792,12 +808,16 @@
     if (mode === 'mic' && sysCapturing) stopSys(true);
   }
 
-  // ── Answer Style Toggle ───────────────────────────────────────────────────────
-  function setAnswerStyle(style) {
-    answerStyle = style;
-    document.getElementById('ast-full').classList.toggle('on',      style === 'full');
-    document.getElementById('ast-one-liner').classList.toggle('on', style === 'one-liner');
-    document.getElementById('ast-hints').classList.toggle('on',     style === 'hints');
+  // ── Answer Tab Toggle ─────────────────────────────────────────────────────────
+  function setAnswerTab(tab) {
+    activeTab = tab;
+    ['full', 'one-liner', 'hints'].forEach(t => {
+      document.getElementById('atab-' + t).classList.toggle('active', t === tab);
+    });
+    const box = document.getElementById('answer-box');
+    box.className = 'answer-box' + (answersReady[tab] ? '' : ' stream');
+    renderAnswerBullets(answers[tab] || '');
+    setAnswerStreaming(!answersReady[tab]);
   }
 
   // ── Mic Mode ──────────────────────────────────────────────────────────────────
@@ -1027,11 +1047,11 @@
     document.getElementById('stream-dot').classList.toggle('on', on);
     document.getElementById('answer-badge').classList.toggle('on', !on);
     const labels = {
-      'answer':    [on ? 'Streaming Answer'  : 'Answer Ready',    ''],
-      'one-liner': [on ? '💬 Getting Lines…' : '💬 One-Liners',   ''],
-      'hints':     [on ? '⚡ Getting Cues…'  : '⚡ Cue Cards',    ''],
+      'full':      on ? '⏳ Generating Full Answer…' : '📝 Full Answer',
+      'one-liner': on ? '⏳ Generating One-Liner…'   : '💬 One-Liner',
+      'hints':     on ? '⏳ Generating Cue Cards…'   : '⚡ Cue Cards',
     };
-    document.getElementById('answer-title-label').textContent = (labels[answerStyle] || labels['answer'])[0];
+    document.getElementById('answer-title-label').textContent = labels[activeTab] || labels['full'];
     document.getElementById('answer-actions').style.display = on ? 'none' : '';
   }
 
@@ -1058,78 +1078,130 @@
     await Auth.recordQuestion();
     updateQuota();
 
-    if (streamCtrl) streamCtrl.abort();
+    // Abort any existing streams
+    Object.values(streamCtrls).forEach(c => c?.abort());
+    streamCtrls = {};
     stopSpeaking();
-    streamCtrl = new AbortController();
 
-    const card   = document.getElementById('answer-card');
-    const box    = document.getElementById('answer-box');
-    const atext  = document.getElementById('answer-text');
+    // Reset all answers
+    answers = { full: '', 'one-liner': '', hints: '' };
+    answersReady = { full: false, 'one-liner': false, hints: false };
 
+    // Show card & tabs, switch to full tab
+    const card = document.getElementById('answer-card');
+    const tabs = document.getElementById('answer-tabs');
     card.classList.add('show');
+    tabs.style.display = '';
     card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-    atext.innerHTML = ''; fullAnswer = '';
-    box.className = 'answer-box stream';
+
+    // Mark all tabs as loading
+    ['full', 'one-liner', 'hints'].forEach(t => {
+      const el = document.getElementById('atab-' + t);
+      el.classList.remove('ready');
+      el.classList.add('loading');
+    });
+
+    // Reset visible tab
+    activeTab = 'full';
+    ['full', 'one-liner', 'hints'].forEach(t =>
+      document.getElementById('atab-' + t).classList.toggle('active', t === 'full')
+    );
+    document.getElementById('answer-text').innerHTML = '';
+    document.getElementById('answer-box').className = 'answer-box stream';
     setAnswerStreaming(true);
 
     const docsText = getSupportingDocsText();
+    const modeMap = { full: 'answer', 'one-liner': 'one-liner', hints: 'hints' };
 
-    async function doStream(ctrl) {
+    // Fire all 3 streams in parallel
+    ['full', 'one-liner', 'hints'].forEach(tab => {
+      streamCtrls[tab] = new AbortController();
+      streamOneTab(tab, modeMap[tab], question, docsText, streamCtrls[tab]);
+    });
+
+    if (voiceMode === 'system' && sysCapturing)
+      setSysStatus('👂 Listening — speak or let your interviewer speak…');
+  }
+
+  async function streamOneTab(tab, mode, question, docsText, ctrl) {
+    try {
       const res = await fetch('/api/interview/answer-stream', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ resume: resumeText, jobDescription, question, supportingDocs: docsText, mode: answerStyle === 'hints' ? 'hints' : answerStyle === 'one-liner' ? 'one-liner' : 'answer' }),
+        headers: { 'Content-Type': 'application/json', ...Auth.authHeaders() },
+        body: JSON.stringify({ resume: resumeText, jobDescription, question, supportingDocs: docsText, mode }),
         signal: ctrl.signal,
       });
-      const reader = res.body.getReader(); const dec = new TextDecoder(); let buf = '';
+
+      if (res.status === 429) { markTabError(tab, 'Rate limit — please wait a moment'); return; }
+      if (!res.ok) { markTabError(tab, 'Server error ' + res.status); return; }
+
+      const reader = res.body.getReader();
+      const dec = new TextDecoder();
+      let buf = '';
+
       while (true) {
-        const { done, value } = await reader.read(); if (done) break;
+        const { done, value } = await reader.read();
+        if (done) break;
         buf += dec.decode(value, { stream: true });
         const lines = buf.split('\n'); buf = lines.pop();
         for (const line of lines) {
           if (!line.startsWith('data:')) continue;
           const raw = line.slice(5).trim();
-          if (raw === '[DONE]') {
-            box.className = 'answer-box';
-            setAnswerStreaming(false);
-            renderAnswerBullets(fullAnswer); // final clean render (no inline cursor)
-            return 'done';
-          }
+          if (raw === '[DONE]') { markTabReady(tab); return; }
           try {
             const d = JSON.parse(raw);
             if (d.text) {
-              fullAnswer += d.text;
-              renderAnswerBullets(fullAnswer);
-              box.scrollTop = box.scrollHeight;
+              answers[tab] += d.text;
+              if (tab === activeTab) {
+                renderAnswerBullets(answers[tab]);
+                const box = document.getElementById('answer-box');
+                box.scrollTop = box.scrollHeight;
+              }
             }
-            if (d.error) return d.error;
+            if (d.error) {
+              if (d.error === 'overloaded') {
+                // Brief wait and retry once
+                await new Promise(r => setTimeout(r, 4000));
+                if (ctrl.signal.aborted) return;
+                answers[tab] = '';
+                const ctrl2 = new AbortController();
+                streamCtrls[tab] = ctrl2;
+                await streamOneTab(tab, mode, question, docsText, ctrl2);
+              } else {
+                markTabError(tab, d.error);
+              }
+              return;
+            }
           } catch(_) {}
         }
       }
-      return 'done';
-    }
-
-    try {
-      const result = await doStream(streamCtrl);
-      if (result === 'overloaded') {
-        atext.innerHTML = '<div class="answer-plain">⏳ Claude is busy — retrying in 5 seconds…</div>';
-        if (voiceMode === 'system') setSysStatus('⏳ Claude busy — retrying…');
-        await new Promise(r => setTimeout(r, 5000));
-        if (!streamCtrl) return;
-        streamCtrl = new AbortController();
-        atext.innerHTML = ''; fullAnswer = '';
-        box.className = 'answer-box stream';
-        setAnswerStreaming(true);
-        const result2 = await doStream(streamCtrl);
-        if (result2 && result2 !== 'done') showAnswerError('⚠️ ' + result2);
-      } else if (result && result !== 'done') {
-        showAnswerError('⚠️ ' + result);
-      }
+      markTabReady(tab);
     } catch(err) {
-      if (err.name !== 'AbortError') showAnswerError('⚠️ ' + err.message);
-    } finally {
-      streamCtrl = null;
-      if (voiceMode === 'system' && sysCapturing) setSysStatus('👂 Listening — speak or let your interviewer speak…');
+      if (err.name !== 'AbortError') markTabError(tab, err.message);
+    }
+  }
+
+  function markTabReady(tab) {
+    answersReady[tab] = true;
+    const el = document.getElementById('atab-' + tab);
+    el.classList.remove('loading');
+    el.classList.add('ready');
+    if (tab === activeTab) {
+      document.getElementById('answer-box').className = 'answer-box';
+      setAnswerStreaming(false);
+      renderAnswerBullets(answers[tab]);
+    }
+  }
+
+  function markTabError(tab, msg) {
+    answersReady[tab] = true;
+    answers[tab] = answers[tab] || ('⚠️ ' + msg);
+    const el = document.getElementById('atab-' + tab);
+    el.classList.remove('loading');
+    if (tab === activeTab) {
+      renderAnswerBullets(answers[tab]);
+      document.getElementById('answer-box').className = 'answer-box';
+      setAnswerStreaming(false);
     }
   }
 
@@ -1142,9 +1214,10 @@
 
   // ── TTS ───────────────────────────────────────────────────────────────────────
   function speakAnswer() {
-    if (!fullAnswer || !window.speechSynthesis) return;
+    const text = answers[activeTab];
+    if (!text || !window.speechSynthesis) return;
     stopSpeaking();
-    utterance = new SpeechSynthesisUtterance(fullAnswer); utterance.rate = 0.95;
+    utterance = new SpeechSynthesisUtterance(text); utterance.rate = 0.95;
     utterance.onstart = () => { document.getElementById('speak-btn').style.display = 'none'; document.getElementById('stop-speak').style.display = ''; };
     utterance.onend = utterance.onerror = () => { document.getElementById('speak-btn').style.display = ''; document.getElementById('stop-speak').style.display = 'none'; };
     window.speechSynthesis.speak(utterance);
@@ -1155,8 +1228,9 @@
     if (sb) sb.style.display = ''; if (ss) ss.style.display = 'none';
   }
   function copyAnswer() {
-    if (!fullAnswer) return;
-    navigator.clipboard.writeText(fullAnswer).then(() => {
+    const text = answers[activeTab];
+    if (!text) return;
+    navigator.clipboard.writeText(text).then(() => {
       const btn = event.currentTarget; const orig = btn.textContent;
       btn.textContent = '✅ Copied!'; setTimeout(() => btn.textContent = orig, 2000);
     });
