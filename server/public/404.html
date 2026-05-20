@@ -6,7 +6,7 @@
   <title>Page Not Found — Interview Coach</title>
   <meta name="robots" content="noindex, nofollow" />
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎙️</text></svg>" />
-  <link rel="stylesheet" href="/styles.css" />
+  <link rel="stylesheet" href="/styles.css?v=5" />
   <style>
     body { display: flex; flex-direction: column; min-height: 100vh; }
     .not-found {
@@ -17,7 +17,7 @@
     .not-found-code {
       font-size: clamp(80px, 15vw, 140px); font-weight: 900;
       letter-spacing: -4px; line-height: 1;
-      background: linear-gradient(135deg, #2563eb, #38bdf8);
+      background: linear-gradient(135deg, #4f46e5, #818cf8);
       -webkit-background-clip: text; -webkit-text-fill-color: transparent;
       background-clip: text; margin-bottom: 16px;
     }
@@ -59,7 +59,7 @@
 <script src="/auth.js"></script>
 <script>
   document.addEventListener('DOMContentLoaded', () => {
-    Auth.ensureAdmin();
+
     Auth.renderNav();
   });
 </script>

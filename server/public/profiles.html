@@ -1,0 +1,869 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Job Profiles — Interview Coach</title>
+  <script src="/auth.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #08080f;
+      --surface: #101020;
+      --surface2: #17172a;
+      --border: #252540;
+      --accent: #6366f1;
+      --accent-dim: rgba(99,102,241,0.12);
+      --accent-glow: rgba(99,102,241,0.25);
+      --green: #10b981;
+      --green-dim: rgba(16,185,129,0.12);
+      --red: #ef4444;
+      --red-dim: rgba(239,68,68,0.1);
+      --text: #f0f0f8;
+      --muted: #64748b;
+      --radius: 14px;
+      --font: 'Inter', system-ui, -apple-system, sans-serif;
+    }
+
+    body { background: var(--bg); color: var(--text); font-family: var(--font); min-height: 100vh; line-height: 1.5; }
+
+    /* ── Nav ── */
+    .nav {
+      position: sticky; top: 0; z-index: 100;
+      height: 58px; padding: 0 28px;
+      display: flex; align-items: center; gap: 14px;
+      background: rgba(8,8,15,0.94); backdrop-filter: blur(18px);
+      border-bottom: 1px solid var(--border);
+    }
+    .nav-logo {
+      width: 30px; height: 30px; flex-shrink: 0;
+      background: linear-gradient(135deg, var(--accent), var(--green));
+      border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 14px;
+    }
+    .nav-brand { font-size: 15px; font-weight: 700; }
+    .nav-sep   { color: var(--border); }
+    .nav-page  { font-size: 14px; color: var(--muted); }
+    .nav-right { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+    .nav-user  { font-size: 13px; color: var(--muted); }
+    .nav-link  { font-size: 13px; color: var(--muted); text-decoration: none; transition: color 0.2s; }
+    .nav-link:hover { color: var(--text); }
+    .btn-nav {
+      padding: 5px 13px; border-radius: 7px; font-size: 13px; font-weight: 600;
+      cursor: pointer; border: 1px solid var(--border); background: transparent; color: var(--muted); transition: all 0.2s;
+    }
+    .btn-nav:hover { border-color: var(--red); color: var(--red); }
+
+    /* ── Layout ── */
+    .page-wrap { max-width: 860px; margin: 0 auto; padding: 36px 24px 80px; }
+    .page-header {
+      display: flex; align-items: flex-start; justify-content: space-between;
+      gap: 16px; margin-bottom: 28px; flex-wrap: wrap;
+    }
+    .page-header h1 { font-size: 24px; font-weight: 800; margin-bottom: 6px; }
+    .page-header p  { font-size: 14px; color: var(--muted); max-width: 480px; line-height: 1.6; }
+
+    /* ── Buttons ── */
+    .btn {
+      display: inline-flex; align-items: center; gap: 7px;
+      padding: 10px 20px; border-radius: 10px; font-size: 14px; font-weight: 600;
+      cursor: pointer; border: none; transition: box-shadow 0.2s, opacity 0.2s; font-family: var(--font);
+    }
+    .btn-primary { background: linear-gradient(135deg, var(--accent), #8b5cf6); color: #fff; }
+    .btn-primary:hover { box-shadow: 0 0 18px rgba(99,102,241,0.4); }
+    .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--muted); }
+    .btn-outline:hover { border-color: var(--accent); color: var(--text); }
+    .btn-danger  { background: transparent; border: 1px solid rgba(239,68,68,0.3); color: #f87171; }
+    .btn-danger:hover { background: var(--red-dim); border-color: var(--red); }
+    .btn-success { background: var(--green); color: #000; border: none; }
+    .btn-success:hover { box-shadow: 0 0 14px rgba(16,185,129,0.35); }
+    .btn-sm { padding: 6px 13px; font-size: 13px; border-radius: 8px; }
+    .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    /* ── Flash ── */
+    .flash {
+      padding: 12px 16px; border-radius: 10px; font-size: 14px; margin-bottom: 20px; display: none;
+    }
+    .flash.success { background: var(--green-dim); border: 1px solid rgba(16,185,129,0.25); color: #34d399; }
+    .flash.error   { background: var(--red-dim);   border: 1px solid rgba(239,68,68,0.25);  color: #f87171; }
+
+    /* ── Profile Cards ── */
+    .profiles-grid { display: flex; flex-direction: column; gap: 14px; }
+    .profile-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 20px 22px; transition: border-color 0.2s;
+    }
+    .profile-card:hover { border-color: rgba(99,102,241,0.3); }
+    .profile-card-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
+    .profile-card-icon {
+      width: 44px; height: 44px; border-radius: 11px; flex-shrink: 0;
+      background: var(--accent-dim); border: 1px solid var(--accent-glow);
+      display: flex; align-items: center; justify-content: center; font-size: 20px;
+    }
+    .profile-card-info { flex: 1; min-width: 0; }
+    .profile-card-name { font-size: 16px; font-weight: 700; margin-bottom: 6px; }
+    .profile-card-chips { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 6px; }
+    .chip { display: inline-flex; align-items: center; gap: 4px; padding: 3px 9px; border-radius: 5px; font-size: 11px; font-weight: 600; }
+    .chip-has  { background: var(--green-dim); color: #34d399; }
+    .chip-miss { background: rgba(255,255,255,0.05); color: var(--muted); }
+    .profile-card-date { font-size: 12px; color: var(--muted); }
+    .profile-card-actions { display: flex; gap: 8px; flex-shrink: 0; flex-wrap: wrap; align-items: flex-start; }
+
+    /* ── Empty / Loading ── */
+    .empty-state { text-align: center; padding: 70px 24px; color: var(--muted); }
+    .empty-state .icon { font-size: 52px; display: block; margin-bottom: 16px; }
+    .empty-state h3 { font-size: 18px; font-weight: 700; color: var(--text); margin-bottom: 8px; }
+    .empty-state p  { font-size: 14px; max-width: 360px; margin: 0 auto 22px; line-height: 1.65; }
+    .loading-row { text-align: center; padding: 60px; color: var(--muted); font-size: 14px; }
+
+    /* ══ MODAL ══ */
+    .overlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,0.75); z-index: 300;
+      align-items: flex-start; justify-content: center;
+      padding: 40px 20px; overflow-y: auto;
+    }
+    .overlay.open { display: flex; }
+    .modal {
+      background: #0e0e1e; border: 1px solid var(--border);
+      border-radius: 18px; padding: 30px; width: 100%; max-width: 620px;
+      position: relative; margin: auto;
+    }
+    .modal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; }
+    .modal-title { font-size: 18px; font-weight: 800; }
+    .modal-close {
+      width: 30px; height: 30px; border-radius: 8px;
+      background: transparent; border: 1px solid var(--border); color: var(--muted);
+      font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s;
+    }
+    .modal-close:hover { border-color: var(--red); color: var(--red); }
+
+    /* Modal error/info message */
+    .modal-msg {
+      padding: 10px 14px; border-radius: 9px; font-size: 13px; margin-bottom: 16px; display: none;
+    }
+    .modal-msg.error   { background: var(--red-dim);   border: 1px solid rgba(239,68,68,0.3);  color: #f87171; }
+    .modal-msg.success { background: var(--green-dim); border: 1px solid rgba(16,185,129,0.3); color: #34d399; }
+    .modal-msg.info    { background: var(--accent-dim); border: 1px solid var(--accent-glow);  color: #a5b4fc; }
+
+    /* Form */
+    .field { margin-bottom: 20px; }
+    .field-label {
+      display: block; font-size: 12px; font-weight: 700; letter-spacing: 0.06em;
+      text-transform: uppercase; color: var(--muted); margin-bottom: 8px;
+    }
+    .field-label span { font-weight: 400; text-transform: none; letter-spacing: 0; opacity: 0.7; }
+    input.field-input, textarea.field-input {
+      width: 100%; background: var(--surface2); border: 1.5px solid var(--border);
+      border-radius: 10px; color: var(--text); font-family: var(--font);
+      font-size: 14px; padding: 11px 14px; outline: none;
+      transition: border-color 0.2s; resize: vertical; line-height: 1.6;
+    }
+    input.field-input:focus, textarea.field-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-dim); }
+    input.field-input::placeholder, textarea.field-input::placeholder { color: var(--muted); }
+
+    /* Tabs */
+    .field-tabs {
+      display: flex; gap: 4px; background: var(--surface2);
+      border-radius: 8px; padding: 3px; margin-bottom: 10px;
+    }
+    .field-tab {
+      flex: 1; padding: 7px; border: none; border-radius: 6px;
+      background: transparent; color: var(--muted); font-size: 13px; font-weight: 500;
+      cursor: pointer; transition: all 0.2s; font-family: var(--font);
+    }
+    .field-tab.on { background: var(--surface); color: var(--text); box-shadow: 0 1px 3px rgba(0,0,0,0.3); }
+
+    /* Upload zone */
+    .upload-zone {
+      border: 2px dashed var(--border); border-radius: 10px;
+      padding: 24px 20px; text-align: center; cursor: pointer;
+      transition: border-color 0.2s, background 0.2s; position: relative;
+    }
+    .upload-zone:hover, .upload-zone.over { border-color: var(--accent); background: var(--accent-dim); }
+    .upload-zone input[type="file"] { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
+    .upload-zone .zone-icon  { font-size: 28px; display: block; margin-bottom: 6px; }
+    .upload-zone .zone-label { font-size: 14px; color: var(--muted); }
+    .upload-zone .zone-sub   { font-size: 12px; color: var(--muted); opacity: 0.6; margin-top: 4px; }
+
+    /* File loaded chip */
+    .file-loaded {
+      display: none; align-items: center; gap: 10px;
+      background: var(--green-dim); border: 1px solid rgba(16,185,129,0.25);
+      border-radius: 10px; padding: 10px 14px;
+    }
+    .file-loaded.show { display: flex; }
+    .file-loaded-name { flex: 1; font-size: 13px; font-weight: 600; color: #34d399; }
+    .file-loaded-sub  { font-size: 11px; color: var(--muted); margin-top: 2px; }
+    .file-loaded-clear {
+      background: none; border: none; color: var(--muted); cursor: pointer;
+      font-size: 18px; padding: 0 2px; transition: color 0.2s;
+    }
+    .file-loaded-clear:hover { color: var(--red); }
+
+    /* Supporting docs list */
+    .docs-list { display: flex; flex-direction: column; gap: 6px; margin-top: 8px; }
+    .doc-row {
+      display: flex; align-items: center; gap: 10px;
+      background: var(--surface2); border: 1px solid var(--border);
+      border-radius: 8px; padding: 8px 12px; font-size: 13px;
+    }
+    .doc-row-name { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--text); }
+    .doc-row-status { font-size: 11px; flex-shrink: 0; }
+    .doc-row-status.ok      { color: var(--green); }
+    .doc-row-status.err     { color: var(--red); }
+    .doc-row-status.parsing { color: var(--muted); }
+    .doc-row-remove {
+      background: none; border: none; color: var(--muted); cursor: pointer;
+      font-size: 14px; flex-shrink: 0; padding: 0 2px; transition: color 0.2s;
+    }
+    .doc-row-remove:hover { color: var(--red); }
+
+    .modal-footer { display: flex; gap: 10px; justify-content: flex-end; margin-top: 28px; flex-wrap: wrap; }
+
+    /* ── DB Banner ── */
+    .db-banner {
+      background: rgba(234,179,8,0.08); border: 1px solid rgba(234,179,8,0.25);
+      border-radius: 12px; padding: 14px 18px; margin-bottom: 20px;
+      display: flex; gap: 12px; align-items: flex-start;
+    }
+    .db-banner-icon { font-size: 22px; flex-shrink: 0; margin-top: 1px; }
+    .db-banner-body { font-size: 13px; color: #fde68a; line-height: 1.6; flex: 1; }
+    .db-banner-body strong { color: #fbbf24; }
+    .db-banner-link { color: #fbbf24; cursor: pointer; text-decoration: underline; margin-left: 4px; }
+    .db-help { margin-top: 10px; }
+    .db-help ol { padding-left: 20px; }
+    .db-help li { margin-bottom: 5px; color: #fde68a; }
+    .db-help a { color: #fbbf24; }
+    .db-help code {
+      background: rgba(234,179,8,0.15); padding: 1px 5px;
+      border-radius: 4px; font-size: 12px; font-family: monospace;
+    }
+
+    @media (max-width: 600px) {
+      .nav { padding: 0 14px; }
+      .page-wrap { padding: 20px 14px 60px; }
+      .profile-card-row { flex-direction: column; }
+      .profile-card-actions { width: 100%; }
+      .modal { padding: 22px 16px; }
+      .overlay { padding: 20px 14px; }
+    }
+  </style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-logo">🎙️</div>
+  <span class="nav-brand">Interview Coach</span>
+  <span class="nav-sep">/</span>
+  <span class="nav-page">Job Profiles</span>
+  <div class="nav-right">
+    <a href="/interview/" class="nav-link">← Back to Coach</a>
+    <span class="nav-user" id="nav-user"></span>
+    <button class="btn-nav" onclick="Auth.logout()">Log out</button>
+  </div>
+</nav>
+
+<div class="page-wrap">
+  <div class="page-header">
+    <div>
+      <h1>Job Profiles</h1>
+      <p>Save your resume, job description, and supporting context together. Load any profile on the interview page to start a session in one click.</p>
+    </div>
+    <button class="btn btn-primary" onclick="openCreate()">+ New Profile</button>
+  </div>
+
+  <!-- DB banner: shown when DATABASE_URL not set on server -->
+  <div class="db-banner" id="db-banner" style="display:none">
+    <div class="db-banner-icon">🗄️</div>
+    <div class="db-banner-body">
+      <strong>Profiles are stored locally on this device only.</strong>
+      To sync profiles across any device after login, connect a free PostgreSQL database.
+      <a class="db-banner-link" onclick="toggleDbHelp(event)">Setup guide →</a>
+      <div class="db-help" id="db-help" style="display:none">
+        <ol>
+          <li>Create a free database at <a href="https://neon.tech" target="_blank" rel="noopener">neon.tech</a> or <a href="https://supabase.com" target="_blank" rel="noopener">supabase.com</a></li>
+          <li>Copy your connection string (starts with <code>postgres://</code> or <code>postgresql://</code>)</li>
+          <li>In Vercel → your project → Settings → Environment Variables → add <code>DATABASE_URL</code></li>
+          <li>Click <strong>Redeploy</strong> — profiles will sync automatically from any device</li>
+        </ol>
+      </div>
+    </div>
+  </div>
+
+  <div class="flash" id="flash"></div>
+  <div id="profiles-list"><div class="loading-row">Loading…</div></div>
+</div>
+
+<!-- ══ MODAL ══ -->
+<div class="overlay" id="overlay" onclick="handleOverlayClick(event)">
+<div class="modal">
+
+  <div class="modal-header">
+    <div class="modal-title" id="modal-title">New Job Profile</div>
+    <button class="modal-close" onclick="closeModal()">✕</button>
+  </div>
+
+  <div class="modal-msg" id="modal-msg"></div>
+
+  <!-- Name -->
+  <div class="field">
+    <label class="field-label" for="f-name">Profile Name *</label>
+    <input class="field-input" type="text" id="f-name"
+      placeholder='e.g. "Google SWE L5" or "Product Manager at Stripe"' maxlength="100" />
+  </div>
+
+  <!-- Resume -->
+  <div class="field">
+    <label class="field-label">Resume <span>(PDF or Word document, or paste text)</span></label>
+    <div class="field-tabs">
+      <button class="field-tab on" id="tab-upload" onclick="switchResumeTab('upload')">📄 Upload File</button>
+      <button class="field-tab"   id="tab-paste"  onclick="switchResumeTab('paste')">✏️ Paste Text</button>
+    </div>
+
+    <div id="panel-upload">
+      <div class="upload-zone" id="resume-zone"
+        ondragover="zoneDrag(event,'resume-zone',true)"
+        ondragleave="zoneDrag(event,'resume-zone',false)"
+        ondrop="dropResume(event)">
+        <input type="file" id="resume-file" accept=".pdf,.docx,.doc,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+          onchange="pickResume(event)" />
+        <span class="zone-icon">📋</span>
+        <div class="zone-label"><strong>Click to upload</strong> or drag & drop</div>
+        <div class="zone-sub">PDF or Word (.docx) — max 10 MB</div>
+      </div>
+      <div class="file-loaded" id="resume-loaded">
+        <span>✅</span>
+        <div>
+          <div class="file-loaded-name" id="resume-loaded-name"></div>
+          <div class="file-loaded-sub"  id="resume-loaded-sub"></div>
+        </div>
+        <button class="file-loaded-clear" onclick="clearResumeFile()" title="Remove">✕</button>
+      </div>
+    </div>
+
+    <div id="panel-paste" style="display:none">
+      <textarea class="field-input" id="f-resume" rows="7" placeholder="Paste your full resume text here…"></textarea>
+    </div>
+  </div>
+
+  <!-- Job Description -->
+  <div class="field">
+    <label class="field-label" for="f-jd">Job Description *</label>
+    <textarea class="field-input" id="f-jd" rows="6"
+      placeholder="Paste the full job description from the company's careers page…"></textarea>
+  </div>
+
+  <!-- Supporting Docs -->
+  <div class="field">
+    <label class="field-label">
+      Supporting Documents
+      <span>(optional — portfolio, cover letter, certifications, company research)</span>
+    </label>
+    <div class="upload-zone" id="docs-zone"
+      ondragover="zoneDrag(event,'docs-zone',true)"
+      ondragleave="zoneDrag(event,'docs-zone',false)"
+      ondrop="dropDocs(event)">
+      <input type="file" id="docs-file" accept=".pdf,.docx,.doc,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+        multiple onchange="pickDocs(event)" />
+      <span class="zone-icon">📎</span>
+      <div class="zone-label"><strong>Click to upload</strong> or drag & drop — multiple files allowed</div>
+      <div class="zone-sub">PDF or Word (.docx)</div>
+    </div>
+    <div class="docs-list" id="modal-docs-list"></div>
+    <div style="margin-top:12px">
+      <div style="font-size:12px;color:var(--muted);margin-bottom:6px">Or type notes / extra context:</div>
+      <textarea class="field-input" id="f-notes" rows="3"
+        placeholder="Company research, key talking points, certifications, cover letter highlights…"></textarea>
+    </div>
+  </div>
+
+  <div class="modal-footer">
+    <button class="btn btn-outline" onclick="closeModal()">Cancel</button>
+    <button class="btn btn-primary" id="save-btn" onclick="saveModal()">Save Profile</button>
+  </div>
+
+</div>
+</div>
+
+<script>
+  // ── Auth ─────────────────────────────────────────────────────────────────────
+  const _sess = Auth.requireAuth();
+  if (_sess) document.getElementById('nav-user').textContent = '👤 ' + _sess.username;
+
+  // ── API availability ──────────────────────────────────────────────────────────
+  // null = not checked yet, true = server DB ready, false = no DB (localStorage mode)
+  let apiAvailable = null;
+
+  function apiHeaders() {
+    return { 'Content-Type': 'application/json', ...Auth.authHeaders() };
+  }
+
+  // ── localStorage fallback store ───────────────────────────────────────────────
+  function storageKey() { return 'ic_profiles_' + (_sess?.username || 'guest'); }
+
+  function getLocalProfiles() {
+    try { return JSON.parse(localStorage.getItem(storageKey()) || '[]'); }
+    catch { return []; }
+  }
+
+  function saveLocalProfiles(profiles) {
+    localStorage.setItem(storageKey(), JSON.stringify(profiles));
+  }
+
+  function createLocalProfile(data) {
+    const profiles = getLocalProfiles();
+    const now = new Date().toISOString();
+    const profile = { id: crypto.randomUUID(), ...data, createdAt: now, updatedAt: now };
+    profiles.push(profile);
+    saveLocalProfiles(profiles);
+    return profile;
+  }
+
+  function updateLocalProfile(id, data) {
+    const profiles = getLocalProfiles();
+    const idx = profiles.findIndex(p => p.id === id);
+    if (idx === -1) throw new Error('Profile not found');
+    profiles[idx] = { ...profiles[idx], ...data, updatedAt: new Date().toISOString() };
+    saveLocalProfiles(profiles);
+  }
+
+  function removeLocalProfile(id) {
+    saveLocalProfiles(getLocalProfiles().filter(p => p.id !== id));
+  }
+
+  // ── DB banner ─────────────────────────────────────────────────────────────────
+  function showDbBanner() { document.getElementById('db-banner').style.display = ''; }
+  function hideDbBanner() { document.getElementById('db-banner').style.display = 'none'; }
+  function toggleDbHelp(e) {
+    if (e) e.preventDefault();
+    const el = document.getElementById('db-help');
+    el.style.display = el.style.display === 'none' ? '' : 'none';
+  }
+
+  // ── Flash & Modal messages ────────────────────────────────────────────────────
+  function showFlash(text, type = 'success') {
+    const el = document.getElementById('flash');
+    el.textContent = text; el.className = 'flash ' + type; el.style.display = '';
+    clearTimeout(el._t); el._t = setTimeout(() => { el.style.display = 'none'; }, 4000);
+  }
+
+  function showModalMsg(text, type = 'error') {
+    const el = document.getElementById('modal-msg');
+    el.textContent = text; el.className = 'modal-msg ' + type; el.style.display = '';
+    if (type === 'success' || type === 'info') {
+      clearTimeout(el._t); el._t = setTimeout(() => { el.style.display = 'none'; }, 3000);
+    }
+  }
+  function hideModalMsg() { document.getElementById('modal-msg').style.display = 'none'; }
+
+  // ── Profile list ──────────────────────────────────────────────────────────────
+  // Stores summary objects: {id, name, hasResume, hasJD, docsCount, createdAt, updatedAt}
+  let allProfiles = [];
+
+  async function loadAndRender() {
+    const container = document.getElementById('profiles-list');
+    container.innerHTML = '<div class="loading-row">Loading…</div>';
+
+    try {
+      const res = await fetch('/api/profiles', { headers: Auth.authHeaders() });
+
+      if (res.status === 503) {
+        const body = await res.json().catch(() => ({}));
+        if (body.code === 'NO_DATABASE') {
+          apiAvailable = false;
+          showDbBanner();
+          _loadFromLocalStorage();
+          return;
+        }
+      }
+
+      if (res.status === 401) { Auth.logout(); return; }
+      if (!res.ok) throw new Error('Server error ' + res.status);
+
+      const data = await res.json();
+      apiAvailable = true;
+      hideDbBanner();
+      allProfiles = data.profiles; // [{id, name, hasResume, hasJD, docsCount, ...}]
+      renderProfiles();
+
+    } catch (err) {
+      console.warn('API unreachable, using localStorage:', err.message);
+      if (apiAvailable === null) {
+        apiAvailable = false;
+        showDbBanner();
+      }
+      _loadFromLocalStorage();
+    }
+  }
+
+  function _loadFromLocalStorage() {
+    const stored = getLocalProfiles();
+    allProfiles = stored.map(p => ({
+      id:        p.id,
+      name:      p.name,
+      hasResume: (p.resumeText || '').length > 0,
+      hasJD:     (p.jobDescription || '').length > 0,
+      docsCount: (p.supportingDocs || []).length,
+      createdAt: p.createdAt,
+      updatedAt: p.updatedAt,
+    }));
+    renderProfiles();
+  }
+
+  function renderProfiles() {
+    const container = document.getElementById('profiles-list');
+    if (allProfiles.length === 0) {
+      container.innerHTML = `
+        <div class="empty-state">
+          <span class="icon">📋</span>
+          <h3>No profiles yet</h3>
+          <p>Create your first profile to save your resume and job description — load it in one click on interview day.</p>
+          <button class="btn btn-primary" onclick="openCreate()">+ Create Your First Profile</button>
+        </div>`;
+      return;
+    }
+
+    container.innerHTML = '';
+    const grid = document.createElement('div');
+    grid.className = 'profiles-grid';
+
+    [...allProfiles].forEach(p => {
+      const card = document.createElement('div');
+      card.className = 'profile-card';
+
+      const chips = [
+        p.hasResume ? '<span class="chip chip-has">📄 Resume</span>' : '<span class="chip chip-miss">No Resume</span>',
+        p.hasJD     ? '<span class="chip chip-has">📝 Job Description</span>' : '<span class="chip chip-miss">No JD</span>',
+        p.docsCount ? `<span class="chip chip-has">📎 ${p.docsCount} doc${p.docsCount > 1 ? 's' : ''}</span>` : '',
+      ].filter(Boolean).join('');
+
+      const date = new Date(p.updatedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+
+      card.innerHTML = `
+        <div class="profile-card-row">
+          <div class="profile-card-icon">📋</div>
+          <div class="profile-card-info">
+            <div class="profile-card-name">${escHtml(p.name)}</div>
+            <div class="profile-card-chips">${chips}</div>
+            <div class="profile-card-date">Updated ${date}</div>
+          </div>
+          <div class="profile-card-actions">
+            <button class="btn btn-success btn-sm" onclick="loadInCoach('${p.id}')">▶ Load in Coach</button>
+            <button class="btn btn-outline btn-sm" onclick="openEdit('${p.id}')">Edit</button>
+            <button class="btn btn-danger  btn-sm" onclick="confirmDelete('${p.id}', ${JSON.stringify(p.name)})">Delete</button>
+          </div>
+        </div>`;
+      grid.appendChild(card);
+    });
+
+    container.appendChild(grid);
+  }
+
+  function escHtml(s) {
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  function loadInCoach(id) {
+    sessionStorage.setItem('loadProfileId', id);
+    window.location.href = '/interview/';
+  }
+
+  async function confirmDelete(id, name) {
+    if (!confirm(`Delete "${name}"? This cannot be undone.`)) return;
+
+    if (apiAvailable) {
+      try {
+        const res = await fetch(`/api/profiles/${id}`, {
+          method: 'DELETE', headers: Auth.authHeaders(),
+        });
+        if (!res.ok && res.status !== 404) throw new Error('Delete failed (' + res.status + ')');
+      } catch (err) {
+        showFlash('Failed to delete: ' + err.message, 'error');
+        return;
+      }
+    } else {
+      removeLocalProfile(id);
+    }
+
+    allProfiles = allProfiles.filter(p => p.id !== id);
+    renderProfiles();
+    showFlash(`"${name}" deleted`);
+  }
+
+  // ── Modal state ───────────────────────────────────────────────────────────────
+  let editingId         = null;
+  let modalResumeParsed = '';   // text extracted from uploaded resume file
+  let modalDocsUploaded = [];   // [{name, text, status}]
+
+  function resetModal() {
+    editingId = null;
+    modalResumeParsed = '';
+    modalDocsUploaded = [];
+    document.getElementById('f-name').value   = '';
+    document.getElementById('f-resume').value = '';
+    document.getElementById('f-jd').value     = '';
+    document.getElementById('f-notes').value  = '';
+    document.getElementById('resume-file').value = '';
+    document.getElementById('docs-file').value   = '';
+    clearResumeFile();
+    switchResumeTab('upload');
+    renderModalDocs();
+    hideModalMsg();
+  }
+
+  function openCreate() {
+    resetModal();
+    document.getElementById('modal-title').textContent = 'New Job Profile';
+    document.getElementById('save-btn').textContent    = 'Save Profile';
+    document.getElementById('overlay').classList.add('open');
+    setTimeout(() => document.getElementById('f-name').focus(), 80);
+  }
+
+  async function openEdit(id) {
+    resetModal();
+    document.getElementById('modal-title').textContent = 'Edit Profile';
+    document.getElementById('save-btn').textContent    = 'Update Profile';
+    document.getElementById('overlay').classList.add('open');
+    showModalMsg('Loading profile…', 'info');
+
+    let p;
+    if (apiAvailable) {
+      try {
+        const res = await fetch(`/api/profiles/${id}`, { headers: Auth.authHeaders() });
+        if (!res.ok) throw new Error('Server returned ' + res.status);
+        const data = await res.json();
+        p = {
+          id:             data.profile.id,
+          name:           data.profile.name,
+          resumeText:     data.profile.resumeText     || '',
+          jobDescription: data.profile.jobDescription || '',
+          supportingDocs: data.profile.supportingDocs || [],
+        };
+      } catch (err) {
+        showModalMsg('Could not load profile: ' + err.message, 'error');
+        return;
+      }
+    } else {
+      p = getLocalProfiles().find(x => x.id === id);
+      if (!p) { showModalMsg('Profile not found', 'error'); return; }
+    }
+
+    hideModalMsg();
+    editingId = id;
+
+    document.getElementById('f-name').value = p.name;
+    document.getElementById('f-jd').value   = p.jobDescription || '';
+
+    if (p.resumeText) {
+      document.getElementById('f-resume').value = p.resumeText;
+      switchResumeTab('paste');
+    }
+
+    if (p.supportingDocs?.length) {
+      const notesDoc  = p.supportingDocs.find(d => d.name === 'Notes');
+      if (notesDoc) document.getElementById('f-notes').value = notesDoc.text;
+      const otherDocs = p.supportingDocs.filter(d => d.name !== 'Notes');
+      modalDocsUploaded = otherDocs.map(d => ({ name: d.name, text: d.text, status: 'ok' }));
+      renderModalDocs();
+    }
+  }
+
+  function closeModal() {
+    document.getElementById('overlay').classList.remove('open');
+  }
+
+  function handleOverlayClick(e) {
+    if (e.target === document.getElementById('overlay')) closeModal();
+  }
+
+  // ── Resume tab switching ──────────────────────────────────────────────────────
+  function switchResumeTab(tab) {
+    document.getElementById('panel-upload').style.display = tab === 'upload' ? '' : 'none';
+    document.getElementById('panel-paste').style.display  = tab === 'paste'  ? '' : 'none';
+    document.getElementById('tab-upload').className = 'field-tab' + (tab === 'upload' ? ' on' : '');
+    document.getElementById('tab-paste').className  = 'field-tab' + (tab === 'paste'  ? ' on' : '');
+  }
+
+  // ── Resume file upload ────────────────────────────────────────────────────────
+  function zoneDrag(e, id, over) {
+    e.preventDefault();
+    document.getElementById(id).classList.toggle('over', over);
+  }
+
+  function dropResume(e) {
+    e.preventDefault();
+    document.getElementById('resume-zone').classList.remove('over');
+    const file = e.dataTransfer.files[0];
+    if (file) handleResumeFile(file);
+  }
+
+  function pickResume(e) {
+    const file = e.target.files[0];
+    if (file) handleResumeFile(file);
+  }
+
+  async function handleResumeFile(file) {
+    const zone   = document.getElementById('resume-zone');
+    const loaded = document.getElementById('resume-loaded');
+    const lName  = document.getElementById('resume-loaded-name');
+    const lSub   = document.getElementById('resume-loaded-sub');
+
+    zone.style.display = 'none';
+    loaded.classList.add('show');
+    lName.textContent = file.name;
+    lSub.textContent  = 'Parsing…';
+    lSub.style.color  = '';
+    modalResumeParsed = '';
+    hideModalMsg();
+
+    try {
+      const form = new FormData(); form.append('resume', file);
+      const res  = await fetch('/api/interview/parse-resume', { method: 'POST', body: form });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || 'Parse failed');
+      modalResumeParsed = data.text;
+      const kb = Math.round(data.text.length / 1024);
+      lSub.textContent = `✓ Parsed — ${kb} KB of text extracted`;
+    } catch(err) {
+      lSub.textContent = '⚠️ ' + err.message;
+      lSub.style.color = '#f87171';
+      showModalMsg('Could not parse this file. Try "Paste Text" mode instead.', 'error');
+    }
+  }
+
+  function clearResumeFile() {
+    modalResumeParsed = '';
+    document.getElementById('resume-file').value   = '';
+    document.getElementById('resume-zone').style.display = '';
+    document.getElementById('resume-loaded').classList.remove('show');
+    document.getElementById('resume-loaded-sub').style.color = '';
+  }
+
+  // ── Supporting docs upload ────────────────────────────────────────────────────
+  function dropDocs(e) {
+    e.preventDefault();
+    document.getElementById('docs-zone').classList.remove('over');
+    handleDocFiles([...e.dataTransfer.files]);
+  }
+
+  function pickDocs(e) {
+    handleDocFiles([...e.target.files]);
+    e.target.value = '';
+  }
+
+  async function handleDocFiles(files) {
+    for (const file of files) {
+      if (modalDocsUploaded.find(d => d.name === file.name)) continue;
+      const doc = { name: file.name, text: '', status: 'parsing' };
+      modalDocsUploaded.push(doc);
+      renderModalDocs();
+      try {
+        const form = new FormData(); form.append('resume', file);
+        const res  = await fetch('/api/interview/parse-resume', { method: 'POST', body: form });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.message || 'Parse failed');
+        doc.text = data.text; doc.status = 'ok';
+      } catch(err) {
+        doc.status = 'error'; doc.error = err.message;
+      }
+      renderModalDocs();
+    }
+  }
+
+  function removeModalDoc(name) {
+    modalDocsUploaded = modalDocsUploaded.filter(d => d.name !== name);
+    renderModalDocs();
+  }
+
+  function renderModalDocs() {
+    const list = document.getElementById('modal-docs-list');
+    list.innerHTML = '';
+    modalDocsUploaded.forEach(doc => {
+      const row = document.createElement('div');
+      row.className = 'doc-row';
+      const status = doc.status === 'parsing'
+        ? '<span class="doc-row-status parsing">⏳ Parsing…</span>'
+        : doc.status === 'ok'
+        ? '<span class="doc-row-status ok">✓ Ready</span>'
+        : `<span class="doc-row-status err" title="${escHtml(doc.error||'')}">⚠️ Error</span>`;
+      row.innerHTML = `
+        <span>📄</span>
+        <span class="doc-row-name" title="${escHtml(doc.name)}">${escHtml(doc.name)}</span>
+        ${status}
+        <button class="doc-row-remove" onclick="removeModalDoc(${JSON.stringify(doc.name)})">✕</button>`;
+      list.appendChild(row);
+    });
+  }
+
+  // ── Save ──────────────────────────────────────────────────────────────────────
+  async function saveModal() {
+    const name = document.getElementById('f-name').value.trim();
+    if (!name) {
+      document.getElementById('f-name').focus();
+      showModalMsg('Please enter a profile name.', 'error');
+      return;
+    }
+
+    // Collect resume text
+    let resumeText = '';
+    if (document.getElementById('tab-upload').classList.contains('on')) {
+      resumeText = modalResumeParsed;
+    } else {
+      resumeText = document.getElementById('f-resume').value.trim();
+    }
+
+    const jobDescription = document.getElementById('f-jd').value.trim();
+
+    const notesText    = document.getElementById('f-notes').value.trim();
+    const supportingDocs = [
+      ...modalDocsUploaded.filter(d => d.status === 'ok').map(d => ({ name: d.name, text: d.text })),
+      ...(notesText ? [{ name: 'Notes', text: notesText }] : []),
+    ];
+
+    const btn = document.getElementById('save-btn');
+    btn.disabled = true; btn.textContent = 'Saving…';
+
+    try {
+      const payload = { name, resumeText, jobDescription, supportingDocs };
+
+      if (apiAvailable) {
+        // ── Server-side save ──────────────────────────────────────────────────
+        const url    = editingId ? `/api/profiles/${editingId}` : '/api/profiles';
+        const method = editingId ? 'PUT' : 'POST';
+        const res = await fetch(url, {
+          method,
+          headers: apiHeaders(),
+          body: JSON.stringify(payload),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.error || `Save failed (${res.status})`);
+        closeModal();
+        showFlash(editingId ? `"${name}" updated` : `"${name}" saved successfully`);
+        await loadAndRender(); // refresh list from server
+
+      } else {
+        // ── localStorage fallback ─────────────────────────────────────────────
+        if (editingId) {
+          updateLocalProfile(editingId, payload);
+        } else {
+          createLocalProfile(payload);
+        }
+        closeModal();
+        showFlash(editingId ? `"${name}" updated` : `"${name}" saved successfully`);
+        _loadFromLocalStorage();
+      }
+
+    } catch(err) {
+      showModalMsg(err.message || 'Failed to save profile', 'error');
+    } finally {
+      btn.disabled = false;
+      btn.textContent = editingId ? 'Update Profile' : 'Save Profile';
+    }
+  }
+
+  // ── Init ──────────────────────────────────────────────────────────────────────
+  document.addEventListener('DOMContentLoaded', loadAndRender);
+</script>
+</body>
+</html>

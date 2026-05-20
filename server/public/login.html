@@ -6,7 +6,7 @@
   <title>Sign In — Interview Coach</title>
   <meta name="robots" content="noindex, nofollow" />
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎙️</text></svg>" />
-  <link rel="stylesheet" href="/styles.css" />
+  <link rel="stylesheet" href="/styles.css?v=5" />
   <style>
     body { display: flex; flex-direction: column; min-height: 100vh; }
     .auth-wrap {
@@ -19,10 +19,13 @@
     .auth-card {
       width: 100%;
       max-width: 420px;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      padding: 36px;
+      background: rgba(255,255,255,0.07);
+      border: 1px solid rgba(255,255,255,0.14);
+      border-radius: 20px;
+      padding: 38px;
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      box-shadow: 0 24px 80px rgba(0,0,0,0.4), 0 0 0 1px rgba(99,102,241,0.08);
     }
     .auth-logo {
       display: flex; align-items: center; justify-content: center;
@@ -30,10 +33,11 @@
     }
     .auth-logo .icon {
       width: 42px; height: 42px;
-      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      background: linear-gradient(135deg, var(--accent), var(--accent3));
       border-radius: 11px;
       display: flex; align-items: center; justify-content: center;
       font-size: 20px;
+      box-shadow: 0 0 20px rgba(99,102,241,0.40);
     }
     .auth-logo span { font-size: 18px; font-weight: 800; }
     .auth-title { font-size: 22px; font-weight: 800; margin-bottom: 6px; }
@@ -42,12 +46,17 @@
     .auth-footer a { color: var(--accent); font-weight: 600; }
     .auth-footer a:hover { text-decoration: underline; }
     .btn-submit {
-      width: 100%; background: var(--accent); color: #fff;
-      padding: 13px; border-radius: 8px; font-size: 15px; font-weight: 700;
-      cursor: pointer; border: none; transition: box-shadow 0.2s;
+      width: 100%;
+      background: linear-gradient(135deg, var(--accent), var(--accent3));
+      color: #fff;
+      padding: 13px; border-radius: 999px; font-size: 15px; font-weight: 700;
+      cursor: pointer; border: none; transition: box-shadow 0.2s, transform 0.15s;
       margin-top: 4px;
     }
-    .btn-submit:hover:not(:disabled) { box-shadow: 0 0 20px rgba(108,99,255,0.4); }
+    .btn-submit:hover:not(:disabled) {
+      box-shadow: 0 0 28px rgba(99,102,241,0.50), 0 0 56px rgba(167,139,250,0.20);
+      transform: translateY(-1px);
+    }
     .btn-submit:disabled { opacity: 0.4; cursor: not-allowed; }
     .divider {
       display: flex; align-items: center; gap: 12px;
@@ -98,6 +107,9 @@
       <button class="btn-submit" id="submit-btn" type="submit">Sign In</button>
     </form>
 
+    <div class="auth-footer" style="margin-top:14px">
+      <a href="/forgot-password.html" style="color:var(--text-muted);font-size:13px">Forgot your password?</a>
+    </div>
     <div class="auth-footer">
       Don't have an account? <a href="/register.html">Create one free</a>
     </div>
@@ -110,9 +122,37 @@
 
 <script src="/auth.js"></script>
 <script>
-  document.addEventListener('DOMContentLoaded', () => {
-    // Redirect if already logged in
-    if (Auth.getSession()) window.location.href = '/interview/';
+  document.addEventListener('DOMContentLoaded', async () => {
+    // ?logout=1  — force-clear any stale token and stay on the login page.
+    // Auth.logout() navigates here with this flag so we don't loop.
+    if (new URLSearchParams(location.search).get('logout') === '1') {
+      Auth.clearSession();
+      history.replaceState(null, '', '/login.html');
+      return;
+    }
+
+    // Quick client-side check: no token → show the form immediately
+    const session = Auth.getSession();
+    if (!session) return;
+
+    // Token present — verify server-side before redirecting.
+    // This catches stale tokens signed with an old JWT_SECRET.
+    try {
+      const res = await fetch('/api/interview-auth/session', {
+        headers: Auth.authHeaders(),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        // Valid session — send admins to the dashboard, others to the app
+        window.location.href = data.role === 'admin' ? '/admin.html' : '/interview/';
+      } else {
+        // Server rejected the token (expired / wrong secret) — clear it
+        Auth.clearSession();
+      }
+    } catch {
+      // Network error — optimistically trust the client-side session
+      window.location.href = '/interview/';
+    }
   });
 
   async function handleLogin(e) {
@@ -134,7 +174,9 @@
       btn.disabled = false;
       btn.textContent = 'Sign In';
     } else {
-      window.location.href = '/interview/';
+      // Admins go straight to their dashboard; everyone else to the coach
+      const role = result.session?.role;
+      window.location.href = role === 'admin' ? '/admin.html' : '/interview/';
     }
   }
 </script>

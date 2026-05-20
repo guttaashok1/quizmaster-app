@@ -63,7 +63,13 @@ window.Auth = (() => {
 
   function logout() {
     clearToken();
-    window.location.href = '/';
+    // ?logout=1 tells login.html to skip the redirect-if-logged-in check
+    window.location.href = '/login.html?logout=1';
+  }
+
+  /** Clear the stored token without navigating away (useful for inline stale-token recovery). */
+  function clearSession() {
+    clearToken();
   }
 
   // ── Auth header helper ─────────────────────────────────────────────────────
@@ -167,8 +173,12 @@ window.Auth = (() => {
     if (!el) return;
     const session = getSession();
     if (session) {
+      const adminLink = session.role === 'admin'
+        ? `<a href="/admin.html" class="btn-nav-outline" style="color:#a78bfa;border-color:#a78bfa">⚙️ Admin</a>`
+        : '';
       el.innerHTML = `
         <span class="nav-user">👤 ${session.username}</span>
+        ${adminLink}
         <a href="/interview/" class="btn-nav-filled">Open Coach</a>
         <button onclick="Auth.logout()" class="btn-nav-outline">Log out</button>
       `;
@@ -181,7 +191,7 @@ window.Auth = (() => {
   }
 
   return {
-    login, logout, register,
+    login, logout, register, clearSession,
     getSession, requireAuth, renderNav,
     canAskQuestion, getRemainingQuestions,
     recordQuestion, incrementQuestionCount,

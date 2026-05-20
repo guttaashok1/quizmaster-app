@@ -1,0 +1,9 @@
+{
+  "experimentalServices": {
+    "server": {
+      "entrypoint": "server",
+      "routePrefix": "/",
+      "buildCommand": "npm install && npx tsc --outDir dist --rootDir src"
+    }
+  }
+}

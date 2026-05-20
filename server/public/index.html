@@ -22,168 +22,164 @@
   <meta name="twitter:image" content="https://interview-coach-seven-lovat.vercel.app/og-image.png" />
   <!-- Favicon -->
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎙️</text></svg>" />
-  <link rel="stylesheet" href="/styles.css" />
+  <link rel="stylesheet" href="/styles.css?v=5" />
   <style>
-    body { background: #07070f; background-image: none; }
-
     /* ════════════════════════════════════════
-       HERO — full-bleed cinematic, text on left
+       HERO — Full-bleed GenZ team background
     ════════════════════════════════════════ */
     .hero {
       position: relative;
-      min-height: 88vh;
+      min-height: 100vh;
       display: flex;
       align-items: center;
       overflow: hidden;
-      border-bottom: 1px solid rgba(255,255,255,0.07);
+      border-bottom: 1px solid rgba(255,255,255,0.09);
+      /* Full-bleed team photo */
+      background-image: url('https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=1920&q=80&auto=format&fit=crop');
+      background-size: cover;
+      background-position: center 35%;
     }
 
-    /* ── Background scene (the "image") ── */
-    .hero-scene {
-      position: absolute;
-      inset: 0;
-      background: #07070f;
-    }
-    /* Main ambient glow — right side */
-    .hero-scene::before {
+    /* ── Dark gradient overlay — strong left, fades right ── */
+    .hero::before {
       content: '';
-      position: absolute;
-      right: -100px; top: 50%;
-      transform: translateY(-50%);
-      width: 900px; height: 900px;
-      background: radial-gradient(circle, rgba(37,99,235,0.22) 0%, rgba(37,99,235,0.06) 40%, transparent 70%);
+      position: absolute; inset: 0; z-index: 1;
+      pointer-events: none;
+      background:
+        linear-gradient(105deg,
+          rgba(9,9,11,0.94) 0%,
+          rgba(9,9,11,0.78) 38%,
+          rgba(9,9,11,0.45) 62%,
+          rgba(9,9,11,0.20) 100%
+        ),
+        linear-gradient(to bottom,
+          rgba(9,9,11,0.30) 0%,
+          rgba(9,9,11,0.70) 100%
+        );
     }
-    /* Secondary glow — top right corner */
-    .hero-scene::after {
+
+    /* ── Dot-grid texture over the whole hero ── */
+    .hero::after {
       content: '';
-      position: absolute;
-      right: 80px; top: -60px;
-      width: 500px; height: 500px;
-      background: radial-gradient(circle, rgba(56,189,248,0.12) 0%, transparent 65%);
+      position: absolute; inset: 0; z-index: 2;
+      pointer-events: none;
+      background-image: radial-gradient(circle, rgba(255,255,255,0.055) 1px, transparent 1px);
+      background-size: 28px 28px;
+      -webkit-mask-image: radial-gradient(ellipse 100% 100% at 50% 50%, black 0%, transparent 80%);
+      mask-image: radial-gradient(ellipse 100% 100% at 50% 50%, black 0%, transparent 80%);
     }
 
-    /* ── Left-side readability gradient ── */
-    .hero-overlay {
-      position: absolute;
-      inset: 0;
-      background: linear-gradient(
-        90deg,
-        rgba(7,7,15,0.98) 0%,
-        rgba(7,7,15,0.92) 30%,
-        rgba(7,7,15,0.65) 55%,
-        rgba(7,7,15,0.15) 80%,
-        transparent 100%
-      );
-      z-index: 1;
-    }
-
-    /* ── Hero inner two-column grid ── */
+    /* ── Hero inner — single wide column ── */
     .hero-inner {
       position: relative;
       z-index: 10;
       max-width: 1280px;
       margin: 0 auto;
-      padding: 80px 48px;
+      padding: 130px 64px 110px;
       width: 100%;
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 48px;
-      align-items: center;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
     }
 
-    /* ── Right panel: floating UI cards ── */
-    .hero-art-panel {
-      position: relative;
-      height: 460px;
-    }
-
-    /* floating UI cards — positioned within hero-art-panel */
-    .hero-ui-card {
-      position: absolute;
-      background: rgba(255,255,255,0.05);
-      border: 1px solid rgba(255,255,255,0.12);
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
-      border-radius: 12px;
-      padding: 14px 18px;
-    }
-    .hui-card-1 {
-      top: 0; right: 0;
-      width: 260px;
-    }
-    .hui-card-2 {
-      top: 50%; left: 50%;
-      transform: translate(-50%, -50%);
-      width: 290px;
-    }
-    .hui-card-3 {
-      bottom: 0; left: 0;
-      width: 240px;
-    }
-    .hui-label {
-      font-size: 10px; font-weight: 700; letter-spacing: 1px;
-      text-transform: uppercase; color: #60a5fa; margin-bottom: 8px;
-      display: flex; align-items: center; gap: 6px;
-    }
-    .hui-pulse { width: 6px; height: 6px; border-radius: 50%; background: #60a5fa; animation: huipulse 1.6s ease-in-out infinite; }
-    @keyframes huipulse { 0%,100%{opacity:1} 50%{opacity:0.2} }
-    .hui-text { font-size: 13px; color: rgba(255,255,255,0.75); line-height: 1.55; }
-    .hui-line { height: 7px; border-radius: 4px; background: rgba(255,255,255,0.08); margin-bottom: 6px; }
-    .hui-mini-bars {
-      display: flex; align-items: flex-end; gap: 3px; height: 32px; margin-top: 8px;
-    }
-    .hui-mini-bar { width: 6px; border-radius: 3px; background: linear-gradient(to top, #1d4ed8, #60a5fa); }
-    .hui-bullet { display: flex; gap: 7px; font-size: 12px; color: rgba(255,255,255,0.65); margin-bottom: 5px; line-height: 1.5; }
-    .hui-bullet::before { content: '→'; color: #60a5fa; flex-shrink: 0; font-weight: 700; }
+    /* constrain text so it doesn't stretch full width */
+    .hero-content { max-width: 680px; }
 
     /* ── Hero text content (left column) ── */
-    .hero-content {
-      /* lives inside .hero-inner grid — no extra positioning needed */
-    }
     .hero-eyebrow {
-      font-size: 12px; font-weight: 700;
-      letter-spacing: 1.8px; text-transform: uppercase;
-      color: #60a5fa; margin-bottom: 20px;
+      display: inline-flex; align-items: center; gap: 8px;
+      font-size: 11px; font-weight: 700;
+      letter-spacing: 2px; text-transform: uppercase;
+      color: #818cf8; margin-bottom: 22px;
+      background: rgba(99,102,241,0.12);
+      border: 1px solid rgba(99,102,241,0.28);
+      padding: 5px 14px; border-radius: 999px;
     }
     .hero h1 {
-      font-size: clamp(40px, 5.5vw, 72px);
+      font-size: clamp(38px, 5vw, 68px);
       font-weight: 900;
       letter-spacing: -2px;
-      line-height: 1.02;
-      margin-bottom: 22px;
-      max-width: 580px;
+      line-height: 1.04;
+      margin-bottom: 24px;
+      max-width: 560px;
       color: #fff;
     }
     .hero h1 .accent {
-      color: #60a5fa;
+      background: linear-gradient(135deg, #818cf8 0%, #a78bfa 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
     }
     .hero-sub {
       font-size: 17px;
-      color: rgba(255,255,255,0.5);
-      line-height: 1.75;
+      color: rgba(255,255,255,0.55);
+      line-height: 1.78;
       max-width: 460px;
+      margin-bottom: 28px;
+    }
+
+    /* ── Pill category row (Dataflix-style) ── */
+    .hero-pill-row {
+      display: flex; flex-wrap: wrap; gap: 10px;
       margin-bottom: 36px;
     }
+    .hero-pill {
+      padding: 7px 18px;
+      border: 1.5px solid rgba(255,255,255,0.25);
+      border-radius: 999px;
+      font-size: 13px; font-weight: 600; color: rgba(255,255,255,0.85);
+      background: rgba(255,255,255,0.05);
+      backdrop-filter: blur(8px);
+      cursor: pointer; transition: border-color 0.2s, background 0.2s, color 0.2s;
+      text-decoration: none; display: inline-block;
+    }
+    .hero-pill:hover { border-color: #818cf8; color: #818cf8; background: rgba(99,102,241,0.10); }
+
     .hero-cta-row { display: flex; gap: 14px; align-items: center; }
     .btn-hero-primary {
       display: inline-flex; align-items: center; gap: 8px;
-      background: #2563eb; color: #fff;
-      padding: 14px 32px; border-radius: 6px;
+      background: linear-gradient(135deg, #6366f1, #a78bfa);
+      color: #fff;
+      padding: 14px 32px; border-radius: 999px;
       font-size: 15px; font-weight: 700;
-      cursor: pointer; border: none; transition: background 0.2s, box-shadow 0.2s;
+      cursor: pointer; border: none;
+      transition: box-shadow 0.2s, transform 0.15s;
       font-family: var(--font); text-decoration: none;
     }
-    .btn-hero-primary:hover { background: #1d4ed8; box-shadow: 0 0 28px rgba(37,99,235,0.45); }
+    .btn-hero-primary:hover {
+      box-shadow: 0 0 36px rgba(99,102,241,0.55), 0 0 72px rgba(167,139,250,0.22);
+      transform: translateY(-2px);
+    }
     .btn-hero-outline {
       display: inline-flex; align-items: center;
-      background: transparent; color: #fff;
-      padding: 13px 32px; border-radius: 6px;
+      background: rgba(255,255,255,0.06);
+      color: #fff;
+      padding: 13px 32px; border-radius: 999px;
       font-size: 15px; font-weight: 600;
-      border: 1.5px solid rgba(255,255,255,0.3);
-      cursor: pointer; transition: border-color 0.2s, color 0.2s;
+      border: 1.5px solid rgba(255,255,255,0.25);
+      cursor: pointer; transition: border-color 0.2s, background 0.2s;
       font-family: var(--font); text-decoration: none;
+      backdrop-filter: blur(8px);
     }
-    .btn-hero-outline:hover { border-color: #fff; }
+    .btn-hero-outline:hover { border-color: rgba(255,255,255,0.55); background: rgba(255,255,255,0.10); }
+
+    /* ── Hero stats row — quick social proof below CTAs ── */
+    .hero-stats-row {
+      display: flex; gap: 36px; margin-top: 44px; flex-wrap: wrap;
+    }
+    .hero-stat {
+      display: flex; flex-direction: column; gap: 3px;
+    }
+    .hero-stat-num {
+      font-size: 26px; font-weight: 900; letter-spacing: -0.5px; color: #fff;
+    }
+    .hero-stat-num span { color: #818cf8; }
+    .hero-stat-label {
+      font-size: 12px; color: rgba(255,255,255,0.45); font-weight: 500;
+    }
+    .hero-stats-divider {
+      width: 1px; background: rgba(255,255,255,0.12); align-self: stretch;
+    }
 
     /* ════════════════════════════════════════
        CATEGORY CARDS — horizontal scroll
@@ -199,7 +195,7 @@
       display: flex; justify-content: space-between; align-items: baseline;
     }
     .categories-header h2 { font-size: 22px; font-weight: 800; }
-    .categories-header a { font-size: 13px; color: #60a5fa; font-weight: 600; }
+    .categories-header a { font-size: 13px; color: #818cf8; font-weight: 600; }
     .cat-scroll {
       display: flex;
       gap: 16px;
@@ -231,7 +227,7 @@
     .cat-card-5 .cat-bg { background: linear-gradient(135deg, #1a1000 0%, #2e1e00 100%); }
     .cat-card-6 .cat-bg { background: linear-gradient(135deg, #001a1a 0%, #002a2a 100%); }
     /* accent glow per card */
-    .cat-card-1 .cat-bg::after { content:''; position:absolute; inset:0; background: radial-gradient(circle at 80% 30%, rgba(37,99,235,0.3) 0%, transparent 60%); }
+    .cat-card-1 .cat-bg::after { content:''; position:absolute; inset:0; background: radial-gradient(circle at 80% 30%, rgba(99,102,241,0.3) 0%, transparent 60%); }
     .cat-card-2 .cat-bg::after { content:''; position:absolute; inset:0; background: radial-gradient(circle at 80% 30%, rgba(56,189,248,0.25) 0%, transparent 60%); }
     .cat-card-3 .cat-bg::after { content:''; position:absolute; inset:0; background: radial-gradient(circle at 80% 30%, rgba(16,185,129,0.25) 0%, transparent 60%); }
     .cat-card-4 .cat-bg::after { content:''; position:absolute; inset:0; background: radial-gradient(circle at 80% 30%, rgba(139,92,246,0.25) 0%, transparent 60%); }
@@ -266,7 +262,7 @@
     .feature-inner.reverse > * { direction: ltr; }
     .feature-eyebrow {
       font-size: 11px; font-weight: 700; letter-spacing: 1.5px;
-      text-transform: uppercase; color: #60a5fa; margin-bottom: 16px;
+      text-transform: uppercase; color: #818cf8; margin-bottom: 16px;
     }
     .feature-section h2 {
       font-size: clamp(26px, 3vw, 38px);
@@ -279,7 +275,7 @@
     }
     .feature-link {
       display: inline-flex; align-items: center; gap: 8px;
-      font-size: 14px; font-weight: 700; color: #60a5fa;
+      font-size: 14px; font-weight: 700; color: #818cf8;
       transition: gap 0.2s;
     }
     .feature-link:hover { gap: 14px; }
@@ -288,7 +284,7 @@
     .voice-illustration {
       padding: 40px 32px;
       background: linear-gradient(135deg, #0d1a3a 0%, #0a0f1e 100%);
-      border: 1px solid rgba(37,99,235,0.15);
+      border: 1px solid rgba(99,102,241,0.15);
       border-radius: 14px;
       position: relative; overflow: hidden;
       min-height: 320px;
@@ -296,7 +292,7 @@
     }
     .voice-illustration::before {
       content: ''; position: absolute; inset: 0;
-      background: radial-gradient(circle at 50% 40%, rgba(37,99,235,0.18) 0%, transparent 60%);
+      background: radial-gradient(circle at 50% 40%, rgba(99,102,241,0.18) 0%, transparent 60%);
     }
     .mic-sonar {
       position: relative; width: 100px; height: 100px;
@@ -305,7 +301,7 @@
     }
     .sonar-ring {
       position: absolute; border-radius: 50%;
-      border: 1.5px solid rgba(37,99,235,0.4);
+      border: 1.5px solid rgba(99,102,241,0.4);
       animation: sonar 2.4s ease-out infinite;
     }
     .sonar-ring:nth-child(1) { width: 110px; height: 110px; animation-delay: 0s; }
@@ -314,13 +310,13 @@
     @keyframes sonar { 0%{opacity:.8;transform:scale(.7)} 100%{opacity:0;transform:scale(1.1)} }
     .mic-btn {
       width: 72px; height: 72px; border-radius: 50%;
-      background: linear-gradient(135deg, #1d4ed8, #2563eb);
+      background: linear-gradient(135deg, #4f46e5, #6366f1);
       display: flex; align-items: center; justify-content: center;
       font-size: 30px; position: relative; z-index: 2;
-      box-shadow: 0 0 40px rgba(37,99,235,0.5);
+      box-shadow: 0 0 40px rgba(99,102,241,0.5);
     }
     .voice-bars { display: flex; align-items: center; gap: 4px; height: 48px; margin-bottom: 24px; z-index: 1; }
-    .vbar { width: 4px; border-radius: 4px; background: linear-gradient(to top, #1d4ed8, #60a5fa); animation: vwave 1.2s ease-in-out infinite; }
+    .vbar { width: 4px; border-radius: 4px; background: linear-gradient(to top, #4f46e5, #a5b4fc); animation: vwave 1.2s ease-in-out infinite; }
     .vbar:nth-child(1){height:14px;animation-delay:.0s} .vbar:nth-child(2){height:28px;animation-delay:.1s}
     .vbar:nth-child(3){height:40px;animation-delay:.2s} .vbar:nth-child(4){height:48px;animation-delay:.15s}
     .vbar:nth-child(5){height:36px;animation-delay:.25s} .vbar:nth-child(6){height:44px;animation-delay:.05s}
@@ -328,7 +324,7 @@
     .vbar:nth-child(9){height:12px;animation-delay:.2s}
     @keyframes vwave { 0%,100%{transform:scaleY(1)} 50%{transform:scaleY(0.35)} }
     .voice-q-bubble {
-      background: rgba(37,99,235,0.12); border: 1px solid rgba(37,99,235,0.25);
+      background: rgba(99,102,241,0.12); border: 1px solid rgba(99,102,241,0.25);
       border-radius: 12px; padding: 14px 18px;
       font-size: 13px; color: rgba(255,255,255,0.75);
       line-height: 1.6; font-style: italic; text-align: center; z-index: 1; max-width: 340px;
@@ -349,13 +345,13 @@
     }
     .resume-upload-row {
       display: flex; align-items: center; gap: 10px;
-      background: rgba(37,99,235,0.08); border: 1px solid rgba(37,99,235,0.2);
+      background: rgba(99,102,241,0.08); border: 1px solid rgba(99,102,241,0.2);
       border-radius: 8px; padding: 10px 14px; margin-bottom: 14px;
     }
     .resume-filename { font-size: 13px; font-weight: 600; color: #fff; }
     .resume-meta { font-size: 11px; color: rgba(255,255,255,0.4); }
     .resume-progress { background: rgba(255,255,255,0.06); border-radius: 4px; height: 4px; overflow: hidden; margin-bottom: 6px; }
-    .resume-fill { height: 100%; background: linear-gradient(90deg, #1d4ed8, #38bdf8); border-radius: 4px; }
+    .resume-fill { height: 100%; background: linear-gradient(90deg, #4f46e5, #818cf8); border-radius: 4px; }
     .resume-doc {
       background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.10);
       border-radius: 10px; padding: 18px;
@@ -366,16 +362,16 @@
     }
     .resume-avatar {
       width: 36px; height: 36px; border-radius: 50%;
-      background: linear-gradient(135deg, #1d4ed8, #38bdf8);
+      background: linear-gradient(135deg, #4f46e5, #818cf8);
       display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0;
     }
     .resume-name { font-size: 14px; font-weight: 700; color: #fff; }
     .resume-role-txt { font-size: 11px; color: rgba(255,255,255,0.4); margin-top: 1px; }
-    .resume-section-title { font-size: 10px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: #60a5fa; margin-bottom: 8px; }
+    .resume-section-title { font-size: 10px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: #818cf8; margin-bottom: 8px; }
     .resume-line { height: 7px; border-radius: 4px; background: rgba(255,255,255,0.08); margin-bottom: 6px; }
-    .resume-highlight { background: rgba(37,99,235,0.3); }
+    .resume-highlight { background: rgba(99,102,241,0.3); }
     .resume-tags { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 12px; }
-    .resume-tag { background: rgba(37,99,235,0.12); border: 1px solid rgba(37,99,235,0.25); border-radius: 999px; padding: 3px 10px; font-size: 11px; font-weight: 600; color: #93c5fd; }
+    .resume-tag { background: rgba(99,102,241,0.12); border: 1px solid rgba(99,102,241,0.25); border-radius: 999px; padding: 3px 10px; font-size: 11px; font-weight: 600; color: #a5b4fc; }
 
     /* Answer visual */
     .answer-illustration {
@@ -392,13 +388,13 @@
     .q-icon { width: 28px; height: 28px; border-radius: 50%; background: rgba(255,255,255,0.08); display: flex; align-items: center; justify-content: center; font-size: 13px; flex-shrink: 0; margin-top: 2px; }
     .q-bubble { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08); border-radius: 0 10px 10px 10px; padding: 10px 14px; font-size: 13px; color: rgba(255,255,255,0.7); line-height: 1.5; }
     .answer-a-row { display: flex; gap: 10px; align-items: flex-start; }
-    .a-icon { width: 28px; height: 28px; border-radius: 50%; background: linear-gradient(135deg, #1d4ed8, #2563eb); display: flex; align-items: center; justify-content: center; font-size: 13px; flex-shrink: 0; margin-top: 2px; box-shadow: 0 0 12px rgba(37,99,235,0.4); }
-    .a-bubble { background: rgba(37,99,235,0.1); border: 1px solid rgba(37,99,235,0.22); border-radius: 0 10px 10px 10px; padding: 12px 14px; flex: 1; }
-    .a-label { font-size: 10px; font-weight: 700; letter-spacing: 0.8px; text-transform: uppercase; color: #60a5fa; margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }
-    .a-pulse { width: 6px; height: 6px; border-radius: 50%; background: #60a5fa; animation: apulse 1.5s ease-in-out infinite; }
+    .a-icon { width: 28px; height: 28px; border-radius: 50%; background: linear-gradient(135deg, #4f46e5, #6366f1); display: flex; align-items: center; justify-content: center; font-size: 13px; flex-shrink: 0; margin-top: 2px; box-shadow: 0 0 12px rgba(99,102,241,0.4); }
+    .a-bubble { background: rgba(99,102,241,0.1); border: 1px solid rgba(99,102,241,0.22); border-radius: 0 10px 10px 10px; padding: 12px 14px; flex: 1; }
+    .a-label { font-size: 10px; font-weight: 700; letter-spacing: 0.8px; text-transform: uppercase; color: #818cf8; margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }
+    .a-pulse { width: 6px; height: 6px; border-radius: 50%; background: #a5b4fc; animation: apulse 1.5s ease-in-out infinite; }
     @keyframes apulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
     .a-bullet { display: flex; gap: 8px; font-size: 12px; color: rgba(255,255,255,0.72); margin-bottom: 7px; line-height: 1.5; align-items: flex-start; }
-    .a-bullet::before { content: '→'; color: #60a5fa; flex-shrink: 0; font-weight: 700; }
+    .a-bullet::before { content: '→'; color: #818cf8; flex-shrink: 0; font-weight: 700; }
 
     /* ════════════════════════════════════════
        STATS
@@ -413,12 +409,12 @@
       gap: 1px; background: rgba(255,255,255,0.07);
       border: 1px solid rgba(255,255,255,0.07); border-radius: 14px; overflow: hidden;
     }
-    .stat-item { padding: 40px 48px; background: #07070f; }
+    .stat-item { padding: 40px 48px; background: rgba(9,9,11,0.55); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
     .stat-num {
       font-size: 56px; font-weight: 900; letter-spacing: -2px; line-height: 1;
       color: #fff; margin-bottom: 10px;
     }
-    .stat-num span { color: #60a5fa; }
+    .stat-num span { color: #818cf8; }
     .stat-label { font-size: 15px; color: rgba(255,255,255,0.45); font-weight: 500; }
 
     /* ════════════════════════════════════════
@@ -427,12 +423,12 @@
     .cta-section {
       padding: 100px 48px;
       text-align: center;
-      background: linear-gradient(180deg, #07070f 0%, #0d1830 100%);
+      background: linear-gradient(180deg, transparent 0%, rgba(99,102,241,0.08) 50%, rgba(110,30,200,0.10) 100%);
       position: relative; overflow: hidden;
     }
     .cta-section::before {
       content: ''; position: absolute; inset: 0;
-      background: radial-gradient(ellipse at 50% 100%, rgba(37,99,235,0.22) 0%, transparent 60%);
+      background: radial-gradient(ellipse at 50% 100%, rgba(99,102,241,0.25) 0%, transparent 60%);
       pointer-events: none;
     }
     .cta-section h2 { font-size: clamp(32px, 4vw, 52px); font-weight: 900; letter-spacing: -1px; margin-bottom: 16px; }
@@ -466,12 +462,9 @@
     /* ════════════════════════════════════════
        RESPONSIVE
     ════════════════════════════════════════ */
-    @media (max-width: 1024px) {
-      .hui-card-1, .hui-card-2, .hui-card-3 { display: none; }
-    }
     @media (max-width: 900px) {
-      .hero { min-height: auto; }
-      .hero-content { padding: 72px 32px; }
+      .hero-inner { padding: 100px 32px 80px; }
+      .hero-content { max-width: 100%; }
       .feature-inner { grid-template-columns: 1fr; gap: 40px; }
       .feature-inner.reverse { direction: ltr; }
       .stats-inner { grid-template-columns: 1fr; }
@@ -480,11 +473,205 @@
       .categories { padding: 36px 0 36px 24px; }
     }
     @media (max-width: 640px) {
-      .hero-content, .feature-section, .stats-section, .cta-section { padding-left: 20px; padding-right: 20px; }
-      .hero h1 { font-size: 38px; letter-spacing: -1px; }
+      .hero-inner { padding: 90px 24px 70px; }
+      .hero-inner, .feature-section, .stats-section, .cta-section { padding-left: 24px; padding-right: 24px; }
+      .hero h1 { font-size: 36px; letter-spacing: -1px; }
+      .hero-pill-row { gap: 8px; }
+      .hero-stats-row { gap: 20px; }
+      .hero-stats-divider { display: none; }
       .site-footer { padding: 40px 20px 24px; }
       .footer-grid { grid-template-columns: 1fr; gap: 28px; }
       .footer-bottom { flex-direction: column; text-align: center; }
+    }
+
+    /* ════════════════════════════════════════
+       HOW IT WORKS — video + 3 step cards
+    ════════════════════════════════════════ */
+    .hiw-section {
+      padding: 100px 48px;
+      border-bottom: 1px solid rgba(255,255,255,0.07);
+      position: relative;
+    }
+    .hiw-inner { max-width: 1100px; margin: 0 auto; }
+
+    .hiw-header { text-align: center; margin-bottom: 60px; }
+    .hiw-eyebrow {
+      font-size: 11px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase;
+      color: #818cf8; margin-bottom: 18px;
+      display: inline-flex; align-items: center; gap: 8px;
+      background: rgba(99,102,241,0.12); border: 1px solid rgba(99,102,241,0.28);
+      padding: 5px 16px; border-radius: 999px;
+    }
+    .hiw-header h2 {
+      font-size: clamp(28px, 3.5vw, 44px);
+      font-weight: 900; letter-spacing: -0.8px; line-height: 1.15;
+      margin-bottom: 16px;
+    }
+    .hiw-header p {
+      font-size: 16px; color: rgba(255,255,255,0.55);
+      max-width: 520px; margin: 0 auto; line-height: 1.75;
+    }
+
+    /* ── Video container ── */
+    .hiw-video-wrap { margin-bottom: 64px; }
+
+    .hiw-video-frame {
+      position: relative;
+      width: 100%; aspect-ratio: 16/9;
+      border-radius: 20px; overflow: hidden;
+      border: 1px solid rgba(99,102,241,0.28);
+      box-shadow:
+        0 0 0 1px rgba(99,102,241,0.10),
+        0 40px 100px rgba(0,0,0,0.55),
+        0 0 100px rgba(99,102,241,0.12),
+        0 0 200px rgba(110,30,200,0.08);
+      background: #060d23;
+    }
+
+    /* macOS-style window bar */
+    .hiw-video-bar {
+      position: absolute; top: 0; left: 0; right: 0; z-index: 3;
+      height: 38px;
+      background: rgba(6,13,35,0.90);
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+      display: flex; align-items: center; padding: 0 16px; gap: 7px;
+    }
+    .hiw-dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
+
+    /* Animated app mockup behind the overlay */
+    .hiw-video-bg {
+      position: absolute; inset: 38px 0 0 0;
+      background: linear-gradient(135deg, rgba(6,18,55,0.97) 0%, rgba(20,6,55,0.95) 100%);
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center; gap: 16px;
+      padding: 32px;
+      overflow: hidden;
+    }
+    /* Decorative blobs inside the video frame */
+    .hiw-video-bg::before {
+      content: '';
+      position: absolute; left: -10%; top: -10%;
+      width: 50%; height: 120%;
+      background: radial-gradient(ellipse, rgba(99,102,241,0.22) 0%, transparent 65%);
+      pointer-events: none;
+    }
+    .hiw-video-bg::after {
+      content: '';
+      position: absolute; right: -5%; bottom: -20%;
+      width: 45%; height: 100%;
+      background: radial-gradient(ellipse, rgba(110,30,200,0.20) 0%, transparent 65%);
+      pointer-events: none;
+    }
+    /* Fake UI inside the video frame */
+    .hiw-mock {
+      position: relative; z-index: 1;
+      display: flex; gap: 20px; align-items: flex-start; width: 100%; max-width: 680px;
+    }
+    .hiw-mock-left {
+      flex: 1;
+      background: rgba(255,255,255,0.05); border: 1px solid rgba(99,102,241,0.20);
+      border-radius: 14px; padding: 18px;
+    }
+    .hiw-mock-right {
+      flex: 1;
+      background: rgba(255,255,255,0.05); border: 1px solid rgba(167,139,250,0.22);
+      border-radius: 14px; padding: 18px;
+    }
+    .hiw-mock-label {
+      font-size: 9px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase;
+      color: #818cf8; margin-bottom: 10px; display: flex; align-items: center; gap: 6px;
+    }
+    .hiw-mock-label.purple { color: #c4b5fd; }
+    .hiw-mock-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; animation: huipulse 1.5s infinite; }
+    .hiw-mock-line { height: 7px; border-radius: 4px; background: rgba(255,255,255,0.10); margin-bottom: 7px; }
+    .hiw-mock-bullet {
+      display: flex; gap: 7px; font-size: 11px; color: rgba(255,255,255,0.65);
+      margin-bottom: 6px; line-height: 1.5;
+    }
+    .hiw-mock-bullet::before { content: '→'; color: #818cf8; flex-shrink: 0; font-weight: 700; }
+    .hiw-mock-bullet.anim { animation: fadeInUp 0.5s ease both; }
+    .hiw-mock-bullet:nth-child(2) { animation-delay: 0.6s; }
+    .hiw-mock-bullet:nth-child(3) { animation-delay: 1.2s; }
+    .hiw-mock-bullet:nth-child(4) { animation-delay: 1.8s; }
+    @keyframes fadeInUp { from { opacity:0; transform: translateY(6px); } to { opacity:1; transform: none; } }
+
+    /* Play button overlay */
+    .hiw-video-overlay {
+      position: absolute; inset: 0; z-index: 10;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      background: rgba(6,13,35,0.50);
+      backdrop-filter: blur(2px);
+      cursor: pointer;
+      transition: background 0.25s;
+    }
+    .hiw-video-overlay:hover { background: rgba(6,13,35,0.35); }
+    .hiw-play-btn {
+      width: 88px; height: 88px;
+      background: linear-gradient(135deg, #6366f1, #a78bfa);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      margin-bottom: 18px;
+      box-shadow: 0 0 48px rgba(99,102,241,0.55), 0 0 96px rgba(167,139,250,0.28);
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .hiw-video-overlay:hover .hiw-play-btn {
+      transform: scale(1.10);
+      box-shadow: 0 0 64px rgba(99,102,241,0.70), 0 0 120px rgba(167,139,250,0.40);
+    }
+    .hiw-play-icon {
+      width: 0; height: 0;
+      border-style: solid; border-width: 13px 0 13px 24px;
+      border-color: transparent transparent transparent #fff;
+      margin-left: 5px;
+    }
+    .hiw-video-label { font-size: 16px; font-weight: 700; color: #fff; margin-bottom: 6px; }
+    .hiw-video-sub { font-size: 13px; color: rgba(255,255,255,0.50); }
+
+    /* YouTube iframe (hidden until play) */
+    .hiw-video-frame iframe {
+      position: absolute; inset: 0; width: 100%; height: 100%;
+      border: none; display: none;
+    }
+    .hiw-video-frame.playing iframe { display: block; }
+    .hiw-video-frame.playing .hiw-video-overlay,
+    .hiw-video-frame.playing .hiw-video-bar,
+    .hiw-video-frame.playing .hiw-video-bg { display: none; }
+
+    /* ── Step cards ── */
+    .hiw-steps { display: grid; grid-template-columns: repeat(3,1fr); gap: 24px; }
+    .hiw-step {
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.11);
+      border-radius: 20px; padding: 30px 26px;
+      position: relative; overflow: hidden;
+      transition: border-color 0.22s, transform 0.22s, box-shadow 0.22s;
+    }
+    .hiw-step:hover {
+      border-color: rgba(99,102,241,0.42);
+      transform: translateY(-4px);
+      box-shadow: 0 16px 48px rgba(0,0,0,0.30), 0 0 32px rgba(99,102,241,0.10);
+    }
+    /* Top gradient accent bar */
+    .hiw-step::before {
+      content: '';
+      position: absolute; top: 0; left: 0; right: 0; height: 2px;
+      background: linear-gradient(90deg, #6366f1, #a78bfa);
+    }
+    .hiw-step-icon { font-size: 30px; margin-bottom: 14px; display: block; }
+    .hiw-step-num {
+      font-size: 10px; font-weight: 800; letter-spacing: 1.5px; text-transform: uppercase;
+      background: linear-gradient(135deg, #818cf8, #a78bfa);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 10px;
+    }
+    .hiw-step h3 { font-size: 18px; font-weight: 800; margin-bottom: 10px; }
+    .hiw-step p { font-size: 14px; color: rgba(255,255,255,0.56); line-height: 1.68; }
+
+    @media (max-width: 768px) {
+      .hiw-section { padding: 64px 24px; }
+      .hiw-steps { grid-template-columns: 1fr; }
     }
   </style>
 </head>
@@ -499,64 +686,51 @@
     </a>
     <div class="nav-links">
       <a href="/#features" class="nav-link">Features</a>
-      <a href="/about.html" class="nav-link">About</a>
+      <a href="/#how-it-works" class="nav-link">How It Works</a>
       <a href="/pricing.html" class="nav-link">Pricing</a>
       <div id="nav-auth" style="display:flex;align-items:center;gap:8px"></div>
     </div>
   </div>
 </nav>
 
-<!-- ═══ HERO — Full-bleed cinematic ═══ -->
+<!-- ═══ HERO — Dataflix-style: blobs show through, oval photo ═══ -->
 <section class="hero">
-  <div class="hero-scene"></div>
-  <div class="hero-overlay"></div>
-
   <div class="hero-inner">
-    <!-- Left column: copy -->
+    <!-- Left column: copy + pills + CTA -->
     <div class="hero-content">
-      <div class="hero-eyebrow">AI-Powered Interview Practice</div>
-      <h1>Practice your way<br>to the <span class="accent">right job.</span></h1>
+      <div class="hero-eyebrow">✦ AI-Powered Interview Practice</div>
+      <h1>Practice smarter.<br>Land your <span class="accent">dream job.</span></h1>
       <p class="hero-sub">Upload your resume, paste a job description, and speak any interview question aloud — get real-time, tailored AI coaching word by word.</p>
+
+      <!-- Dataflix-style pill category tags -->
+      <div class="hero-pill-row">
+        <a href="/register.html" class="hero-pill">Behavioral</a>
+        <a href="/register.html" class="hero-pill">Technical</a>
+        <a href="/register.html" class="hero-pill">Leadership</a>
+        <a href="/register.html" class="hero-pill">Product</a>
+      </div>
+
       <div class="hero-cta-row">
-        <a href="/register.html" class="btn-hero-primary">Get Started Free</a>
+        <a href="/register.html" class="btn-hero-primary">Get Started Free →</a>
         <a href="/about.html" class="btn-hero-outline">See How It Works</a>
       </div>
-    </div>
 
-    <!-- Right column: floating UI art cards -->
-    <div class="hero-art-panel">
-      <!-- Card 1: Resume scan (top-right) -->
-      <div class="hero-ui-card hui-card-1">
-        <div class="hui-label">Resume Parsed</div>
-        <div class="hui-line" style="width:88%"></div>
-        <div class="hui-line" style="width:70%"></div>
-        <div class="hui-line" style="width:80%"></div>
-        <div style="display:flex;gap:6px;margin-top:8px">
-          <span style="background:rgba(37,99,235,0.15);border:1px solid rgba(37,99,235,0.3);border-radius:999px;padding:3px 10px;font-size:11px;color:#93c5fd">Python</span>
-          <span style="background:rgba(37,99,235,0.15);border:1px solid rgba(37,99,235,0.3);border-radius:999px;padding:3px 10px;font-size:11px;color:#93c5fd">AWS</span>
-          <span style="background:rgba(37,99,235,0.15);border:1px solid rgba(37,99,235,0.3);border-radius:999px;padding:3px 10px;font-size:11px;color:#93c5fd">Team Lead</span>
+      <!-- Social proof stats below CTAs -->
+      <div class="hero-stats-row">
+        <div class="hero-stat">
+          <div class="hero-stat-num">12K<span>+</span></div>
+          <div class="hero-stat-label">Interviews practiced</div>
         </div>
-      </div>
-
-      <!-- Card 2: Live streaming answer (center) -->
-      <div class="hero-ui-card hui-card-2">
-        <div class="hui-label"><div class="hui-pulse"></div> Streaming answer</div>
-        <div class="hui-bullet">Led team of 5 engineers through critical migration</div>
-        <div class="hui-bullet">Reduced deployment time by 60% in 3 months</div>
-        <div class="hui-bullet">Zero production incidents post-launch</div>
-        <div class="hui-mini-bars">
-          <div class="hui-mini-bar" style="height:20px"></div>
-          <div class="hui-mini-bar" style="height:28px"></div>
-          <div class="hui-mini-bar" style="height:32px;animation:vwave 1s .1s ease-in-out infinite"></div>
-          <div class="hui-mini-bar" style="height:26px"></div>
-          <div class="hui-mini-bar" style="height:18px"></div>
+        <div class="hero-stats-divider"></div>
+        <div class="hero-stat">
+          <div class="hero-stat-num">94<span>%</span></div>
+          <div class="hero-stat-label">Feel more confident</div>
         </div>
-      </div>
-
-      <!-- Card 3: Question detected (bottom-left) -->
-      <div class="hero-ui-card hui-card-3">
-        <div class="hui-label">Question Detected</div>
-        <div class="hui-text">"Tell me about a time you led a team under pressure…"</div>
+        <div class="hero-stats-divider"></div>
+        <div class="hero-stat">
+          <div class="hero-stat-num">Free<span>*</span></div>
+          <div class="hero-stat-label">No credit card needed</div>
+        </div>
       </div>
     </div>
   </div>
@@ -602,6 +776,90 @@
   </div>
 </div>
 
+<!-- ═══ HOW IT WORKS ═══ -->
+<section class="hiw-section" id="how-it-works">
+  <div class="hiw-inner">
+
+    <div class="hiw-header">
+      <div class="hiw-eyebrow">✦ How It Works</div>
+      <h2>From zero to confident<br>in <span class="gradient-text">3 simple steps</span></h2>
+      <p>Watch how Interview Coach turns your resume and a job description into real-time, tailored answers — in seconds.</p>
+    </div>
+
+    <!-- ── Video player ── -->
+    <div class="hiw-video-wrap">
+      <div class="hiw-video-frame" id="hiw-frame">
+
+        <!-- macOS-style window chrome -->
+        <div class="hiw-video-bar">
+          <div class="hiw-dot" style="background:#ff5f57"></div>
+          <div class="hiw-dot" style="background:#febc2e"></div>
+          <div class="hiw-dot" style="background:#28c840"></div>
+          <span style="font-size:12px;color:rgba(255,255,255,0.30);margin-left:10px">Interview Coach — Live Session</span>
+        </div>
+
+        <!-- Animated app UI mockup visible behind the overlay -->
+        <div class="hiw-video-bg">
+          <div class="hiw-mock">
+            <div class="hiw-mock-left">
+              <div class="hiw-mock-label">✓ Resume Parsed</div>
+              <div class="hiw-mock-line" style="width:90%"></div>
+              <div class="hiw-mock-line" style="width:72%"></div>
+              <div class="hiw-mock-line" style="width:82%"></div>
+              <div class="hiw-mock-line" style="width:60%"></div>
+              <div style="display:flex;gap:6px;margin-top:12px;flex-wrap:wrap">
+                <span style="background:rgba(99,102,241,0.15);border:1px solid rgba(99,102,241,0.30);border-radius:999px;padding:3px 10px;font-size:10px;color:#a5b4fc">Python</span>
+                <span style="background:rgba(99,102,241,0.15);border:1px solid rgba(99,102,241,0.30);border-radius:999px;padding:3px 10px;font-size:10px;color:#a5b4fc">AWS</span>
+                <span style="background:rgba(167,139,250,0.15);border:1px solid rgba(167,139,250,0.30);border-radius:999px;padding:3px 10px;font-size:10px;color:#c4b5fd">Team Lead</span>
+              </div>
+            </div>
+            <div class="hiw-mock-right">
+              <div class="hiw-mock-label purple"><div class="hiw-mock-dot"></div> Streaming answer</div>
+              <div class="hiw-mock-bullet anim">Led team of 5 engineers through critical migration</div>
+              <div class="hiw-mock-bullet anim">Reduced deployment time by 60% in 3 months</div>
+              <div class="hiw-mock-bullet anim">Zero production incidents post-launch</div>
+              <div class="hiw-mock-bullet anim">Exactly the experience this role requires</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Play button overlay -->
+        <div class="hiw-video-overlay" id="hiw-overlay" onclick="hiwPlay()">
+          <div class="hiw-play-btn"><div class="hiw-play-icon"></div></div>
+          <div class="hiw-video-label">Watch the 90-second demo</div>
+          <div class="hiw-video-sub">See voice recognition + AI answers in action</div>
+        </div>
+
+        <!-- YouTube iframe (injected on play) -->
+        <iframe id="hiw-iframe" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen></iframe>
+      </div>
+    </div>
+
+    <!-- ── Step cards ── -->
+    <div class="hiw-steps">
+      <div class="hiw-step">
+        <span class="hiw-step-icon">📄</span>
+        <div class="hiw-step-num">Step 01</div>
+        <h3>Upload your resume</h3>
+        <p>Drop your PDF or Word doc and paste a job description. Interview Coach reads both so every answer is built around your real experience and the specific role.</p>
+      </div>
+      <div class="hiw-step">
+        <span class="hiw-step-icon">🎙️</span>
+        <div class="hiw-step-num">Step 02</div>
+        <h3>Ask any question</h3>
+        <p>Speak naturally or type. The AI detects behavioral, technical, and situational questions and instantly starts crafting your personalised answer.</p>
+      </div>
+      <div class="hiw-step">
+        <span class="hiw-step-icon">⚡</span>
+        <div class="hiw-step-num">Step 03</div>
+        <h3>Get your tailored answer</h3>
+        <p>Four sharp STAR-method bullets stream in real time — grounded in your resume, matched to the role. Read, rehearse, and walk in confident.</p>
+      </div>
+    </div>
+
+  </div>
+</section>
+
 <!-- ═══ FEATURE 1: Voice ═══ -->
 <section class="feature-section">
   <div class="feature-inner">
@@ -645,7 +903,7 @@
         </div>
       </div>
       <div class="resume-progress"><div class="resume-fill" style="width:100%"></div></div>
-      <div style="font-size:11px;color:#60a5fa;text-align:right;margin:6px 0 14px">Parsed ✓</div>
+      <div style="font-size:11px;color:#a5b4fc;text-align:right;margin:6px 0 14px">Parsed ✓</div>
       <div class="resume-doc">
         <div class="resume-doc-header">
           <div class="resume-avatar">👤</div>
@@ -714,7 +972,7 @@
       <div class="stat-label">Interview question types covered</div>
     </div>
     <div class="stat-item">
-      <div class="stat-num" style="color:#60a5fa">Free</div>
+      <div class="stat-num" style="color:#a5b4fc">Free</div>
       <div class="stat-label">No credit card, no trial period</div>
     </div>
     <div class="stat-item">
@@ -748,10 +1006,13 @@
     <div class="footer-col">
       <h4>Company</h4>
       <a href="/about.html">About</a>
-      <a href="/about.html#privacy">Privacy</a>
+      <a href="/privacy.html">Privacy Policy</a>
+      <a href="/terms.html">Terms of Service</a>
     </div>
     <div class="footer-col">
-      <h4>Account</h4>
+      <h4>Support</h4>
+      <a href="/support.html">Help &amp; FAQ</a>
+      <a href="/feedback.html">Share Feedback</a>
       <a href="/login.html">Sign In</a>
       <a href="/register.html">Create Account</a>
     </div>
@@ -765,9 +1026,32 @@
 <script src="/auth.js"></script>
 <script>
   document.addEventListener('DOMContentLoaded', () => {
-    Auth.ensureAdmin();
     Auth.renderNav();
   });
+
+  /**
+   * How It Works video player.
+   *
+   * To embed your own video:
+   *   1. Upload to YouTube and grab the video ID (the part after ?v= in the URL).
+   *   2. Replace null below with your video ID string, e.g. 'dQw4w9WgXcQ'
+   */
+  const HIW_YOUTUBE_ID = null; // ← paste your YouTube video ID here
+
+  function hiwPlay() {
+    const frame   = document.getElementById('hiw-frame');
+    const overlay = document.getElementById('hiw-overlay');
+    const iframe  = document.getElementById('hiw-iframe');
+
+    if (HIW_YOUTUBE_ID) {
+      // Load the YouTube video and hide everything else
+      iframe.src = `https://www.youtube.com/embed/${HIW_YOUTUBE_ID}?autoplay=1&rel=0&modestbranding=1`;
+      frame.classList.add('playing');
+    } else {
+      // No video yet — dismiss the overlay so the animated mockup is fully visible
+      overlay.style.display = 'none';
+    }
+  }
 </script>
 </body>
 </html>
