@@ -17,6 +17,35 @@ import stripeRouter from './routes/stripe';
 import adminRouter, { feedbackRouter } from './routes/admin';
 import { initDatabase } from './services/database';
 
+// ── Startup env-var checklist ─────────────────────────────────────────────────
+(function checkEnv() {
+  const required = [
+    { key: 'DATABASE_URL',     service: 'Database (user auth, profiles, quota)' },
+    { key: 'JWT_SECRET',       service: 'JWT signing (auth security)' },
+    { key: 'ANTHROPIC_API_KEY',service: 'Claude AI (interview answers)' },
+  ];
+  const optional = [
+    { key: 'STRIPE_SECRET_KEY',       service: 'Stripe payments (Pro upgrades)' },
+    { key: 'STRIPE_WEBHOOK_SECRET',   service: 'Stripe webhooks (plan activation)' },
+    { key: 'STRIPE_MONTHLY_PRICE_ID', service: 'Stripe monthly plan' },
+    { key: 'STRIPE_LIFETIME_PRICE_ID',service: 'Stripe lifetime plan' },
+    { key: 'RESEND_API_KEY',          service: 'Resend (password reset emails)' },
+    { key: 'RESEND_FROM_EMAIL',       service: 'Resend from address' },
+    { key: 'SENTRY_DSN',              service: 'Sentry error monitoring' },
+    { key: 'ADMIN_PASSWORD',          service: 'Admin account password' },
+    { key: 'PRODUCTION_URL',          service: 'Production URL (CORS + email links)' },
+  ];
+  const missing = required.filter(v => !process.env[v.key]);
+  const unconfigured = optional.filter(v => !process.env[v.key]);
+  if (missing.length) {
+    missing.forEach(v => console.error(`[env] ❌ MISSING (required): ${v.key} — ${v.service}`));
+  }
+  if (unconfigured.length) {
+    unconfigured.forEach(v => console.warn(`[env] ⚠️  not set (optional): ${v.key} — ${v.service}`));
+  }
+  if (!missing.length) console.log('[env] ✅ All required env vars present');
+})();
+
 // ── Sentry error monitoring (optional — set SENTRY_DSN to enable) ─────────────
 if (process.env.SENTRY_DSN) {
   Sentry.init({

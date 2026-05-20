@@ -1238,6 +1238,23 @@
 
   // ── Init ──────────────────────────────────────────────────────────────────────
   document.addEventListener('DOMContentLoaded', loadProfileList);
+
+  // Show upgrade success banner
+  (function() {
+    const p = new URLSearchParams(location.search);
+    if (p.get('upgraded') === '1') {
+      const b = document.createElement('div');
+      b.style.cssText = 'position:fixed;top:70px;left:50%;transform:translateX(-50%);' +
+        'background:rgba(6,13,35,0.97);border:1px solid rgba(99,102,241,0.6);color:#fff;' +
+        'padding:13px 28px;border-radius:999px;font-size:14px;font-weight:600;' +
+        'z-index:9999;box-shadow:0 8px 32px rgba(99,102,241,0.25);white-space:nowrap';
+      b.textContent = '🎉 You\'re now on Pro — unlimited questions unlocked!';
+      document.body.appendChild(b);
+      setTimeout(() => b.remove(), 6000);
+      // Clean URL so refreshing doesn't re-show the banner
+      history.replaceState({}, '', location.pathname);
+    }
+  })();
 </script>
 </body>
 </html>

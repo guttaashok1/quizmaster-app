@@ -72,6 +72,15 @@ router.post('/create-checkout', async (req: Request, res: Response) => {
   if (plan === 'lifetime' && !LIFETIME_PRICE)
     return void res.status(503).json({ error: 'Lifetime price not configured. Add STRIPE_LIFETIME_PRICE_ID.' });
 
+  let customerEmail: string | undefined;
+  const pool = getPool();
+  if (pool) {
+    try {
+      const r = await pool.query('SELECT email FROM interview_users WHERE username = $1', [user.username]);
+      customerEmail = r.rows[0]?.email ?? undefined;
+    } catch { /* non-fatal */ }
+  }
+
   const baseUrl = process.env.PRODUCTION_URL || 'http://localhost:3001';
 
   try {
@@ -81,6 +90,7 @@ router.post('/create-checkout', async (req: Request, res: Response) => {
         price: (plan === 'monthly' ? MONTHLY_PRICE : LIFETIME_PRICE)!,
         quantity: 1,
       }],
+      customer_email: customerEmail,
       metadata: { username: user.username },
       success_url: `${baseUrl}/interview/?upgraded=1`,
       cancel_url:  `${baseUrl}/pricing.html?cancelled=1`,
@@ -90,6 +100,39 @@ router.post('/create-checkout', async (req: Request, res: Response) => {
   } catch (err) {
     console.error('[stripe] Checkout session error:', err);
     res.status(500).json({ error: 'Failed to create checkout — please try again.' });
+  }
+});
+
+// ── POST /api/stripe/portal ───────────────────────────────────────────────────
+router.post('/portal', async (req: Request, res: Response) => {
+  const stripe = getStripe();
+  if (!stripe) return void res.status(503).json({ error: 'Payments not configured.' });
+
+  const user = getUserFromToken(req);
+  if (!user) return void res.status(401).json({ error: 'Please sign in.' });
+
+  const pool = getPool();
+  if (!pool) return void res.status(503).json({ error: 'Database not configured.' });
+
+  try {
+    const r = await pool.query(
+      'SELECT stripe_customer_id FROM interview_users WHERE username = $1',
+      [user.username]
+    );
+    const customerId = r.rows[0]?.stripe_customer_id;
+    if (!customerId) {
+      return void res.status(400).json({ error: 'No active subscription found.' });
+    }
+
+    const baseUrl = process.env.PRODUCTION_URL || 'http://localhost:3001';
+    const portalSession = await stripe.billingPortal.sessions.create({
+      customer: customerId,
+      return_url: `${baseUrl}/pricing.html`,
+    });
+    res.json({ url: portalSession.url });
+  } catch (err) {
+    console.error('[stripe] Portal session error:', err);
+    res.status(500).json({ error: 'Failed to open billing portal — please try again.' });
   }
 });
 
@@ -155,6 +198,30 @@ router.post('/webhook', async (req: Request, res: Response) => {
         console.error('[stripe] Failed to downgrade user:', err);
       }
     }
+  }
+
+  // Re-activate pro if subscription is updated (e.g. resumed, uncancelled)
+  if (event.type === 'customer.subscription.updated') {
+    const sub   = event.data.object as any;
+    const pool  = getPool();
+    if (pool && sub.customer && sub.status === 'active') {
+      try {
+        await pool.query(
+          `UPDATE interview_users SET plan = 'pro', stripe_subscription_id = $2
+           WHERE stripe_customer_id = $1`,
+          [sub.customer as string, sub.id as string]
+        );
+        console.log(`[stripe] Re-activated pro for customer ${sub.customer}`);
+      } catch (err) {
+        console.error('[stripe] Failed to re-activate pro:', err);
+      }
+    }
+  }
+
+  // Log payment failures (don't downgrade immediately — Stripe retries)
+  if (event.type === 'invoice.payment_failed') {
+    const invoice = event.data.object as any;
+    console.warn(`[stripe] Payment failed for customer ${invoice.customer} — Stripe will retry automatically.`);
   }
 
   res.json({ received: true });

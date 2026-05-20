@@ -77,6 +77,19 @@
   </div>
 </div>
 
+<!-- Manage subscription (shown only to Pro users via JS) -->
+<div id="manage-sub-section" style="display:none;text-align:center;margin:0 0 32px">
+  <p style="color:var(--text-muted);font-size:14px;margin-bottom:12px">
+    You're on Pro · Manage billing, cancel, or update your payment method
+  </p>
+  <button id="manage-sub-btn" onclick="openPortal()"
+          style="background:rgba(99,102,241,0.12);border:1px solid rgba(99,102,241,0.35);
+                 color:#a5b4fc;padding:10px 24px;border-radius:999px;
+                 font-size:14px;font-weight:600;cursor:pointer;transition:all 0.2s">
+    Manage Subscription →
+  </button>
+</div>
+
 <!-- FAQ -->
 <div class="faq-section">
   <h2>Frequently Asked Questions</h2>
@@ -93,7 +106,7 @@
 
   <div class="faq-item">
     <div class="faq-q">Is my data safe?</div>
-    <div class="faq-a">Resume and job description text are only sent during your active session to generate answers — never stored on our servers. Your account data lives in your browser's local storage.</div>
+    <div class="faq-a">Resume and job description text are only sent during your active session to generate answers. Job profiles you save are stored encrypted in our database so you can access them across devices. Your password is hashed with PBKDF2 — we never store it in plain text.</div>
   </div>
 </div>
 
@@ -111,6 +124,12 @@
 <script>
   document.addEventListener('DOMContentLoaded', () => {
     Auth.renderNav();
+    // Show manage-subscription section for Pro users
+    const session = Auth.getSession();
+    if (session && session.plan === 'pro') {
+      const manageDiv = document.getElementById('manage-sub-section');
+      if (manageDiv) manageDiv.style.display = 'block';
+    }
     // Show success/cancel banners from Stripe redirect
     const params = new URLSearchParams(location.search);
     if (params.get('upgraded') === '1') {
@@ -157,6 +176,23 @@
       errEl.textContent = err.message;
       errEl.style.display = 'block';
       btns.forEach(b => { b.disabled = false; b.style.opacity = '1'; });
+    }
+  }
+
+  async function openPortal() {
+    const btn = document.getElementById('manage-sub-btn');
+    if (btn) { btn.disabled = true; btn.textContent = 'Opening…'; }
+    try {
+      const res = await fetch('/api/stripe/portal', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...Auth.authHeaders() },
+      });
+      const data = await res.json();
+      if (!res.ok || data.error) throw new Error(data.error || 'Failed to open portal');
+      window.location.href = data.url;
+    } catch (err) {
+      showBanner('Could not open billing portal: ' + err.message, '#ef4444');
+      if (btn) { btn.disabled = false; btn.textContent = 'Manage Subscription'; }
     }
   }
 </script>

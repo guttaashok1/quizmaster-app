@@ -338,29 +338,40 @@ router.post('/forgot-password', forgotLimiter, async (req: Request, res: Respons
             to: email.trim().toLowerCase(),
             subject: 'Reset your Interview Coach password',
             html: `
-              <div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:32px">
-                <div style="font-size:28px;margin-bottom:8px">🎙️</div>
-                <h2 style="color:#0ea5e9;margin:0 0 16px">Reset your password</h2>
-                <p style="color:#444;line-height:1.6">
-                  Click the link below to set a new password.
-                  This link expires in <strong>1 hour</strong>.
-                </p>
-                <a href="${resetUrl}"
-                   style="display:inline-block;background:linear-gradient(135deg,#0ea5e9,#a78bfa);
-                          color:#fff;padding:13px 28px;border-radius:999px;text-decoration:none;
-                          font-weight:700;font-size:15px;margin:20px 0">
-                  Reset Password →
-                </a>
-                <p style="color:#888;font-size:13px;margin-top:24px">
-                  If you didn't request this, you can safely ignore this email.
-                  Your password won't change.
-                </p>
-                <hr style="border:none;border-top:1px solid #eee;margin:24px 0"/>
-                <p style="color:#bbb;font-size:12px">
-                  Interview Coach · AI-Powered Interview Practice
-                </p>
-              </div>
-            `,
+  <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+              max-width:520px;margin:0 auto;padding:40px 32px;
+              background:#09090f;border-radius:16px;color:#f0f0f8">
+    <div style="margin-bottom:28px;text-align:center">
+      <span style="font-size:36px">🎙️</span>
+    </div>
+    <h2 style="margin:0 0 8px;font-size:22px;font-weight:800;
+               background:linear-gradient(135deg,#6366f1,#a78bfa);
+               -webkit-background-clip:text;-webkit-text-fill-color:transparent">
+      Reset your password
+    </h2>
+    <p style="color:#94a3b8;line-height:1.7;margin:0 0 28px;font-size:15px">
+      You requested a password reset for your Interview Coach account.
+      Click the button below to set a new password.
+      This link expires in <strong style="color:#e2e8f0">1 hour</strong>.
+    </p>
+    <div style="text-align:center;margin:32px 0">
+      <a href="${resetUrl}"
+         style="display:inline-block;
+                background:linear-gradient(135deg,#6366f1,#8b5cf6);
+                color:#fff;padding:14px 36px;border-radius:999px;
+                text-decoration:none;font-weight:700;font-size:16px;
+                letter-spacing:0.01em;
+                box-shadow:0 0 32px rgba(99,102,241,0.4)">
+        Reset Password →
+      </a>
+    </div>
+    <p style="color:#64748b;font-size:13px;line-height:1.6;margin:24px 0 0;
+              padding-top:20px;border-top:1px solid #1e1e3a">
+      If you didn't request this, you can safely ignore this email — your password won't change.<br/>
+      <span style="color:#475569">Interview Coach · AI-Powered Interview Practice</span>
+    </p>
+  </div>
+`,
           }),
         });
       } catch (mailErr) {
