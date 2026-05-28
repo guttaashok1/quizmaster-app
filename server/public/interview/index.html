@@ -490,8 +490,10 @@
   <!-- ── SYSTEM AUDIO PANEL ─────────────────────────────────────────────────── -->
   <div class="voice-card" id="sys-panel" style="display:none">
     <div class="sys-info">
-      🎤 <strong>Mic detects your interviewer's voice</strong> — no screen sharing or install needed.
-      Works seamlessly with Zoom, Teams, Google Meet, or any call platform.
+      🖥️ <strong>Share your interview tab</strong> — only the interviewer's voice is captured.
+      When you click Start, select the browser tab where your interview is running
+      (Zoom Web, Google Meet, Teams, etc.).
+      Your own voice is automatically filtered out using tab audio detection.
     </div>
     <div class="status-row">
       <div class="vad-dot" id="vad-dot"></div>
@@ -597,9 +599,16 @@
   // Mic
   let recognition = null, isListening = false, currentQ = '', debounce = null;
 
-  // System audio
+  // System audio — Web Speech API (microphone) gated by tab-audio VAD
   let sysRec = null, sysAcc = '', sysInterim = '', sysTimer = null, sysCapturing = false;
   const SYS_SILENCE = 2500;
+
+  // Tab-audio VAD (getDisplayMedia stream → AudioContext analyser)
+  let displayStream = null, displayAudioCtx = null, displayAnalyser = null;
+  let tabHasSpeech = false, vadTimerId = null, vadHoldTimer = null;
+  const VAD_INTERVAL  = 100;    // ms between VAD checks
+  const VAD_THRESHOLD = 0.006;  // RMS energy level that counts as speech
+  const VAD_HOLD_MS   = 1200;   // keep gate open 1.2 s after tab goes silent (smooth pauses)
 
   // Answer
   let streamCtrls = {}, answers = { full: '', 'one-liner': '', hints: '' }, utterance = null;
@@ -893,15 +902,69 @@
   }
 
   // ── System Audio Mode ─────────────────────────────────────────────────────────
+  // How it works:
+  //   1. getDisplayMedia() → user shares their interview tab (Zoom/Meet/Teams)
+  //   2. AudioContext analyses that tab stream for voice activity (VAD)
+  //   3. Web Speech API (mic) runs continuously but results are ONLY accepted
+  //      when the tab has active audio — so the user's own voice gets discarded
   async function startSys() {
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SR) { setSysStatus('⚠️ Requires Chrome or Edge'); return; }
 
+    // ── 1. Capture interview tab audio ────────────────────────────────────────
+    setSysStatus('🖥️ Select your interview tab in the sharing dialog…');
+    let stream;
+    try {
+      stream = await navigator.mediaDevices.getDisplayMedia({
+        // Chrome requires video:true to show the "Share tab audio" checkbox
+        video: true,
+        audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false },
+      });
+    } catch (_) {
+      setSysStatus('Cancelled — click Start Listening to try again');
+      return;
+    }
+
+    // Drop video tracks — we only need the audio
+    stream.getVideoTracks().forEach(t => t.stop());
+
+    const audioTracks = stream.getAudioTracks();
+    if (!audioTracks.length) {
+      setSysStatus('⚠️ No audio captured. In Chrome\'s dialog, check "Share tab audio" and retry.');
+      stream.getTracks().forEach(t => t.stop());
+      return;
+    }
+
+    displayStream = stream;
+
+    // If the user stops sharing from the browser toolbar, reset gracefully
+    audioTracks[0].onended = () => {
+      if (sysCapturing) {
+        stopSys(true);
+        setSysStatus('⚠️ Tab sharing stopped — click Start Listening to reconnect');
+      }
+    };
+
+    // ── 2. Set up AudioContext VAD on tab stream ───────────────────────────────
+    displayAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const src       = displayAudioCtx.createMediaStreamSource(displayStream);
+    displayAnalyser = displayAudioCtx.createAnalyser();
+    displayAnalyser.fftSize = 512;
+    displayAnalyser.smoothingTimeConstant = 0.4;
+    src.connect(displayAnalyser);
+
+    // ── 3. Initialise Web Speech API (microphone) ─────────────────────────────
     sysRec = new SR();
-    sysRec.continuous = true; sysRec.interimResults = true; sysRec.lang = 'en-US';
-    sysAcc = ''; sysInterim = '';
+    sysRec.continuous = true;
+    sysRec.interimResults = true;
+    sysRec.lang = 'en-US';
+    sysAcc = ''; sysInterim = ''; tabHasSpeech = false;
 
     sysRec.onresult = (e) => {
+      // Gate: only accept transcript when the interview tab has active audio.
+      // This discards anything the mic picks up while the user is speaking
+      // (the tab is typically silent when the user talks).
+      if (!tabHasSpeech) return;
       sysInterim = '';
       for (let i = e.resultIndex; i < e.results.length; i++) {
         if (e.results[i].isFinal) {
@@ -915,27 +978,70 @@
       }
       setSysTx(sysAcc, sysInterim);
     };
-    sysRec.onspeechstart = () => setVadDot(true);
-    sysRec.onspeechend   = () => setVadDot(false);
     sysRec.onerror = (e) => {
-      if (e.error === 'no-speech') return;
+      if (e.error === 'no-speech' || e.error === 'aborted') return;
       if (e.error === 'not-allowed') { setSysStatus('⚠️ Mic permission denied'); stopSys(true); }
     };
     sysRec.onend = () => { if (sysCapturing) try { sysRec.start(); } catch(_){} };
 
-    try { sysRec.start(); } catch(err) { setSysStatus('⚠️ ' + err.message); return; }
+    try { sysRec.start(); } catch (err) { setSysStatus('⚠️ ' + err.message); stopSys(true); return; }
 
     sysCapturing = true;
     document.getElementById('sys-start').style.display = 'none';
     document.getElementById('sys-stop').style.display  = '';
-    setSysStatus('👂 Listening — speak or let your interviewer speak…');
+    setSysStatus('👂 Waiting for interviewer to speak…');
     setVadDot(false);
+
+    // ── 4. Start VAD loop ──────────────────────────────────────────────────────
+    _vadLoop();
+  }
+
+  function _vadLoop() {
+    if (!sysCapturing || !displayAnalyser) return;
+
+    // Measure RMS energy of the tab audio
+    const buf = new Float32Array(displayAnalyser.frequencyBinCount);
+    displayAnalyser.getFloatTimeDomainData(buf);
+    let rmsSum = 0;
+    for (let i = 0; i < buf.length; i++) rmsSum += buf[i] * buf[i];
+    const rms = Math.sqrt(rmsSum / buf.length);
+
+    if (rms > VAD_THRESHOLD) {
+      // Tab has active audio → interviewer is speaking
+      clearTimeout(vadHoldTimer); vadHoldTimer = null;
+      if (!tabHasSpeech) {
+        tabHasSpeech = true;
+        setVadDot(true);
+        setSysStatus('🎙️ Interviewer detected — transcribing…');
+      }
+    } else if (tabHasSpeech && !vadHoldTimer) {
+      // Tab went quiet — hold the gate open briefly to smooth over natural pauses
+      vadHoldTimer = setTimeout(() => {
+        tabHasSpeech = false;
+        vadHoldTimer = null;
+        setVadDot(false);
+        setSysStatus('👂 Waiting for interviewer to speak…');
+      }, VAD_HOLD_MS);
+    }
+
+    vadTimerId = setTimeout(_vadLoop, VAD_INTERVAL);
   }
 
   function stopSys(silent = false) {
-    sysCapturing = false; clearTimeout(sysTimer);
+    sysCapturing = false;
+    tabHasSpeech = false;
+    clearTimeout(sysTimer);
+    clearTimeout(vadTimerId);    vadTimerId   = null;
+    clearTimeout(vadHoldTimer);  vadHoldTimer = null;
+
+    // Tear down tab audio stream & AudioContext
+    if (displayStream)   { displayStream.getTracks().forEach(t => t.stop()); displayStream = null; }
+    if (displayAudioCtx) { displayAudioCtx.close().catch(() => {}); displayAudioCtx = null; displayAnalyser = null; }
+
+    // Tear down Speech Recognition
     if (sysRec) { try { sysRec.stop(); } catch(_){} sysRec = null; }
     sysAcc = ''; sysInterim = '';
+
     document.getElementById('sys-start').style.display = '';
     document.getElementById('sys-stop').style.display  = 'none';
     if (!silent) setSysStatus('Stopped — click Start Listening to resume');
