@@ -30,6 +30,19 @@ const upload = multer({
   },
 });
 
+// Accept audio blobs for Whisper transcription
+const audioUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 10 * 1024 * 1024 }, // 10 MB — ~5 min of opus audio
+  fileFilter: (_req, file, cb) => {
+    if (file.mimetype.startsWith('audio/') || file.mimetype === 'application/octet-stream') {
+      cb(null, true);
+    } else {
+      cb(new Error('Audio files only'));
+    }
+  },
+});
+
 const SYSTEM_PROMPT = `You are an expert interview coach. Given a candidate's resume and a job description, craft a punchy, memorable interview answer as exactly 4 bullet points.
 
 Output format — each line MUST start with the → symbol followed by a space:
@@ -227,29 +240,57 @@ JSON response: {"isQuestion": true/false, "question": "clean question or null", 
   }
 });
 
+// GET /api/interview/transcribe — check if transcription service is configured
+router.get('/transcribe', (_req: Request, res: Response) => {
+  const groqKey   = process.env.GROQ_API_KEY;
+  const openaiKey = process.env.OPENAI_API_KEY;
+  if (groqKey || openaiKey) {
+    res.json({ available: true, service: groqKey ? 'groq' : 'openai' });
+  } else {
+    res.status(503).json({
+      available: false,
+      message: 'Add GROQ_API_KEY (free at groq.com) or OPENAI_API_KEY to Vercel env vars to enable tab-only transcription.',
+      code: 'NO_KEY',
+    });
+  }
+});
+
 // POST /api/interview/transcribe — converts audio blob to text via Whisper
-router.post('/transcribe', upload.single('audio'), async (req: Request, res: Response) => {
+// Prefers Groq (free, ~300ms latency) → falls back to OpenAI Whisper
+router.post('/transcribe', audioUpload.single('audio'), async (req: Request, res: Response) => {
   if (!req.file) {
     res.status(400).json({ message: 'No audio file', code: 'NO_FILE' });
     return;
   }
-  const apiKey = process.env.OPENAI_API_KEY;
+
+  const groqKey   = process.env.GROQ_API_KEY;
+  const openaiKey = process.env.OPENAI_API_KEY;
+  const apiKey    = groqKey || openaiKey;
+
   if (!apiKey) {
-    res.status(503).json({ message: 'Transcription not configured — add OPENAI_API_KEY', code: 'NO_KEY' });
+    res.status(503).json({
+      message: 'Add GROQ_API_KEY (free at groq.com) or OPENAI_API_KEY to Vercel env vars.',
+      code: 'NO_KEY',
+    });
     return;
   }
+
   try {
-    const openai = new OpenAI({ apiKey });
     const mimeType = req.file.mimetype || 'audio/webm';
-    const file = await toFile(req.file.buffer, 'audio.webm', { type: mimeType });
-    const result = await openai.audio.transcriptions.create({
-      file,
-      model: 'whisper-1',
-      language: 'en',
-    });
+    const filename = mimeType.includes('ogg') ? 'audio.ogg' : 'audio.webm';
+
+    const openai = groqKey
+      ? new OpenAI({ apiKey: groqKey, baseURL: 'https://api.groq.com/openai/v1' })
+      : new OpenAI({ apiKey: openaiKey! });
+
+    const model = groqKey ? 'whisper-large-v3-turbo' : 'whisper-1';
+
+    const file   = await toFile(req.file.buffer, filename, { type: mimeType });
+    const result = await openai.audio.transcriptions.create({ file, model, language: 'en' });
+
     res.json({ transcript: result.text.trim() });
   } catch (err) {
-    console.error('Transcription error:', err);
+    console.error('[transcribe] error:', err);
     const msg = err instanceof Error ? err.message : 'Transcription failed';
     res.status(500).json({ message: msg, code: 'TRANSCRIBE_ERROR' });
   }

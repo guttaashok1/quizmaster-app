@@ -29,6 +29,7 @@ import { initDatabase } from './services/database';
     { key: 'STRIPE_WEBHOOK_SECRET',   service: 'Stripe webhooks (plan activation)' },
     { key: 'STRIPE_MONTHLY_PRICE_ID', service: 'Stripe monthly plan' },
     { key: 'STRIPE_LIFETIME_PRICE_ID',service: 'Stripe lifetime plan' },
+    { key: 'GROQ_API_KEY',            service: 'Groq Whisper (free tab-audio transcription — groq.com)' },
     { key: 'RESEND_API_KEY',          service: 'Resend (password reset emails)' },
     { key: 'RESEND_FROM_EMAIL',       service: 'Resend from address' },
     { key: 'SENTRY_DSN',              service: 'Sentry error monitoring' },
