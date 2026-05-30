@@ -198,3 +198,54 @@ window.Auth = (() => {
     getQuota, authHeaders,
   };
 })();
+
+// ── PWA bootstrap (runs on every page that loads auth.js) ─────────────────
+(function initPWA() {
+  // Inject <link rel="manifest"> if the page doesn't already have one
+  if (!document.querySelector('link[rel="manifest"]')) {
+    const el = document.createElement('link');
+    el.rel  = 'manifest';
+    el.href = '/manifest.json';
+    document.head.appendChild(el);
+  }
+
+  // theme-color meta — controls browser chrome colour on Android
+  if (!document.querySelector('meta[name="theme-color"]')) {
+    const el = document.createElement('meta');
+    el.name    = 'theme-color';
+    el.content = '#6366f1';
+    document.head.appendChild(el);
+  }
+
+  // iOS Safari PWA support
+  const appleDefaults = [
+    ['apple-mobile-web-app-capable',          'yes'],
+    ['apple-mobile-web-app-status-bar-style', 'black-translucent'],
+    ['apple-mobile-web-app-title',            'Interview Coach'],
+  ];
+  appleDefaults.forEach(([name, content]) => {
+    if (!document.querySelector(`meta[name="${name}"]`)) {
+      const el = document.createElement('meta');
+      el.name    = name;
+      el.content = content;
+      document.head.appendChild(el);
+    }
+  });
+
+  // iOS touch icon (shown when user adds to Home Screen)
+  if (!document.querySelector('link[rel="apple-touch-icon"]')) {
+    const el = document.createElement('link');
+    el.rel  = 'apple-touch-icon';
+    el.href = '/icons/icon.svg';
+    document.head.appendChild(el);
+  }
+
+  // Register service worker
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('/sw.js').catch((err) => {
+        console.warn('[PWA] Service worker registration failed:', err);
+      });
+    });
+  }
+})();
