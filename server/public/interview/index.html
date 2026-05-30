@@ -609,6 +609,7 @@
   let displayStream   = null;
   let sysMediaRec     = null;   // active MediaRecorder instance
   let sysRecChunks    = [];     // audio chunks for current segment
+  let sysLastChunk    = '';     // dedup: last accepted transcript text
   // Legacy VAD vars kept so stopSys() can always clean them up safely
   let displayAudioCtx = null, displayAnalyser = null;
   let tabHasSpeech = false, vadTimerId = null, vadHoldTimer = null;
@@ -953,11 +954,15 @@
     };
 
     // ── 2. Start recording & transcription loop ───────────────────────────────
+    // Stop any in-progress Read Aloud — its TTS audio would be captured and looped back
+    if (window.speechSynthesis) window.speechSynthesis.cancel();
+    if (utterance) { utterance = null; }
+
     sysCapturing = true;
-    sysAcc = ''; sysInterim = '';
+    sysAcc = ''; sysInterim = ''; sysLastChunk = '';
     document.getElementById('sys-start').style.display = 'none';
     document.getElementById('sys-stop').style.display  = '';
-    setSysStatus('🎙️ Recording interviewer audio — your voice is not captured…');
+    setSysStatus('🎙️ Recording interviewer audio — share the Zoom/Meet tab, NOT this tab…');
     setVadDot(true);
 
     _startChunk();
@@ -1003,12 +1008,27 @@
 
           const text = (data.transcript || '').trim();
           if (text) {
-            sysAcc += text + ' ';
-            setSysTx(sysAcc, '');
-            updateSysBtn();
-            clearTimeout(sysTimer);
-            if (sysAcc.trim().split(/\s+/).length >= 6)
-              sysTimer = setTimeout(sysAutoAnswer, SYS_SILENCE);
+            // Dedup: discard chunks that are identical or pure repetitions of the last one.
+            // This catches "Thank you. Thank you." feedback loops when the wrong tab is shared.
+            const norm     = t => t.toLowerCase().replace(/[^a-z0-9\s]/g, '').trim();
+            const stripped = norm(text);
+            const lastStrp = norm(sysLastChunk);
+            const isRepeat = stripped === lastStrp
+              || (stripped.length > 0 && lastStrp.length > 0 &&
+                  (lastStrp.includes(stripped) || stripped.includes(lastStrp)));
+
+            if (isRepeat) {
+              setSysStatus('⚠️ Repeated audio detected — make sure you shared your interview tab (Zoom/Meet), not this tab.');
+            } else {
+              sysLastChunk = text;
+              sysAcc += text + ' ';
+              setSysTx(sysAcc, '');
+              updateSysBtn();
+              clearTimeout(sysTimer);
+              if (sysAcc.trim().split(/\s+/).length >= 6)
+                sysTimer = setTimeout(sysAutoAnswer, SYS_SILENCE);
+              setSysStatus('🎙️ Recording interviewer audio…');
+            }
           }
         } catch (err) {
           console.warn('[sys] transcription fetch error:', err.message);
