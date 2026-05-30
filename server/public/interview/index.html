@@ -489,12 +489,8 @@
 
   <!-- ── SYSTEM AUDIO PANEL ─────────────────────────────────────────────────── -->
   <div class="voice-card" id="sys-panel" style="display:none">
-    <div class="sys-info">
-      🖥️ <strong>Captures only your interviewer — your voice is never in the audio.</strong><br>
-      Click <em>Start Listening</em>, then share the browser tab where your interview
-      is running (Zoom Web, Google Meet, Teams Web). Make sure
-      <strong>"Share tab audio"</strong> is checked in Chrome's sharing dialog.
-      <br><span style="opacity:0.7;font-size:12px">Requires GROQ_API_KEY or OPENAI_API_KEY in Vercel — see Settings.</span>
+    <div class="sys-info" id="sys-info-box">
+      <!-- filled by JS based on OS -->
     </div>
     <div class="status-row">
       <div class="vad-dot" id="vad-dot"></div>
@@ -962,7 +958,10 @@
     sysAcc = ''; sysInterim = ''; sysLastChunk = '';
     document.getElementById('sys-start').style.display = 'none';
     document.getElementById('sys-stop').style.display  = '';
-    setSysStatus('🎙️ Recording interviewer audio — share the Zoom/Meet tab, NOT this tab…');
+    const isMac2 = /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent);
+    setSysStatus(isMac2
+      ? '🎙️ Recording — use Zoom/Teams in Chrome browser for best results on Mac…'
+      : '🎙️ Recording — select Entire Screen + "Share system audio" for desktop Zoom/Teams…');
     setVadDot(true);
 
     _startChunk();
@@ -1369,6 +1368,39 @@
       btn.textContent = '✅ Copied!'; setTimeout(() => btn.textContent = orig, 2000);
     });
   }
+
+  // ── System Audio info box — OS-aware instructions ─────────────────────────────
+  (function() {
+    const isMac = /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent);
+    const box   = document.getElementById('sys-info-box');
+    if (!box) return;
+
+    if (isMac) {
+      box.innerHTML = `
+        🖥️ <strong>macOS — two options to capture Zoom/Teams desktop audio:</strong><br>
+        <strong>Option A (easiest):</strong> Open your call in Chrome —
+        <a href="https://zoom.us/wc/join" target="_blank" style="color:#a5b4fc">zoom.us/wc/join</a> or
+        <a href="https://teams.microsoft.com" target="_blank" style="color:#a5b4fc">teams.microsoft.com</a>
+        — then share that browser tab and check <strong>"Share tab audio"</strong>.<br>
+        <strong>Option B (desktop app):</strong> Install
+        <a href="https://existential.audio/blackhole/" target="_blank" style="color:#a5b4fc">BlackHole</a>
+        (free virtual audio driver), set it as your Mac's sound output, then share
+        <em>Entire Screen</em> in Chrome's dialog.
+        <br><span style="opacity:0.65;font-size:12px">Requires GROQ_API_KEY in Vercel (free at groq.com).</span>`;
+    } else {
+      // Windows / Linux
+      box.innerHTML = `
+        🖥️ <strong>Using Zoom or Teams desktop app?</strong><br>
+        In Chrome's sharing dialog, click the <strong>Entire Screen</strong> tab,
+        tick <strong>"Also share system audio"</strong>, then click Share.
+        This captures all desktop audio including Zoom &amp; Teams.<br>
+        <em>Or open your call in Chrome browser instead —
+        <a href="https://zoom.us/wc/join" target="_blank" style="color:#a5b4fc">zoom.us/wc/join</a> /
+        <a href="https://teams.microsoft.com" target="_blank" style="color:#a5b4fc">teams.microsoft.com</a>
+        — and share just that tab.</em>
+        <br><span style="opacity:0.65;font-size:12px">Requires GROQ_API_KEY in Vercel (free at groq.com).</span>`;
+    }
+  })();
 
   // ── Init ──────────────────────────────────────────────────────────────────────
   document.addEventListener('DOMContentLoaded', loadProfileList);
