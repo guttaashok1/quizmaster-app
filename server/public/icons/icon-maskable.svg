@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#6366f1"/>
+      <stop offset="100%" stop-color="#8b5cf6"/>
+    </linearGradient>
+    <linearGradient id="mic" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="100%" stop-color="#e0e7ff"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Full bleed background (maskable — extends to all edges) -->
+  <rect width="512" height="512" fill="url(#bg)"/>
+
+  <!-- Inner glow -->
+  <circle cx="256" cy="220" r="180" fill="rgba(255,255,255,0.06)"/>
+
+  <!-- Microphone capsule — slightly smaller to stay inside safe zone -->
+  <rect x="206" y="120" width="100" height="155" rx="50" fill="url(#mic)"/>
+
+  <!-- Stand arc -->
+  <path d="M186 260 Q186 340 256 340 Q326 340 326 260"
+        stroke="white" stroke-width="20" fill="none" stroke-linecap="round"/>
+
+  <!-- Stem -->
+  <line x1="256" y1="340" x2="256" y2="382"
+        stroke="white" stroke-width="20" stroke-linecap="round"/>
+
+  <!-- Base bar -->
+  <line x1="216" y1="382" x2="296" y2="382"
+        stroke="white" stroke-width="20" stroke-linecap="round"/>
+</svg>
