@@ -490,8 +490,22 @@
   <!-- ── SYSTEM AUDIO PANEL ─────────────────────────────────────────────────── -->
   <div class="voice-card" id="sys-panel" style="display:none">
     <div class="sys-info" id="sys-info-box">
-      <!-- filled by JS based on OS -->
+      <!-- filled by JS based on OS + installed devices -->
     </div>
+
+    <!-- Device picker — shown on Mac once BlackHole (or similar) is detected -->
+    <div id="sys-device-row" style="display:none;margin-bottom:14px">
+      <label style="font-size:13px;color:var(--text-muted);display:block;margin-bottom:6px;font-weight:600">
+        🎚️ Audio source
+      </label>
+      <select id="sys-device-select"
+              style="width:100%;background:rgba(255,255,255,0.06);border:1px solid var(--border);
+                     color:#fff;padding:9px 12px;border-radius:10px;font-size:14px;cursor:pointer;
+                     outline:none;appearance:none;-webkit-appearance:none">
+        <option value="tab">📺 Browser tab (share via Chrome dialog)</option>
+      </select>
+    </div>
+
     <div class="status-row">
       <div class="vad-dot" id="vad-dot"></div>
       <span class="stext" id="sys-status">Press Start Listening to begin</span>
@@ -815,6 +829,7 @@
     document.getElementById('mic-panel').style.display = mode === 'mic' ? '' : 'none';
     document.getElementById('sys-panel').style.display = mode === 'system' ? '' : 'none';
     if (mode === 'mic' && sysCapturing) stopSys(true);
+    if (mode === 'system') initSysDevices(); // detect BlackHole on first switch
   }
 
   // ── Answer Tab Toggle ─────────────────────────────────────────────────────────
@@ -902,10 +917,62 @@
   }
 
   // ── System Audio Mode ─────────────────────────────────────────────────────────
-  // Architecture: getDisplayMedia (tab only) → MediaRecorder (4-second chunks)
-  //               → POST /api/interview/transcribe (Groq/OpenAI Whisper)
-  // The microphone is NEVER used. Only the shared interview tab's audio is captured,
-  // so the user's own voice is physically not present in the audio stream.
+  // Two capture paths:
+  //   A) getUserMedia(deviceId)  — BlackHole or any audio-input device (Mac)
+  //   B) getDisplayMedia         — share a browser tab (Windows or Mac browser Zoom)
+  // The microphone is NEVER used in either path.
+
+  let _sysDevicesInit = false; // run initSysDevices only once per page load
+
+  async function initSysDevices() {
+    const isMac = /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent);
+    if (!isMac || _sysDevicesInit) return;
+    _sysDevicesInit = true;
+
+    try {
+      // Need getUserMedia permission before Chrome reveals device labels
+      const temp = await navigator.mediaDevices.getUserMedia({ audio: true }).catch(() => null);
+      if (temp) temp.getTracks().forEach(t => t.stop());
+
+      const devices = await navigator.mediaDevices.enumerateDevices();
+      const inputs  = devices.filter(d => d.kind === 'audioinput');
+      const bh      = inputs.find(d => /blackhole/i.test(d.label));
+
+      if (!bh) return; // BlackHole not installed — keep existing install instructions
+
+      const box = document.getElementById('sys-info-box');
+      const row = document.getElementById('sys-device-row');
+      const sel = document.getElementById('sys-device-select');
+      if (!box || !row || !sel) return;
+
+      // Replace info panel with setup steps now that BlackHole is installed
+      box.innerHTML = `
+        ✅ <strong>BlackHole 2ch detected!</strong> One-time Zoom/Teams setup:<br>
+        <strong>1.</strong> Open <em>Audio MIDI Setup</em> (Spotlight → "Audio MIDI Setup")<br>
+        <strong>2.</strong> Click <strong>+</strong> → <strong>Create Multi-Output Device</strong><br>
+        <strong>3.</strong> Tick both <strong>BlackHole 2ch</strong> and your <strong>headphones / Built-in Output</strong><br>
+        <strong>4.</strong> In <strong>Zoom</strong>: Settings → Audio → Speaker → <strong>Multi-Output Device</strong><br>
+           &nbsp;&nbsp;&nbsp;In <strong>Teams</strong>: Settings → Devices → Speaker → <strong>Multi-Output Device</strong><br>
+        <strong>5.</strong> Select <strong>BlackHole 2ch</strong> below, then click Start Listening
+        <br><span style="opacity:0.65;font-size:12px">
+          You'll still hear the call normally — BlackHole silently copies it to the coach.
+        </span>`;
+
+      // Populate dropdown: tab option + all audio inputs
+      sel.innerHTML = '<option value="tab">📺 Browser tab (Zoom/Meet in Chrome)</option>';
+      inputs.forEach(d => {
+        const opt = document.createElement('option');
+        opt.value = d.deviceId;
+        opt.textContent = d.label || 'Microphone';
+        if (d.deviceId === bh.deviceId) opt.selected = true;
+        sel.appendChild(opt);
+      });
+
+      row.style.display = 'block';
+    } catch (err) {
+      console.warn('[initSysDevices]', err);
+    }
+  }
 
   async function startSys() {
     // ── 0. Check transcription service is configured ───────────────────────────
@@ -920,33 +987,52 @@
       }
     } catch (_) { /* server unreachable — proceed, error will surface on first chunk */ }
 
-    // ── 1. Capture interview tab audio via getDisplayMedia ────────────────────
-    setSysStatus('🖥️ Select your interview tab in the sharing dialog…');
+    // ── 1. Get audio stream — device (BlackHole) OR tab (getDisplayMedia) ─────
+    const selEl  = document.getElementById('sys-device-select');
+    const selVal = selEl ? selEl.value : 'tab';
+    const selLbl = selEl ? (selEl.options[selEl.selectedIndex]?.text || 'audio device') : 'tab';
+
     let stream;
-    try {
-      stream = await navigator.mediaDevices.getDisplayMedia({
-        audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false },
-        video: true,  // Chrome requires video:true to show "Share tab audio" checkbox
-      });
-    } catch (_) {
-      setSysStatus('Cancelled — click Start Listening to try again');
-      return;
-    }
-
-    // Drop video immediately — we only need audio
-    stream.getVideoTracks().forEach(t => t.stop());
-
-    const audioTracks = stream.getAudioTracks();
-    if (!audioTracks.length) {
-      setSysStatus('⚠️ No audio captured. In Chrome\'s dialog check "Share tab audio" then retry.');
-      stream.getTracks().forEach(t => t.stop());
-      return;
+    if (selVal !== 'tab') {
+      // ── Path A: getUserMedia — BlackHole or other device ──────────────────
+      setSysStatus('🎚️ Connecting to ' + selLbl + '…');
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({
+          audio: {
+            deviceId: { exact: selVal },
+            echoCancellation: false,
+            noiseSuppression: false,
+            autoGainControl: false,
+          },
+        });
+      } catch (err) {
+        setSysStatus('⚠️ Could not access device — ' + err.message);
+        return;
+      }
+    } else {
+      // ── Path B: getDisplayMedia — share a browser tab ─────────────────────
+      setSysStatus('🖥️ Select your interview tab in the sharing dialog…');
+      try {
+        stream = await navigator.mediaDevices.getDisplayMedia({
+          audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false },
+          video: true,  // Chrome requires video:true to show "Share tab audio" checkbox
+        });
+      } catch (_) {
+        setSysStatus('Cancelled — click Start Listening to try again');
+        return;
+      }
+      // Drop video immediately — we only need audio
+      stream.getVideoTracks().forEach(t => t.stop());
+      if (!stream.getAudioTracks().length) {
+        setSysStatus('⚠️ No audio captured. In Chrome\'s dialog check "Share tab audio" then retry.');
+        stream.getTracks().forEach(t => t.stop());
+        return;
+      }
     }
 
     displayStream = stream;
-    // Handle user stopping share via the browser toolbar
-    audioTracks[0].onended = () => {
-      if (sysCapturing) { stopSys(true); setSysStatus('⚠️ Tab sharing stopped — click Start Listening to reconnect'); }
+    stream.getAudioTracks()[0].onended = () => {
+      if (sysCapturing) { stopSys(true); setSysStatus('⚠️ Audio source disconnected — click Start Listening to reconnect'); }
     };
 
     // ── 2. Start recording & transcription loop ───────────────────────────────
@@ -958,10 +1044,15 @@
     sysAcc = ''; sysInterim = ''; sysLastChunk = '';
     document.getElementById('sys-start').style.display = 'none';
     document.getElementById('sys-stop').style.display  = '';
-    const isMac2 = /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent);
-    setSysStatus(isMac2
-      ? '🎙️ Recording — use Zoom/Teams in Chrome browser for best results on Mac…'
-      : '🎙️ Recording — select Entire Screen + "Share system audio" for desktop Zoom/Teams…');
+
+    if (selVal !== 'tab') {
+      setSysStatus('🎙️ Recording via ' + selLbl + ' — Zoom/Teams audio will appear here…');
+    } else {
+      const isMac2 = /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent);
+      setSysStatus(isMac2
+        ? '🎙️ Recording — use Zoom/Teams in Chrome browser for best results on Mac…'
+        : '🎙️ Recording — select Entire Screen + "Share system audio" for desktop Zoom/Teams…');
+    }
     setVadDot(true);
 
     _startChunk();
@@ -1017,7 +1108,11 @@
                   (lastStrp.includes(stripped) || stripped.includes(lastStrp)));
 
             if (isRepeat) {
-              setSysStatus('⚠️ Repeated audio detected — make sure you shared your interview tab (Zoom/Meet), not this tab.');
+              const _sel = document.getElementById('sys-device-select');
+              const _devMode = _sel && _sel.value !== 'tab';
+              setSysStatus(_devMode
+                ? '⚠️ Repeated audio — is Zoom/Teams speaker set to Multi-Output Device (not BlackHole directly)?'
+                : '⚠️ Repeated audio detected — make sure you shared your interview tab (Zoom/Meet), not this tab.');
             } else {
               sysLastChunk = text;
               sysAcc += text + ' ';
