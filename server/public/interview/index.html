@@ -916,6 +916,34 @@
     }
   }
 
+  // ── Audio energy check — prevents Whisper hallucinations on silence ──────────
+  // Whisper routinely invents "Thank you", "Thank you for watching", etc. when
+  // given near-silent audio (e.g. BlackHole with no active call).
+  // We decode each 4-second blob and compute RMS; blobs below the threshold
+  // are discarded before they ever reach Whisper.
+  const ENERGY_THRESHOLD = 0.008; // RMS below this = silence; tune if needed
+
+  async function audioHasEnergy(blob) {
+    try {
+      const arrayBuf = await blob.arrayBuffer();
+      const ctx      = new (window.AudioContext || window.webkitAudioContext)();
+      let decoded;
+      try {
+        decoded = await ctx.decodeAudioData(arrayBuf);
+      } finally {
+        ctx.close();
+      }
+      const data    = decoded.getChannelData(0);
+      const samples = Math.min(data.length, decoded.sampleRate * 4); // check up to 4 s
+      let sumSq = 0;
+      for (let i = 0; i < samples; i++) sumSq += data[i] * data[i];
+      const rms = Math.sqrt(sumSq / samples);
+      return rms > ENERGY_THRESHOLD;
+    } catch {
+      return true; // decode failed → let Whisper decide
+    }
+  }
+
   // ── System Audio Mode ─────────────────────────────────────────────────────────
   // Two capture paths:
   //   A) getUserMedia(deviceId)  — BlackHole or any audio-input device (Mac)
@@ -1077,8 +1105,17 @@
       const blob = new Blob(sysRecChunks, { type: mimeType });
       sysRecChunks = [];
 
-      // Skip near-silent segments (< 1 KB is just codec overhead, no real audio)
-      if (blob.size >= 1000) {
+      // Skip silent/empty segments — both size guard and RMS energy check.
+      // The energy check is the critical one: Whisper hallucinates "Thank you",
+      // "Thanks for watching" etc. from near-silent audio (BlackHole with no call).
+      const hasEnergy = blob.size >= 1000 && await audioHasEnergy(blob);
+      if (!hasEnergy) {
+        // Silent chunk — show a soft waiting status (don't overwrite warnings)
+        const st = document.getElementById('sys-status');
+        if (st && !st.textContent.startsWith('⚠️'))
+          setSysStatus('🎙️ Waiting for audio… (silence detected, no hallucination sent)');
+      }
+      if (hasEnergy) {
         try {
           const form = new FormData();
           form.append('audio', blob, mimeType.includes('ogg') ? 'audio.ogg' : 'audio.webm');
