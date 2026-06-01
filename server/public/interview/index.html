@@ -974,17 +974,47 @@
       if (!box || !row || !sel) return;
 
       // Replace info panel with setup steps now that BlackHole is installed
+      const BH_KEY      = 'ic_bh_setup_hidden';
+      const isHidden    = localStorage.getItem(BH_KEY) === '1';
+
       box.innerHTML = `
-        ✅ <strong>BlackHole 2ch detected!</strong> One-time Zoom/Teams setup:<br>
-        <strong>1.</strong> Open <em>Audio MIDI Setup</em> (Spotlight → "Audio MIDI Setup")<br>
-        <strong>2.</strong> Click <strong>+</strong> → <strong>Create Multi-Output Device</strong><br>
-        <strong>3.</strong> Tick both <strong>BlackHole 2ch</strong> and your <strong>headphones / Built-in Output</strong><br>
-        <strong>4.</strong> In <strong>Zoom</strong>: Settings → Audio → Speaker → <strong>Multi-Output Device</strong><br>
-           &nbsp;&nbsp;&nbsp;In <strong>Teams</strong>: Settings → Devices → Speaker → <strong>Multi-Output Device</strong><br>
-        <strong>5.</strong> Select <strong>BlackHole 2ch</strong> below, then click Start Listening
-        <br><span style="opacity:0.65;font-size:12px">
-          You'll still hear the call normally — BlackHole silently copies it to the coach.
-        </span>`;
+        <div id="bh-setup-bar" style="display:flex;align-items:center;justify-content:space-between;gap:8px;cursor:pointer"
+             onclick="toggleBhSetup()" title="Click to expand/collapse setup guide">
+          <span style="font-weight:700;font-size:13px">
+            ✅ BlackHole 2ch detected
+            <span id="bh-chevron" style="font-size:11px;opacity:0.7;margin-left:4px">${isHidden ? '▸ show setup' : '▾ hide'}</span>
+          </span>
+          <span style="font-size:11px;opacity:0.55;white-space:nowrap">one-time setup</span>
+        </div>
+        <div id="bh-setup-body" style="margin-top:10px;${isHidden ? 'display:none' : ''}">
+          <strong>1.</strong> Open <em>Audio MIDI Setup</em> (Spotlight → "Audio MIDI Setup")<br>
+          <strong>2.</strong> Click <strong>+</strong> → <strong>Create Multi-Output Device</strong><br>
+          <strong>3.</strong> Tick both <strong>BlackHole 2ch</strong> and your <strong>headphones / Built-in Output</strong><br>
+          <strong>4.</strong> In <strong>Zoom</strong>: Settings → Audio → Speaker → <strong>Multi-Output Device</strong><br>
+             &nbsp;&nbsp;&nbsp;In <strong>Teams</strong>: Settings → Devices → Speaker → <strong>Multi-Output Device</strong><br>
+          <strong>5.</strong> Select <strong>BlackHole 2ch</strong> below, then click Start Listening
+          <br><span style="opacity:0.65;font-size:12px">
+            You'll still hear the call normally — BlackHole silently copies it to the coach.
+          </span>
+          <div style="margin-top:10px;text-align:right">
+            <button onclick="event.stopPropagation();toggleBhSetup()"
+                    style="background:rgba(99,102,241,0.12);border:1px solid rgba(99,102,241,0.3);
+                           color:#a5b4fc;padding:4px 12px;border-radius:999px;
+                           font-size:12px;cursor:pointer;font-weight:600">
+              ✓ Done — hide this
+            </button>
+          </div>
+        </div>`;
+
+      window.toggleBhSetup = function() {
+        const body    = document.getElementById('bh-setup-body');
+        const chevron = document.getElementById('bh-chevron');
+        if (!body) return;
+        const hiding = body.style.display !== 'none';
+        body.style.display = hiding ? 'none' : '';
+        chevron.textContent = hiding ? '▸ show setup' : '▾ hide';
+        localStorage.setItem(BH_KEY, hiding ? '1' : '0');
+      };
 
       // Populate dropdown: tab option + all audio inputs
       sel.innerHTML = '<option value="tab">📺 Browser tab (Zoom/Meet in Chrome)</option>';
