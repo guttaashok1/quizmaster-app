@@ -612,7 +612,9 @@
 
   // System audio — Web Speech API (microphone) gated by tab-audio VAD
   let sysRec = null, sysAcc = '', sysInterim = '', sysTimer = null, sysCapturing = false;
-  const SYS_SILENCE = 2500;
+  // Auto-answer fires this many ms after the FIRST silent chunk following speech.
+  // A silent chunk = 4 s of audio with RMS below threshold, confirming interviewer stopped.
+  const SYS_SILENCE = 3000;
 
   // Tab-audio capture (getDisplayMedia → MediaRecorder → Whisper transcription)
   // The microphone is never used in this mode — only the interview tab's audio is captured.
@@ -1139,12 +1141,6 @@
       // The energy check is the critical one: Whisper hallucinates "Thank you",
       // "Thanks for watching" etc. from near-silent audio (BlackHole with no call).
       const hasEnergy = blob.size >= 1000 && await audioHasEnergy(blob);
-      if (!hasEnergy) {
-        // Silent chunk — show a soft waiting status (don't overwrite warnings)
-        const st = document.getElementById('sys-status');
-        if (st && !st.textContent.startsWith('⚠️'))
-          setSysStatus('🎙️ Waiting for audio… (silence detected, no hallucination sent)');
-      }
       if (hasEnergy) {
         try {
           const form = new FormData();
@@ -1185,14 +1181,26 @@
               sysAcc += text + ' ';
               setSysTx(sysAcc, '');
               updateSysBtn();
+              // Interviewer is STILL speaking — cancel any pending auto-answer timer
               clearTimeout(sysTimer);
-              if (sysAcc.trim().split(/\s+/).length >= 6)
-                sysTimer = setTimeout(sysAutoAnswer, SYS_SILENCE);
-              setSysStatus('🎙️ Recording interviewer audio…');
+              sysTimer = null;
+              setSysStatus('🎙️ Listening — capturing question…');
             }
           }
         } catch (err) {
           console.warn('[sys] transcription fetch error:', err.message);
+        }
+      } else {
+        // ── Silent chunk — interviewer has paused or finished ───────────────
+        const wordsSoFar = sysAcc.trim().split(/\s+/).filter(Boolean).length;
+        if (wordsSoFar >= 5 && !sysTimer) {
+          // Enough words captured + silence confirmed → start auto-answer countdown
+          sysTimer = setTimeout(sysAutoAnswer, SYS_SILENCE);
+          setSysStatus(`⏳ Pause detected (${wordsSoFar} words) — auto-answering in 3 s… or click Get Answer`);
+        } else if (wordsSoFar === 0) {
+          setSysStatus('🎙️ Waiting for interviewer to speak…');
+        } else {
+          setSysStatus('🎙️ Listening — capturing question…');
         }
       }
 
