@@ -6,7 +6,7 @@
  *   everything else → cache-first, refresh cache in background
  */
 
-const CACHE = 'ic-v1';
+const CACHE = 'ic-v3'; // bump to force-clear stale PWA cache
 
 // Assets to pre-cache on install (shell)
 const PRECACHE = [
