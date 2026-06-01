@@ -43,35 +43,21 @@ const audioUpload = multer({
   },
 });
 
-const SYSTEM_PROMPT = `You are an expert interview coach. Given a candidate's resume and a job description, craft a punchy, memorable interview answer as exactly 4 bullet points.
+const SYSTEM_PROMPT = `You are an expert interview coach. Write a natural, spoken interview answer in 3 sentences — confident first-person, no bullet points, no STAR labels.
 
-Output format — each line MUST start with the → symbol followed by a space:
-→ [Situation: set the scene in one sentence]
-→ [Action: what you specifically did — your key decision or approach]
-→ [Result: a concrete outcome, ideally with a metric or number]
-→ [Connection: why this experience makes you right for THIS specific role]
+Sentence 1: Ground it in a specific experience from the resume (role, project, or situation).
+Sentence 2: What you did and one concrete result or number.
+Sentence 3: Connect that experience directly to this role or company — make it feel inevitable.
 
-Rules:
-- Write in first person as if YOU are the candidate speaking aloud
-- Be specific: reference real details from the resume and job description
-- Each bullet is 1–2 tight sentences — confident and direct, no filler
-- Include at least one concrete metric or measurable result
-- Output ONLY the 4 → lines — no intro text, no title, no extra commentary`;
+Sound like someone speaking in a real interview: direct, warm, no corporate jargon. Pull real specifics from the resume and job description.
+Output ONLY the 3-sentence answer — no intro, no labels, no extra text.`;
 
-const ONE_LINER_PROMPT = `You are an expert interview coach. Given a candidate's resume and a job description, produce exactly 4 punchy one-liner statements the candidate can speak directly in an interview — one per bullet.
+const ONE_LINER_PROMPT = `You are an expert interview coach. Give exactly 4 punchy talking points — one sentence each — that the candidate can weave naturally into their answer.
 
-Output format — each line MUST start with the → symbol followed by a space:
-→ [one tight, confident sentence — first person, present or past tense]
-→ [one tight, confident sentence — first person, present or past tense]
-→ [one tight, confident sentence — first person, present or past tense]
-→ [one tight, confident sentence — first person, present or past tense]
-
-Rules:
-- Each line is ONE sentence only — no sub-clauses, no semicolons
-- Write as if speaking aloud: direct, confident, no filler words
-- Include a concrete number or outcome in at least 2 of the 4 lines
-- Reference specifics from the resume and job description
-- Output ONLY the 4 → lines — no intro text, no title, no extra commentary`;
+Each line starts with → and is one first-person sentence, spoken confidently.
+At least 2 lines must include a concrete number or outcome.
+Pull real specifics from the resume and job description.
+Output ONLY the 4 → lines — no intro, no labels, no extra text.`;
 
 const HINTS_PROMPT = `You are generating live interview cue cards. Given a resume, job description, and interview question, produce exactly 4 ultra-short cue lines the candidate can glance at in 1–2 seconds while speaking.
 
@@ -148,7 +134,8 @@ router.post('/answer-stream', async (req: Request, res: Response) => {
     const chosenPrompt = mode === 'hints' ? HINTS_PROMPT
                        : mode === 'one-liner' ? ONE_LINER_PROMPT
                        : SYSTEM_PROMPT;
-    const maxTokens    = mode === 'hints' ? 200 : 400;
+    // Shorter answers = faster streaming; natural 3-sentence answer ≈ 80-120 tokens
+    const maxTokens = mode === 'hints' ? 120 : mode === 'one-liner' ? 150 : 180;
 
     const stream = client.messages.stream({
       model: 'claude-sonnet-4-6',
