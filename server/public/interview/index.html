@@ -398,6 +398,22 @@
     .answer-tab.active.loading .tab-dot { background: var(--accent); }
     .answer-tab.active.ready   .tab-dot { background: var(--green); }
 
+    /* ── Dual transcript panels ───────────────────────────────────────────── */
+    .tx-panel { display: flex; flex-direction: column; gap: 6px; }
+    .tx-panel-hd {
+      display: flex; align-items: center; gap: 7px;
+      font-size: 11px; font-weight: 700; letter-spacing: 0.08em;
+      text-transform: uppercase; color: var(--muted);
+    }
+    .tx-dot {
+      width: 7px; height: 7px; border-radius: 50%; background: var(--border);
+      flex-shrink: 0; transition: background 0.3s, box-shadow 0.3s;
+    }
+    .tx-dot.on { background: var(--green); box-shadow: 0 0 5px rgba(16,185,129,0.45); animation: blink 1s infinite; }
+    .tx-dot.you { background: var(--accent); box-shadow: 0 0 5px rgba(99,102,241,0.45); animation: blink 1s infinite; }
+    /* Compact transcript inside panels */
+    .tx-panel .transcript { min-height: 60px; margin-bottom: 0; font-size: 14px; }
+
     @media (max-width: 768px) {
       .nav { padding: 0 14px; }
       #session.on { height: auto; overflow: visible; }
@@ -452,6 +468,26 @@
         </select>
         <span class="select-caret">▾</span>
       </div>
+      <!-- Audio mode — one-time choice -->
+      <div style="margin-top:20px;margin-bottom:16px">
+        <div class="setup-label">Capture Mode</div>
+        <div class="mode-toggle" id="setup-mode-toggle" style="margin-bottom:12px">
+          <button class="mode-btn on" id="setup-mode-mic" onclick="setSetupMode('mic')">🎙️ My Microphone</button>
+          <button class="mode-btn" id="setup-mode-sys" onclick="setSetupMode('system')">🖥️ System Audio</button>
+        </div>
+        <!-- Audio source — revealed when System Audio is selected on Mac with BlackHole -->
+        <div id="setup-sys-section" style="display:none">
+          <div class="setup-label">Audio Source</div>
+          <div class="select-wrap" style="margin-bottom:8px">
+            <select class="profile-select" id="setup-device-select" style="font-size:14px">
+              <option value="tab">📺 Browser tab (Zoom/Meet in Chrome)</option>
+            </select>
+            <span class="select-caret">▾</span>
+          </div>
+          <div id="setup-bh-guide" style="display:none;background:var(--accent-dim);border:1px solid rgba(99,102,241,0.2);border-radius:9px;padding:9px 13px;font-size:12px;color:#a5b4fc;line-height:1.6"></div>
+        </div>
+      </div>
+
       <div class="setup-btns">
         <a href="/profiles.html" class="btn-outline-sm">⚙️ Manage Profiles</a>
         <button class="btn-begin" id="begin-btn" onclick="beginSession()" disabled>
@@ -479,85 +515,83 @@
 <div id="session">
 <div class="session-wrap">
 
-  <!-- LEFT PANE: capture controls -->
+  <!-- LEFT PANE: live transcript + controls -->
   <div class="left-pane">
-  <div class="mode-toggle">
-    <button class="mode-btn on" id="mode-mic" onclick="setMode('mic')">🎙️ My Microphone</button>
-    <button class="mode-btn"    id="mode-sys" onclick="setMode('system')">🖥️ System Audio</button>
-  </div>
 
-  <!-- ── MIC PANEL ──────────────────────────────────────────────────────────── -->
-  <div class="voice-card" id="mic-panel">
-    <div class="status-row">
-      <div class="sdot" id="mic-dot"></div>
-      <span class="stext" id="mic-status">Press Start Listening and speak your question</span>
-      <div class="wave" id="mic-wave">
-        <span></span><span></span><span></span><span></span><span></span><span></span>
+  <!-- Hidden toggles kept for setMode() JS compatibility -->
+  <div style="display:none">
+    <button id="mode-mic"></button>
+    <button id="mode-sys"></button>
+    <div id="mic-panel">
+      <div id="mic-dot"></div><span id="mic-status"></span>
+      <div id="mic-tx"></div>
+      <button id="mic-start" disabled></button>
+      <button id="mic-stop"  disabled></button>
+      <div id="no-support"></div>
+      <div class="wave" id="mic-wave"></div>
+    </div>
+    <div id="sys-panel">
+      <div id="sys-info-box"></div>
+      <div id="sys-device-row">
+        <select id="sys-device-select"><option value="tab">tab</option></select>
       </div>
     </div>
-    <div class="no-support-msg" id="no-support">
-      Voice recognition requires Chrome or Edge. Switch to <strong>System Audio</strong> mode or use a supported browser.
-    </div>
-    <div class="transcript" id="mic-tx">
-      <span class="tx-ph">Your spoken question will appear here…</span>
-    </div>
-    <div class="btn-row">
-      <button class="btn-listen" id="mic-start" onclick="startMic()" disabled>🎙️ Start Listening</button>
-      <button class="btn-stop"   id="mic-stop"  onclick="stopMic()"  disabled>⏹ Stop</button>
-    </div>
   </div>
 
-  <!-- ── SYSTEM AUDIO PANEL ─────────────────────────────────────────────────── -->
-  <div class="voice-card" id="sys-panel" style="display:none">
-    <div class="sys-info" id="sys-info-box">
-      <!-- filled by JS based on OS + installed devices -->
-    </div>
+  <!-- Status bar -->
+  <div class="status-row">
+    <div class="vad-dot" id="vad-dot"></div>
+    <span class="stext" id="sys-status">Press Start Listening to begin</span>
+  </div>
 
-    <!-- Device picker — shown on Mac once BlackHole (or similar) is detected -->
-    <div id="sys-device-row" style="display:none;margin-bottom:14px">
-      <label style="font-size:13px;color:var(--text-muted);display:block;margin-bottom:6px;font-weight:600">
-        🎚️ Audio source
-      </label>
-      <select id="sys-device-select"
-              style="width:100%;background:rgba(255,255,255,0.06);border:1px solid var(--border);
-                     color:#fff;padding:9px 12px;border-radius:10px;font-size:14px;cursor:pointer;
-                     outline:none;appearance:none;-webkit-appearance:none">
-        <option value="tab">📺 Browser tab (share via Chrome dialog)</option>
-      </select>
-    </div>
-
-    <div class="status-row">
-      <div class="vad-dot" id="vad-dot"></div>
-      <span class="stext" id="sys-status">Press Start Listening to begin</span>
+  <!-- 🎤 Interviewer transcript -->
+  <div class="tx-panel">
+    <div class="tx-panel-hd">
+      <div class="tx-dot" id="interviewer-dot"></div>
+      🎤 Interviewer
     </div>
     <div class="transcript" id="sys-tx">
       <span class="tx-ph">Interviewer's question will appear here…</span>
     </div>
-    <!-- Manual question input -->
-    <div class="manual-section">
-      <div class="manual-label">
-        ✏️ Edit or type question manually
-        <span style="font-weight:400;opacity:0.65"> (auto-filled from voice)</span>
-      </div>
-      <textarea class="manual-q" id="sys-q"
-        placeholder="Type or paste the interview question here, then click Get Answer…"
-        rows="3"
-        onkeydown="if((event.ctrlKey||event.metaKey)&&event.key==='Enter'){event.preventDefault();sysSubmit();}"
-        oninput="this.dataset.edited='1';updateSysBtn()"
-        onfocus="this.style.borderColor='var(--accent)'"
-        onblur="this.style.borderColor='var(--border)'"></textarea>
-      <div class="manual-footer">
-        <span class="manual-hint">Ctrl + Enter to submit</span>
-        <div class="manual-btns">
-          <button class="btn-ghost" onclick="sysClear()">🗑 Clear</button>
-          <button class="btn-get-answer" id="sys-submit" onclick="sysSubmit()" disabled>✨ Get Answer</button>
-        </div>
+  </div>
+
+  <!-- 💬 You transcript -->
+  <div class="tx-panel">
+    <div class="tx-panel-hd">
+      <div class="tx-dot" id="user-dot"></div>
+      💬 You
+    </div>
+    <div class="transcript" id="user-tx">
+      <span class="tx-ph">Your response will appear here…</span>
+    </div>
+  </div>
+
+  <!-- Question to answer -->
+  <div class="manual-section">
+    <div class="manual-label">
+      ✏️ Question to answer
+      <span style="font-weight:400;opacity:0.65"> (auto-filled from Interviewer)</span>
+    </div>
+    <textarea class="manual-q" id="sys-q"
+      placeholder="The interviewer's question auto-fills here — edit if needed, then Get Answer…"
+      rows="2"
+      onkeydown="if((event.ctrlKey||event.metaKey)&&event.key==='Enter'){event.preventDefault();sysSubmit();}"
+      oninput="this.dataset.edited='1';updateSysBtn()"
+      onfocus="this.style.borderColor='var(--accent)'"
+      onblur="this.style.borderColor='var(--border)'"></textarea>
+    <div class="manual-footer">
+      <span class="manual-hint">Ctrl + Enter to submit</span>
+      <div class="manual-btns">
+        <button class="btn-ghost" onclick="sysClear()">🗑 Clear</button>
+        <button class="btn-get-answer" id="sys-submit" onclick="sysSubmit()" disabled>✨ Get Answer</button>
       </div>
     </div>
-    <div class="btn-row" style="margin-top:14px">
-      <button class="btn-listen" id="sys-start" onclick="startSys()">🎙️ Start Listening</button>
-      <button class="btn-stop"   id="sys-stop"  onclick="stopSys()" style="display:none">⏹ Stop</button>
-    </div>
+  </div>
+
+  <!-- Start / Stop -->
+  <div class="btn-row" style="margin-top:4px">
+    <button class="btn-listen" id="sys-start" onclick="startSys()">🎙️ Start Listening</button>
+    <button class="btn-stop"   id="sys-stop"  onclick="stopSys()" style="display:none">⏹ Stop</button>
   </div>
 
   </div><!-- /left-pane -->
@@ -640,6 +674,13 @@
 
   // System audio — Web Speech API (microphone) gated by tab-audio VAD
   let sysRec = null, sysAcc = '', sysInterim = '', sysTimer = null, sysCapturing = false;
+
+  // Setup-screen audio mode selection ('mic' or 'system') — applied when session begins
+  let setupMode = 'mic';
+
+  // "You" transcript — Web Speech API on the user's own microphone (parallel to Whisper)
+  let userSpeechRec = null;
+  let userSpeechAcc = '';
   // Auto-answer fires this many ms after the FIRST silent chunk following speech.
   // A silent chunk = 4 s of audio with RMS below threshold, confirming interviewer stopped.
   const SYS_SILENCE = 3000;
@@ -776,6 +817,9 @@
       // Enable mic button and init
       document.getElementById('mic-start').disabled = false;
       initMic();
+
+      // Apply audio mode chosen on setup screen
+      setMode(setupMode);
 
     } catch(err) {
       btn.textContent = 'Begin Session →';
@@ -974,6 +1018,91 @@
   //   B) getDisplayMedia         — share a browser tab (Windows or Mac browser Zoom)
   // The microphone is NEVER used in either path.
 
+  // ── Setup screen: mode toggle + device picker ─────────────────────────────────
+
+  function setSetupMode(mode) {
+    setupMode = mode;
+    document.getElementById('setup-mode-mic').classList.toggle('on', mode === 'mic');
+    document.getElementById('setup-mode-sys').classList.toggle('on', mode === 'system');
+    const sec = document.getElementById('setup-sys-section');
+    if (sec) sec.style.display = mode === 'system' ? '' : 'none';
+    if (mode === 'system') initSetupDevices();
+  }
+
+  let _setupDevicesInit = false;
+
+  async function initSetupDevices() {
+    if (_setupDevicesInit) return;
+    _setupDevicesInit = true;
+
+    const sel   = document.getElementById('setup-device-select');
+    const guide = document.getElementById('setup-bh-guide');
+    if (!sel) return;
+
+    try {
+      // Need getUserMedia permission before Chrome reveals device labels
+      const temp = await navigator.mediaDevices.getUserMedia({ audio: true }).catch(() => null);
+      if (temp) temp.getTracks().forEach(t => t.stop());
+
+      const devices = await navigator.mediaDevices.enumerateDevices();
+      const inputs  = devices.filter(d => d.kind === 'audioinput');
+      const bh      = inputs.find(d => /blackhole/i.test(d.label));
+
+      // Populate dropdown: tab option + all audio inputs
+      sel.innerHTML = '<option value="tab">📺 Browser tab (Zoom/Meet in Chrome)</option>';
+      inputs.forEach(d => {
+        const opt = document.createElement('option');
+        opt.value = d.deviceId;
+        opt.textContent = d.label || 'Microphone';
+        if (bh && d.deviceId === bh.deviceId) opt.selected = true;
+        sel.appendChild(opt);
+      });
+
+      // Show BlackHole one-time guide if detected
+      if (bh && guide) {
+        const BH_KEY   = 'ic_bh_setup_hidden';
+        const isHidden = localStorage.getItem(BH_KEY) === '1';
+        guide.style.display = '';
+        guide.innerHTML = `
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;cursor:pointer"
+               onclick="toggleSetupBhGuide()" title="Click to expand/collapse">
+            <span style="font-weight:700;font-size:13px">
+              ✅ BlackHole 2ch detected!
+              <span id="setup-bh-chevron" style="font-size:11px;opacity:0.7;margin-left:4px">${isHidden ? '▸ show setup' : '▾ hide'}</span>
+            </span>
+          </div>
+          <div id="setup-bh-body" style="${isHidden ? 'display:none;' : ''}margin-top:8px">
+            <strong>1.</strong> Open <em>Audio MIDI Setup</em> (Spotlight → "Audio MIDI Setup")<br>
+            <strong>2.</strong> Click <strong>+</strong> → <strong>Create Multi-Output Device</strong><br>
+            <strong>3.</strong> Tick <strong>BlackHole 2ch</strong> and your <strong>headphones / Built-in Output</strong><br>
+            <strong>4.</strong> In <strong>Zoom</strong>: Settings → Audio → Speaker → <strong>Multi-Output Device</strong><br>
+               &nbsp;&nbsp;&nbsp;In <strong>Teams</strong>: Settings → Devices → Speaker → <strong>Multi-Output Device</strong><br>
+            <strong>5.</strong> Select <strong>BlackHole 2ch</strong> above, then click Begin Session
+            <br><span style="opacity:0.65;font-size:11px">You'll still hear the call — BlackHole silently copies it to the coach.</span>
+            <div style="margin-top:8px;text-align:right">
+              <button onclick="event.stopPropagation();toggleSetupBhGuide()"
+                      style="background:rgba(99,102,241,0.12);border:1px solid rgba(99,102,241,0.3);
+                             color:#a5b4fc;padding:3px 10px;border-radius:999px;
+                             font-size:11px;cursor:pointer;font-weight:600">✓ Done — hide this</button>
+            </div>
+          </div>`;
+      }
+    } catch (err) {
+      console.warn('[initSetupDevices]', err);
+    }
+  }
+
+  window.toggleSetupBhGuide = function() {
+    const body    = document.getElementById('setup-bh-body');
+    const chevron = document.getElementById('setup-bh-chevron');
+    if (!body) return;
+    const hiding = body.style.display !== 'none';
+    body.style.display  = hiding ? 'none' : '';
+    chevron.textContent = hiding ? '▸ show setup' : '▾ hide';
+    localStorage.setItem('ic_bh_setup_hidden', hiding ? '1' : '0');
+  };
+
+  // ── Session-screen device detection (legacy — kept for sys-device-select fallback) ──
   let _sysDevicesInit = false; // run initSysDevices only once per page load
 
   async function initSysDevices() {
@@ -1070,7 +1199,8 @@
     } catch (_) { /* server unreachable — proceed, error will surface on first chunk */ }
 
     // ── 1. Get audio stream — device (BlackHole) OR tab (getDisplayMedia) ─────
-    const selEl  = document.getElementById('sys-device-select');
+    // setup-device-select (setup screen) is the authoritative source; fall back to session element
+    const selEl  = document.getElementById('setup-device-select') || document.getElementById('sys-device-select');
     const selVal = selEl ? selEl.value : 'tab';
     const selLbl = selEl ? (selEl.options[selEl.selectedIndex]?.text || 'audio device') : 'tab';
 
@@ -1138,6 +1268,9 @@
     setVadDot(true);
 
     _startChunk();
+
+    // Also capture the user's own voice via mic (parallel Web Speech → "You" panel)
+    startUserSpeech();
   }
 
   // Record a 4-second segment, send to Whisper, then repeat.
@@ -1261,10 +1394,68 @@
     if (sysRec) { try { sysRec.stop(); } catch(_){} sysRec = null; }
     sysAcc = ''; sysInterim = '';
 
+    // Stop "You" transcript mic recognition
+    stopUserSpeech();
+
     document.getElementById('sys-start').style.display = '';
     document.getElementById('sys-stop').style.display  = 'none';
     if (!silent) setSysStatus('Stopped — click Start Listening to resume');
     setVadDot(false);
+  }
+
+  // ── "You" transcript — Web Speech API on the user's own mic ─────────────────
+  // Runs in parallel with Whisper (interviewer) so both panels update independently.
+
+  function setUserTx(final, interim) {
+    const box = document.getElementById('user-tx');
+    if (!box) return;
+    const hasContent = (final + interim).trim().length > 0;
+    box.innerHTML = '';
+    if (final)   { const s = document.createElement('span'); s.textContent = final;   box.appendChild(s); }
+    if (interim) { const s = document.createElement('span'); s.textContent = interim; s.style.color = 'var(--muted)'; box.appendChild(s); }
+    if (!hasContent) box.innerHTML = '<span class="tx-ph">Your response will appear here…</span>';
+    box.className = 'transcript' + (hasContent ? ' has-text' : '');
+    // Dot pulses while user is actively speaking (interim text present)
+    const dot = document.getElementById('user-dot');
+    if (dot) {
+      if (interim) dot.classList.add('you'); else dot.classList.remove('you');
+    }
+  }
+
+  function startUserSpeech() {
+    stopUserSpeech(); // clean up any prior instance
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SR) return; // browser doesn't support it — fail silently
+    userSpeechAcc = '';
+    userSpeechRec = new SR();
+    userSpeechRec.continuous      = true;
+    userSpeechRec.interimResults  = true;
+    userSpeechRec.lang            = 'en-US';
+    userSpeechRec.onresult = (e) => {
+      let interim = '';
+      for (let i = e.resultIndex; i < e.results.length; i++) {
+        if (e.results[i].isFinal) {
+          userSpeechAcc = (userSpeechAcc + ' ' + e.results[i][0].transcript).trim();
+        } else {
+          interim += e.results[i][0].transcript;
+        }
+      }
+      setUserTx(userSpeechAcc, interim);
+    };
+    // Auto-restart on end (browser sometimes cuts recognition after a pause)
+    userSpeechRec.onend = () => {
+      if (sysCapturing && userSpeechRec) try { userSpeechRec.start(); } catch(_) {}
+    };
+    try { userSpeechRec.start(); } catch(_) {}
+  }
+
+  function stopUserSpeech() {
+    if (userSpeechRec) {
+      try { userSpeechRec.stop(); } catch(_) {}
+      userSpeechRec = null;
+    }
+    userSpeechAcc = '';
+    setUserTx('', '');
   }
 
   function setSysStatus(text) { document.getElementById('sys-status').textContent = text; }
@@ -1281,6 +1472,9 @@
     if (interim) { const s = document.createElement('span'); s.textContent = interim; s.style.color = 'var(--muted)'; box.appendChild(s); }
     if (!hasContent) box.innerHTML = '<span class="tx-ph">Interviewer\'s question will appear here…</span>';
     box.className = 'transcript' + (hasContent ? ' has-text' : '');
+    // Pulse interviewer dot green when text is present
+    const intDot = document.getElementById('interviewer-dot');
+    if (intDot) intDot.classList.toggle('on', hasContent);
 
     // Mirror to manual input (unless user is editing)
     const inp = document.getElementById('sys-q');
