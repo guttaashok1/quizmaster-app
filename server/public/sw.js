@@ -6,7 +6,7 @@
  *   everything else → cache-first with background revalidation
  */
 
-const CACHE = 'ic-v4'; // bump version → clears all previous caches on activate
+const CACHE = 'ic-v5'; // bump version → clears all previous caches on activate
 
 // Pre-cache static shell assets ONLY — never HTML pages
 // HTML is intentionally excluded so pages always load fresh from the server.
@@ -48,10 +48,12 @@ self.addEventListener('fetch', (e) => {
   // 2. API routes → network only (never cache dynamic data)
   if (url.pathname.startsWith('/api/')) return;
 
-  // 3. HTML pages → network only
-  //    HTML must NEVER be served from cache. Every page load fetches the latest
-  //    deployed HTML so UI changes reach users immediately.
-  if (request.headers.get('accept')?.includes('text/html')) return;
+  // 3. HTML pages → always fetch fresh, bypassing both SW cache AND browser HTTP cache.
+  //    Uses cache:'no-store' so the browser never reads a stale cached copy.
+  if (request.headers.get('accept')?.includes('text/html')) {
+    e.respondWith(fetch(new Request(request.url, { cache: 'no-store' })));
+    return;
+  }
 
   // 4. Static assets (CSS, JS, images, fonts) → cache-first + background revalidate
   e.respondWith(
