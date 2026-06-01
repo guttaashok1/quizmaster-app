@@ -144,13 +144,23 @@
     .setup-footer a { color: var(--accent); text-decoration: none; }
     .setup-footer a:hover { text-decoration: underline; }
 
-    /* ══ SESSION SCREEN ════════════════════════════════════════════════════════ */
+    /* ══ SESSION SCREEN — two-pane layout ═════════════════════════════════════ */
     #session { display: none; }
-    #session.on { display: block; }
+    #session.on { display: flex; flex-direction: column; height: calc(100vh - 58px); overflow: hidden; }
     .session-wrap {
-      max-width: 760px; margin: 0 auto;
-      padding: 28px 22px 80px;
-      display: flex; flex-direction: column; gap: 18px;
+      flex: 1; display: grid;
+      grid-template-columns: 400px 1fr;
+      overflow: hidden;
+    }
+    .left-pane {
+      border-right: 1px solid var(--border);
+      overflow-y: auto; padding: 18px;
+      display: flex; flex-direction: column; gap: 14px;
+    }
+    .right-pane {
+      overflow-y: auto; padding: 18px;
+      display: flex; flex-direction: column;
+      background: rgba(8,8,15,0.6);
     }
 
     /* Profile bar */
@@ -300,9 +310,18 @@
     /* ── Answer Card ─────────────────────────────────────────────────────────── */
     .answer-card {
       background: var(--surface); border: 1px solid var(--border);
-      border-radius: var(--radius); padding: 22px; display: none;
+      border-radius: var(--radius); padding: 22px;
+      display: flex; flex-direction: column; flex: 1;
     }
-    .answer-card.show { display: block; }
+    /* placeholder shown before first answer */
+    .answer-placeholder {
+      flex: 1; display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      gap: 12px; color: var(--muted); text-align: center; padding: 40px 20px;
+    }
+    .answer-placeholder-icon { font-size: 44px; }
+    .answer-placeholder p { font-size: 14px; line-height: 1.65; max-width: 260px; }
+    .answer-placeholder.hide { display: none; }
     .answer-header {
       display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;
     }
@@ -379,9 +398,11 @@
     .answer-tab.active.loading .tab-dot { background: var(--accent); }
     .answer-tab.active.ready   .tab-dot { background: var(--green); }
 
-    @media (max-width: 600px) {
+    @media (max-width: 768px) {
       .nav { padding: 0 14px; }
-      .session-wrap { padding: 16px 14px 60px; gap: 14px; }
+      #session.on { height: auto; overflow: visible; }
+      .session-wrap { grid-template-columns: 1fr; overflow: visible; }
+      .left-pane { border-right: none; border-bottom: 1px solid var(--border); }
       .setup-card { padding: 22px 16px; }
       .setup-title { font-size: 26px; }
       .setup-btns { flex-direction: column; }
@@ -399,6 +420,14 @@
     <span>📋</span><span id="nav-chip-name"></span>
   </div>
   <div class="nav-right">
+    <button id="nav-setup-btn" onclick="endSession()"
+            style="display:none;padding:5px 12px;border-radius:7px;font-size:13px;
+                   font-weight:600;cursor:pointer;border:1px solid var(--border);
+                   background:transparent;color:var(--muted);transition:all 0.2s"
+            onmouseover="this.style.borderColor='var(--accent)';this.style.color='var(--text)'"
+            onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--muted)'">
+      ⚙ Setup
+    </button>
     <a href="/" class="nav-link">← Home</a>
     <span class="nav-user"  id="nav-user"></span>
     <span class="nav-quota" id="nav-quota"></span>
@@ -450,17 +479,8 @@
 <div id="session">
 <div class="session-wrap">
 
-  <!-- Profile bar -->
-  <div class="profile-bar">
-    <div class="profile-bar-icon">📋</div>
-    <div class="profile-bar-info">
-      <div class="profile-bar-name" id="sess-name"></div>
-      <div class="profile-bar-meta" id="sess-meta"></div>
-    </div>
-    <button class="btn-change" onclick="endSession()">↩ Change Profile</button>
-  </div>
-
-  <!-- Mode toggle -->
+  <!-- LEFT PANE: capture controls -->
+  <div class="left-pane">
   <div class="mode-toggle">
     <button class="mode-btn on" id="mode-mic" onclick="setMode('mic')">🎙️ My Microphone</button>
     <button class="mode-btn"    id="mode-sys" onclick="setMode('system')">🖥️ System Audio</button>
@@ -540,8 +560,16 @@
     </div>
   </div>
 
-  <!-- ── ANSWER CARD ────────────────────────────────────────────────────────── -->
+  </div><!-- /left-pane -->
+
+  <!-- RIGHT PANE: AI answer — always visible -->
+  <div class="right-pane">
   <div class="answer-card" id="answer-card">
+    <!-- Placeholder shown before first answer -->
+    <div class="answer-placeholder" id="answer-placeholder">
+      <span class="answer-placeholder-icon">✨</span>
+      <p>Your AI-coached answer will stream here once the interviewer finishes speaking.</p>
+    </div>
     <div class="answer-header">
       <div class="answer-title">
         <div class="stream-dot" id="stream-dot"></div>
@@ -569,10 +597,10 @@
     <div class="answer-box" id="answer-box">
       <div id="answer-text"></div><span class="cursor off" id="cursor"></span>
     </div>
-  </div>
-
-</div>
-</div>
+  </div><!-- /answer-card -->
+  </div><!-- /right-pane -->
+</div><!-- /session-wrap -->
+</div><!-- /session -->
 
 <script>
   // ── Auth ─────────────────────────────────────────────────────────────────────
@@ -736,14 +764,6 @@
       jobDescription = profile.jobDescription || '';
       supportingDocs = profile.supportingDocs || [];
 
-      // Profile bar
-      document.getElementById('sess-name').textContent = profile.name;
-      const tags = [];
-      if (resumeText)             tags.push('Resume ✓');
-      if (jobDescription)         tags.push('JD ✓');
-      if (supportingDocs?.length) tags.push(`${supportingDocs.length} doc${supportingDocs.length > 1 ? 's' : ''}`);
-      document.getElementById('sess-meta').textContent = tags.join(' · ') || 'No data attached';
-
       // Nav chip
       document.getElementById('nav-chip-name').textContent = profile.name;
       document.getElementById('nav-chip').classList.add('show');
@@ -751,6 +771,7 @@
       // Switch screens
       document.getElementById('setup').style.display = 'none';
       document.getElementById('session').classList.add('on');
+      document.getElementById('nav-setup-btn').style.display = '';
 
       // Enable mic button and init
       document.getElementById('mic-start').disabled = false;
@@ -780,7 +801,7 @@
     activeTab = 'full';
 
     // Reset answer card
-    document.getElementById('answer-card').classList.remove('show');
+    document.getElementById('answer-placeholder').classList.remove('hide');
     document.getElementById('answer-text').innerHTML = '';
     document.getElementById('answer-box').className = 'answer-box';
     document.getElementById('answer-tabs').style.display = 'none';
@@ -816,6 +837,7 @@
     // Switch screens
     document.getElementById('session').classList.remove('on');
     document.getElementById('setup').style.display = '';
+    document.getElementById('nav-setup-btn').style.display = 'none';
 
     // Reset mode
     setMode('mic');
@@ -1393,7 +1415,7 @@
     // Show card & tabs, switch to full tab
     const card = document.getElementById('answer-card');
     const tabs = document.getElementById('answer-tabs');
-    card.classList.add('show');
+    document.getElementById('answer-placeholder').classList.add('hide');
     tabs.style.display = '';
     card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 
@@ -1509,7 +1531,7 @@
   }
 
   function showAnswerError(text) {
-    document.getElementById('answer-card').classList.add('show');
+    document.getElementById('answer-placeholder').classList.add('hide');
     document.getElementById('answer-text').innerHTML = `<div class="answer-plain">${safeHtml(text)}</div>`;
     document.getElementById('answer-box').className = 'answer-box';
     setAnswerStreaming(false);
