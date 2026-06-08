@@ -551,7 +551,7 @@
           <div class="profile-card-actions">
             <button class="btn btn-success btn-sm" onclick="loadInCoach('${p.id}')">▶ Load in Coach</button>
             <button class="btn btn-outline btn-sm" onclick="openEdit('${p.id}')">Edit</button>
-            <button class="btn btn-danger  btn-sm" onclick="confirmDelete('${p.id}', ${JSON.stringify(p.name)})">Delete</button>
+            <button class="btn btn-danger  btn-sm" data-id="${escHtml(p.id)}" data-name="${escHtml(p.name)}" onclick="confirmDelete(this.dataset.id, this.dataset.name)">Delete</button>
           </div>
         </div>`;
       grid.appendChild(card);

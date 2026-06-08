@@ -25,7 +25,7 @@
   <link rel="stylesheet" href="/styles.css?v=5" />
   <style>
     /* ════════════════════════════════════════
-       HERO — Full-bleed GenZ team background
+       HERO — Full-bleed dark background
     ════════════════════════════════════════ */
     .hero {
       position: relative;
@@ -34,31 +34,21 @@
       align-items: center;
       overflow: hidden;
       border-bottom: 1px solid rgba(255,255,255,0.09);
-      /* Full-bleed team photo */
-      background-image: url('https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=1920&q=80&auto=format&fit=crop');
-      background-size: cover;
-      background-position: center 35%;
+      background: #09090b;
     }
 
-    /* ── Dark gradient overlay — strong left, fades right ── */
+    /* Animated gradient blobs */
     .hero::before {
       content: '';
       position: absolute; inset: 0; z-index: 1;
       pointer-events: none;
       background:
-        linear-gradient(105deg,
-          rgba(9,9,11,0.94) 0%,
-          rgba(9,9,11,0.78) 38%,
-          rgba(9,9,11,0.45) 62%,
-          rgba(9,9,11,0.20) 100%
-        ),
-        linear-gradient(to bottom,
-          rgba(9,9,11,0.30) 0%,
-          rgba(9,9,11,0.70) 100%
-        );
+        radial-gradient(ellipse 60% 55% at 65% 45%, rgba(99,102,241,0.18) 0%, transparent 65%),
+        radial-gradient(ellipse 40% 50% at 20% 70%, rgba(110,30,200,0.14) 0%, transparent 60%),
+        radial-gradient(ellipse 55% 40% at 80% 20%, rgba(56,189,248,0.07) 0%, transparent 60%);
     }
 
-    /* ── Dot-grid texture over the whole hero ── */
+    /* Dot-grid texture */
     .hero::after {
       content: '';
       position: absolute; inset: 0; z-index: 2;
@@ -69,7 +59,7 @@
       mask-image: radial-gradient(ellipse 100% 100% at 50% 50%, black 0%, transparent 80%);
     }
 
-    /* ── Hero inner — single wide column ── */
+    /* Hero inner */
     .hero-inner {
       position: relative;
       z-index: 10;
@@ -82,10 +72,8 @@
       justify-content: center;
     }
 
-    /* constrain text so it doesn't stretch full width */
-    .hero-content { max-width: 680px; }
+    .hero-content { max-width: 700px; }
 
-    /* ── Hero text content (left column) ── */
     .hero-eyebrow {
       display: inline-flex; align-items: center; gap: 8px;
       font-size: 11px; font-weight: 700;
@@ -101,7 +89,7 @@
       letter-spacing: -2px;
       line-height: 1.04;
       margin-bottom: 24px;
-      max-width: 560px;
+      max-width: 620px;
       color: #fff;
     }
     .hero h1 .accent {
@@ -114,11 +102,11 @@
       font-size: 17px;
       color: rgba(255,255,255,0.55);
       line-height: 1.78;
-      max-width: 460px;
+      max-width: 500px;
       margin-bottom: 28px;
     }
 
-    /* ── Pill category row (Dataflix-style) ── */
+    /* Pill category row */
     .hero-pill-row {
       display: flex; flex-wrap: wrap; gap: 10px;
       margin-bottom: 36px;
@@ -163,7 +151,7 @@
     }
     .btn-hero-outline:hover { border-color: rgba(255,255,255,0.55); background: rgba(255,255,255,0.10); }
 
-    /* ── Hero stats row — quick social proof below CTAs ── */
+    /* Hero stats row */
     .hero-stats-row {
       display: flex; gap: 36px; margin-top: 44px; flex-wrap: wrap;
     }
@@ -180,70 +168,6 @@
     .hero-stats-divider {
       width: 1px; background: rgba(255,255,255,0.12); align-self: stretch;
     }
-
-    /* ════════════════════════════════════════
-       CATEGORY CARDS — horizontal scroll
-    ════════════════════════════════════════ */
-    .categories {
-      border-bottom: 1px solid rgba(255,255,255,0.07);
-      padding: 48px 0 48px 48px;
-      background: rgba(255,255,255,0.01);
-    }
-    .categories-header {
-      max-width: 1200px; margin: 0 auto 28px;
-      padding-right: 48px;
-      display: flex; justify-content: space-between; align-items: baseline;
-    }
-    .categories-header h2 { font-size: 22px; font-weight: 800; }
-    .categories-header a { font-size: 13px; color: #818cf8; font-weight: 600; }
-    .cat-scroll {
-      display: flex;
-      gap: 16px;
-      overflow-x: auto;
-      scrollbar-width: none;
-      padding-right: 48px;
-      padding-bottom: 4px;
-    }
-    .cat-scroll::-webkit-scrollbar { display: none; }
-    .cat-card {
-      flex-shrink: 0;
-      width: 220px;
-      height: 160px;
-      border-radius: 10px;
-      overflow: hidden;
-      position: relative;
-      cursor: pointer;
-      transition: transform 0.2s;
-      border: 1px solid rgba(255,255,255,0.08);
-    }
-    .cat-card:hover { transform: translateY(-3px); }
-    .cat-bg {
-      position: absolute; inset: 0;
-    }
-    .cat-card-1 .cat-bg { background: linear-gradient(135deg, #0f1f3d 0%, #1e3a5f 100%); }
-    .cat-card-2 .cat-bg { background: linear-gradient(135deg, #0a1628 0%, #0f2640 100%); }
-    .cat-card-3 .cat-bg { background: linear-gradient(135deg, #0a1e1a 0%, #0d2e28 100%); }
-    .cat-card-4 .cat-bg { background: linear-gradient(135deg, #1a0f2e 0%, #2a1850 100%); }
-    .cat-card-5 .cat-bg { background: linear-gradient(135deg, #1a1000 0%, #2e1e00 100%); }
-    .cat-card-6 .cat-bg { background: linear-gradient(135deg, #001a1a 0%, #002a2a 100%); }
-    /* accent glow per card */
-    .cat-card-1 .cat-bg::after { content:''; position:absolute; inset:0; background: radial-gradient(circle at 80% 30%, rgba(99,102,241,0.3) 0%, transparent 60%); }
-    .cat-card-2 .cat-bg::after { content:''; position:absolute; inset:0; background: radial-gradient(circle at 80% 30%, rgba(56,189,248,0.25) 0%, transparent 60%); }
-    .cat-card-3 .cat-bg::after { content:''; position:absolute; inset:0; background: radial-gradient(circle at 80% 30%, rgba(16,185,129,0.25) 0%, transparent 60%); }
-    .cat-card-4 .cat-bg::after { content:''; position:absolute; inset:0; background: radial-gradient(circle at 80% 30%, rgba(139,92,246,0.25) 0%, transparent 60%); }
-    .cat-card-5 .cat-bg::after { content:''; position:absolute; inset:0; background: radial-gradient(circle at 80% 30%, rgba(245,158,11,0.25) 0%, transparent 60%); }
-    .cat-card-6 .cat-bg::after { content:''; position:absolute; inset:0; background: radial-gradient(circle at 80% 30%, rgba(20,184,166,0.25) 0%, transparent 60%); }
-    .cat-icon {
-      position: absolute; top: 20px; right: 20px;
-      font-size: 32px; opacity: 0.7;
-    }
-    .cat-label {
-      position: absolute; bottom: 0; left: 0; right: 0;
-      padding: 12px 16px;
-      background: linear-gradient(to top, rgba(0,0,0,0.7) 0%, transparent 100%);
-      font-size: 14px; font-weight: 700; color: #fff;
-    }
-    .cat-count { font-size: 11px; color: rgba(255,255,255,0.45); font-weight: 400; margin-top: 2px; }
 
     /* ════════════════════════════════════════
        FEATURE SECTIONS — alternating
@@ -280,65 +204,153 @@
     }
     .feature-link:hover { gap: 14px; }
 
-    /* ── Feature visuals ── */
-    .voice-illustration {
-      padding: 40px 32px;
-      background: linear-gradient(135deg, #0d1a3a 0%, #0a0f1e 100%);
+    /* ── Dual Transcript Visual ── */
+    .dual-transcript-illustration {
+      padding: 28px;
+      background: linear-gradient(135deg, #0a0f1e 0%, #0d1a2e 100%);
       border: 1px solid rgba(99,102,241,0.15);
       border-radius: 14px;
-      position: relative; overflow: hidden;
       min-height: 320px;
-      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      position: relative;
+      overflow: hidden;
     }
-    .voice-illustration::before {
-      content: ''; position: absolute; inset: 0;
-      background: radial-gradient(circle at 50% 40%, rgba(99,102,241,0.18) 0%, transparent 60%);
+    .dual-transcript-illustration::before {
+      content: '';
+      position: absolute; inset: 0;
+      background: radial-gradient(ellipse 70% 50% at 50% 0%, rgba(99,102,241,0.12) 0%, transparent 70%);
+      pointer-events: none;
     }
-    .mic-sonar {
-      position: relative; width: 100px; height: 100px;
-      display: flex; align-items: center; justify-content: center;
-      margin-bottom: 28px; z-index: 1;
+    .transcript-panel {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.10);
+      border-radius: 10px;
+      padding: 14px 16px;
+      position: relative;
+      z-index: 1;
     }
-    .sonar-ring {
-      position: absolute; border-radius: 50%;
-      border: 1.5px solid rgba(99,102,241,0.4);
-      animation: sonar 2.4s ease-out infinite;
+    .transcript-panel.interviewer { border-color: rgba(99,102,241,0.30); }
+    .transcript-panel.you { border-color: rgba(16,185,129,0.25); }
+    .transcript-panel-header {
+      display: flex; align-items: center; gap: 8px;
+      margin-bottom: 10px;
     }
-    .sonar-ring:nth-child(1) { width: 110px; height: 110px; animation-delay: 0s; }
-    .sonar-ring:nth-child(2) { width: 155px; height: 155px; animation-delay: 0.8s; }
-    .sonar-ring:nth-child(3) { width: 200px; height: 200px; animation-delay: 1.6s; }
-    @keyframes sonar { 0%{opacity:.8;transform:scale(.7)} 100%{opacity:0;transform:scale(1.1)} }
-    .mic-btn {
-      width: 72px; height: 72px; border-radius: 50%;
-      background: linear-gradient(135deg, #4f46e5, #6366f1);
-      display: flex; align-items: center; justify-content: center;
-      font-size: 30px; position: relative; z-index: 2;
-      box-shadow: 0 0 40px rgba(99,102,241,0.5);
+    .transcript-live-dot {
+      width: 7px; height: 7px; border-radius: 50%;
+      flex-shrink: 0;
     }
-    .voice-bars { display: flex; align-items: center; gap: 4px; height: 48px; margin-bottom: 24px; z-index: 1; }
-    .vbar { width: 4px; border-radius: 4px; background: linear-gradient(to top, #4f46e5, #a5b4fc); animation: vwave 1.2s ease-in-out infinite; }
-    .vbar:nth-child(1){height:14px;animation-delay:.0s} .vbar:nth-child(2){height:28px;animation-delay:.1s}
-    .vbar:nth-child(3){height:40px;animation-delay:.2s} .vbar:nth-child(4){height:48px;animation-delay:.15s}
-    .vbar:nth-child(5){height:36px;animation-delay:.25s} .vbar:nth-child(6){height:44px;animation-delay:.05s}
-    .vbar:nth-child(7){height:32px;animation-delay:.3s}  .vbar:nth-child(8){height:20px;animation-delay:.1s}
-    .vbar:nth-child(9){height:12px;animation-delay:.2s}
-    @keyframes vwave { 0%,100%{transform:scaleY(1)} 50%{transform:scaleY(0.35)} }
-    .voice-q-bubble {
-      background: rgba(99,102,241,0.12); border: 1px solid rgba(99,102,241,0.25);
-      border-radius: 12px; padding: 14px 18px;
-      font-size: 13px; color: rgba(255,255,255,0.75);
-      line-height: 1.6; font-style: italic; text-align: center; z-index: 1; max-width: 340px;
+    .transcript-live-dot.blue { background: #818cf8; animation: blink2 1.2s infinite; }
+    .transcript-live-dot.green { background: #10b981; animation: blink2 1.6s infinite 0.4s; }
+    .transcript-panel-label {
+      font-size: 10px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase;
     }
-    .rec-pill {
-      display: inline-flex; align-items: center; gap: 6px;
-      background: rgba(239,68,68,0.12); border: 1px solid rgba(239,68,68,0.25);
-      border-radius: 999px; padding: 4px 12px;
-      font-size: 11px; font-weight: 700; color: #fca5a5; margin-bottom: 20px; z-index: 1;
+    .transcript-panel-label.blue { color: #818cf8; }
+    .transcript-panel-label.green { color: #10b981; }
+    .transcript-line {
+      height: 7px; border-radius: 4px;
+      background: rgba(255,255,255,0.09);
+      margin-bottom: 7px;
     }
-    .rec-dot { width: 7px; height: 7px; border-radius: 50%; background: #ef4444; animation: blink2 1s infinite; }
-    @keyframes blink2 { 0%,100%{opacity:1} 50%{opacity:0.3} }
+    .transcript-line.highlight { background: rgba(99,102,241,0.28); }
+    .transcript-line.highlight-green { background: rgba(16,185,129,0.22); }
+    .transcript-typing {
+      display: flex; align-items: center; gap: 4px; margin-top: 8px;
+    }
+    .typing-dot {
+      width: 5px; height: 5px; border-radius: 50%;
+    }
+    .typing-dot.blue {
+      background: #818cf8;
+      animation: typingBounce 1.4s ease-in-out infinite;
+    }
+    .typing-dot.green {
+      background: #10b981;
+      animation: typingBounce 1.4s ease-in-out infinite;
+    }
+    .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+    .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes typingBounce {
+      0%, 80%, 100% { transform: translateY(0); opacity: 0.5; }
+      40% { transform: translateY(-4px); opacity: 1; }
+    }
+    .transcript-text-preview {
+      font-size: 12px; color: rgba(255,255,255,0.60);
+      line-height: 1.55; font-style: italic;
+      margin-top: 6px;
+    }
+    .transcript-text-preview span {
+      animation: fadeInWord 0.4s ease both;
+    }
+    @keyframes fadeInWord {
+      from { opacity: 0; } to { opacity: 1; }
+    }
 
-    /* Resume visual */
+    /* ── Answer Modes Visual ── */
+    .answer-modes-illustration {
+      background: linear-gradient(135deg, #050d1a 0%, #0a0f1e 100%);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 14px;
+      overflow: hidden;
+      min-height: 320px;
+    }
+    .mode-tab-bar {
+      background: rgba(255,255,255,0.04);
+      border-bottom: 1px solid rgba(255,255,255,0.07);
+      padding: 10px 16px;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .mode-tab {
+      padding: 6px 14px;
+      border-radius: 6px;
+      font-size: 12px; font-weight: 600;
+      cursor: pointer; border: none;
+      transition: background 0.2s, color 0.2s;
+      font-family: var(--font);
+      color: rgba(255,255,255,0.45);
+      background: transparent;
+    }
+    .mode-tab.active {
+      background: rgba(99,102,241,0.18);
+      color: #a5b4fc;
+      border: 1px solid rgba(99,102,241,0.30);
+    }
+    .mode-content-area { padding: 20px; }
+    .mode-q-label {
+      font-size: 10px; font-weight: 700; letter-spacing: 0.8px; text-transform: uppercase;
+      color: rgba(255,255,255,0.35); margin-bottom: 8px;
+    }
+    .mode-q-text {
+      font-size: 13px; color: rgba(255,255,255,0.65);
+      font-style: italic; margin-bottom: 14px; line-height: 1.5;
+    }
+    .mode-answer-label {
+      font-size: 10px; font-weight: 700; letter-spacing: 0.8px; text-transform: uppercase;
+      color: #818cf8; margin-bottom: 10px;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .mode-a-pulse { width: 6px; height: 6px; border-radius: 50%; background: #a5b4fc; animation: apulse 1.5s ease-in-out infinite; }
+    @keyframes apulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+    .mode-full-text {
+      font-size: 12px; color: rgba(255,255,255,0.68); line-height: 1.65;
+      background: rgba(99,102,241,0.08); border: 1px solid rgba(99,102,241,0.18);
+      border-radius: 8px; padding: 12px 14px;
+    }
+    .mode-bullet {
+      display: flex; gap: 8px; font-size: 12px;
+      color: rgba(255,255,255,0.72); margin-bottom: 7px;
+      line-height: 1.5; align-items: flex-start;
+    }
+    .mode-bullet::before { content: '→'; color: #818cf8; flex-shrink: 0; font-weight: 700; }
+    .mode-cue {
+      background: rgba(99,102,241,0.10); border: 1px solid rgba(99,102,241,0.20);
+      border-radius: 6px; padding: 8px 12px;
+      font-size: 13px; font-weight: 700; color: #fff; margin-bottom: 6px;
+      letter-spacing: 0.2px;
+    }
+
+    /* ── Resume visual (kept from original) ── */
     .resume-illustration {
       padding: 28px; background: linear-gradient(135deg, #0a0f1e 0%, #0d1a2e 100%);
       border: 1px solid rgba(255,255,255,0.08); border-radius: 14px; min-height: 320px;
@@ -372,29 +384,6 @@
     .resume-highlight { background: rgba(99,102,241,0.3); }
     .resume-tags { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 12px; }
     .resume-tag { background: rgba(99,102,241,0.12); border: 1px solid rgba(99,102,241,0.25); border-radius: 999px; padding: 3px 10px; font-size: 11px; font-weight: 600; color: #a5b4fc; }
-
-    /* Answer visual */
-    .answer-illustration {
-      background: linear-gradient(135deg, #050d1a 0%, #0a0f1e 100%);
-      border: 1px solid rgba(255,255,255,0.08); border-radius: 14px; overflow: hidden; min-height: 320px;
-    }
-    .answer-terminal-bar {
-      background: rgba(255,255,255,0.04); border-bottom: 1px solid rgba(255,255,255,0.07);
-      padding: 10px 16px; display: flex; align-items: center; gap: 8px;
-    }
-    .terminal-dot { width: 10px; height: 10px; border-radius: 50%; }
-    .answer-terminal-body { padding: 20px; }
-    .answer-q-row { display: flex; gap: 10px; margin-bottom: 16px; align-items: flex-start; }
-    .q-icon { width: 28px; height: 28px; border-radius: 50%; background: rgba(255,255,255,0.08); display: flex; align-items: center; justify-content: center; font-size: 13px; flex-shrink: 0; margin-top: 2px; }
-    .q-bubble { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08); border-radius: 0 10px 10px 10px; padding: 10px 14px; font-size: 13px; color: rgba(255,255,255,0.7); line-height: 1.5; }
-    .answer-a-row { display: flex; gap: 10px; align-items: flex-start; }
-    .a-icon { width: 28px; height: 28px; border-radius: 50%; background: linear-gradient(135deg, #4f46e5, #6366f1); display: flex; align-items: center; justify-content: center; font-size: 13px; flex-shrink: 0; margin-top: 2px; box-shadow: 0 0 12px rgba(99,102,241,0.4); }
-    .a-bubble { background: rgba(99,102,241,0.1); border: 1px solid rgba(99,102,241,0.22); border-radius: 0 10px 10px 10px; padding: 12px 14px; flex: 1; }
-    .a-label { font-size: 10px; font-weight: 700; letter-spacing: 0.8px; text-transform: uppercase; color: #818cf8; margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }
-    .a-pulse { width: 6px; height: 6px; border-radius: 50%; background: #a5b4fc; animation: apulse 1.5s ease-in-out infinite; }
-    @keyframes apulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
-    .a-bullet { display: flex; gap: 8px; font-size: 12px; color: rgba(255,255,255,0.72); margin-bottom: 7px; line-height: 1.5; align-items: flex-start; }
-    .a-bullet::before { content: '→'; color: #818cf8; flex-shrink: 0; font-weight: 700; }
 
     /* ════════════════════════════════════════
        STATS
@@ -470,7 +459,6 @@
       .stats-inner { grid-template-columns: 1fr; }
       .stat-item { padding: 28px 32px; }
       .footer-grid { grid-template-columns: 1fr 1fr; }
-      .categories { padding: 36px 0 36px 24px; }
     }
     @media (max-width: 640px) {
       .hero-inner { padding: 90px 24px 70px; }
@@ -485,7 +473,7 @@
     }
 
     /* ════════════════════════════════════════
-       HOW IT WORKS — video + 3 step cards
+       HOW IT WORKS — animated mockup + 5 step cards
     ════════════════════════════════════════ */
     .hiw-section {
       padding: 100px 48px;
@@ -512,12 +500,12 @@
       max-width: 520px; margin: 0 auto; line-height: 1.75;
     }
 
-    /* ── Video container ── */
-    .hiw-video-wrap { margin-bottom: 64px; }
-
-    .hiw-video-frame {
-      position: relative;
-      width: 100%; aspect-ratio: 16/9;
+    /* ── Big animated app mockup ── */
+    .hiw-mockup-wrap {
+      margin-bottom: 64px;
+    }
+    .hiw-app-frame {
+      width: 100%;
       border-radius: 20px; overflow: hidden;
       border: 1px solid rgba(99,102,241,0.28);
       box-shadow:
@@ -527,123 +515,161 @@
         0 0 200px rgba(110,30,200,0.08);
       background: #060d23;
     }
-
     /* macOS-style window bar */
-    .hiw-video-bar {
-      position: absolute; top: 0; left: 0; right: 0; z-index: 3;
+    .hiw-app-bar {
       height: 38px;
-      background: rgba(6,13,35,0.90);
+      background: rgba(6,13,35,0.95);
       border-bottom: 1px solid rgba(255,255,255,0.08);
       display: flex; align-items: center; padding: 0 16px; gap: 7px;
     }
     .hiw-dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
+    .hiw-app-url {
+      margin-left: 12px;
+      font-size: 11px; color: rgba(255,255,255,0.28);
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 4px; padding: 3px 10px;
+    }
 
-    /* Animated app mockup behind the overlay */
-    .hiw-video-bg {
-      position: absolute; inset: 38px 0 0 0;
-      background: linear-gradient(135deg, rgba(6,18,55,0.97) 0%, rgba(20,6,55,0.95) 100%);
-      display: flex; flex-direction: column;
-      align-items: center; justify-content: center; gap: 16px;
-      padding: 32px;
+    /* App body */
+    .hiw-app-body {
+      background: linear-gradient(135deg, rgba(6,18,55,0.98) 0%, rgba(16,6,45,0.96) 100%);
+      padding: 28px 32px;
+      position: relative;
       overflow: hidden;
     }
-    /* Decorative blobs inside the video frame */
-    .hiw-video-bg::before {
+    .hiw-app-body::before {
       content: '';
-      position: absolute; left: -10%; top: -10%;
-      width: 50%; height: 120%;
-      background: radial-gradient(ellipse, rgba(99,102,241,0.22) 0%, transparent 65%);
-      pointer-events: none;
-    }
-    .hiw-video-bg::after {
-      content: '';
-      position: absolute; right: -5%; bottom: -20%;
+      position: absolute; left: -5%; top: -20%;
       width: 45%; height: 100%;
-      background: radial-gradient(ellipse, rgba(110,30,200,0.20) 0%, transparent 65%);
+      background: radial-gradient(ellipse, rgba(99,102,241,0.20) 0%, transparent 65%);
       pointer-events: none;
     }
-    /* Fake UI inside the video frame */
-    .hiw-mock {
+    .hiw-app-body::after {
+      content: '';
+      position: absolute; right: -5%; bottom: -10%;
+      width: 40%; height: 80%;
+      background: radial-gradient(ellipse, rgba(110,30,200,0.16) 0%, transparent 65%);
+      pointer-events: none;
+    }
+
+    /* Inside the mock: top status bar */
+    .hiw-status-bar {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 20px; position: relative; z-index: 1;
+    }
+    .hiw-status-left {
+      display: flex; align-items: center; gap: 10px;
+    }
+    .hiw-rec-badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: rgba(239,68,68,0.14); border: 1px solid rgba(239,68,68,0.28);
+      border-radius: 999px; padding: 4px 12px;
+      font-size: 11px; font-weight: 700; color: #fca5a5;
+    }
+    .hiw-rec-dot { width: 7px; height: 7px; border-radius: 50%; background: #ef4444; animation: blink2 1s infinite; }
+    @keyframes blink2 { 0%,100%{opacity:1} 50%{opacity:0.3} }
+    .hiw-whisper-badge {
+      display: inline-flex; align-items: center; gap: 5px;
+      background: rgba(99,102,241,0.12); border: 1px solid rgba(99,102,241,0.25);
+      border-radius: 999px; padding: 4px 10px;
+      font-size: 10px; font-weight: 600; color: #a5b4fc;
+    }
+    .hiw-status-right {
+      font-size: 11px; color: rgba(255,255,255,0.30); font-weight: 500;
+    }
+
+    /* Dual transcript panels row */
+    .hiw-panels-row {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 16px; margin-bottom: 20px; position: relative; z-index: 1;
+    }
+    .hiw-panel {
+      background: rgba(255,255,255,0.04);
+      border-radius: 12px; padding: 16px;
+    }
+    .hiw-panel.interviewer { border: 1px solid rgba(99,102,241,0.28); }
+    .hiw-panel.you { border: 1px solid rgba(16,185,129,0.24); }
+    .hiw-panel-header {
+      display: flex; align-items: center; gap: 7px;
+      margin-bottom: 12px;
+    }
+    .hiw-panel-dot {
+      width: 7px; height: 7px; border-radius: 50%;
+    }
+    .hiw-panel-dot.blue { background: #818cf8; animation: blink2 1.1s infinite; }
+    .hiw-panel-dot.green { background: #10b981; animation: blink2 1.5s infinite 0.5s; }
+    .hiw-panel-title {
+      font-size: 11px; font-weight: 700; letter-spacing: 0.8px; text-transform: uppercase;
+    }
+    .hiw-panel-title.blue { color: #818cf8; }
+    .hiw-panel-title.green { color: #10b981; }
+    .hiw-panel-line { height: 6px; border-radius: 3px; background: rgba(255,255,255,0.09); margin-bottom: 6px; }
+    .hiw-panel-line.hl-blue { background: rgba(99,102,241,0.30); }
+    .hiw-panel-line.hl-green { background: rgba(16,185,129,0.24); }
+    .hiw-panel-quote {
+      font-size: 11px; color: rgba(255,255,255,0.55);
+      font-style: italic; line-height: 1.5; margin-top: 8px;
+    }
+    .hiw-typing { display: flex; gap: 3px; align-items: center; margin-top: 8px; }
+    .hiw-tdot {
+      width: 5px; height: 5px; border-radius: 50%;
+      animation: typingBounce 1.4s ease-in-out infinite;
+    }
+    .hiw-tdot.blue { background: #818cf8; }
+    .hiw-tdot.green { background: #10b981; }
+    .hiw-tdot:nth-child(2) { animation-delay: 0.2s; }
+    .hiw-tdot:nth-child(3) { animation-delay: 0.4s; }
+
+    /* AI Answer panel */
+    .hiw-answer-panel {
+      background: rgba(99,102,241,0.07);
+      border: 1px solid rgba(99,102,241,0.22);
+      border-radius: 12px; padding: 16px;
       position: relative; z-index: 1;
-      display: flex; gap: 20px; align-items: flex-start; width: 100%; max-width: 680px;
     }
-    .hiw-mock-left {
-      flex: 1;
-      background: rgba(255,255,255,0.05); border: 1px solid rgba(99,102,241,0.20);
-      border-radius: 14px; padding: 18px;
+    .hiw-answer-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 12px;
     }
-    .hiw-mock-right {
-      flex: 1;
-      background: rgba(255,255,255,0.05); border: 1px solid rgba(167,139,250,0.22);
-      border-radius: 14px; padding: 18px;
+    .hiw-answer-title {
+      font-size: 11px; font-weight: 700; letter-spacing: 0.8px; text-transform: uppercase;
+      color: #818cf8;
+      display: flex; align-items: center; gap: 6px;
     }
-    .hiw-mock-label {
-      font-size: 9px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase;
-      color: #818cf8; margin-bottom: 10px; display: flex; align-items: center; gap: 6px;
+    .hiw-answer-pulse { width: 6px; height: 6px; border-radius: 50%; background: #a5b4fc; animation: apulse 1.5s ease-in-out infinite; }
+    @keyframes apulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+    .hiw-mode-tabs {
+      display: flex; gap: 4px;
     }
-    .hiw-mock-label.purple { color: #c4b5fd; }
-    .hiw-mock-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; animation: huipulse 1.5s infinite; }
-    .hiw-mock-line { height: 7px; border-radius: 4px; background: rgba(255,255,255,0.10); margin-bottom: 7px; }
-    .hiw-mock-bullet {
-      display: flex; gap: 7px; font-size: 11px; color: rgba(255,255,255,0.65);
-      margin-bottom: 6px; line-height: 1.5;
+    .hiw-mode-tab {
+      padding: 3px 10px; border-radius: 4px; font-size: 10px; font-weight: 600;
+      color: rgba(255,255,255,0.40); background: transparent; border: none;
+      cursor: default;
     }
-    .hiw-mock-bullet::before { content: '→'; color: #818cf8; flex-shrink: 0; font-weight: 700; }
-    .hiw-mock-bullet.anim { animation: fadeInUp 0.5s ease both; }
-    .hiw-mock-bullet:nth-child(2) { animation-delay: 0.6s; }
-    .hiw-mock-bullet:nth-child(3) { animation-delay: 1.2s; }
-    .hiw-mock-bullet:nth-child(4) { animation-delay: 1.8s; }
+    .hiw-mode-tab.active {
+      background: rgba(99,102,241,0.20); color: #a5b4fc;
+      border: 1px solid rgba(99,102,241,0.30);
+    }
+    .hiw-answer-bullets { display: flex; flex-direction: column; gap: 6px; }
+    .hiw-answer-bullet {
+      display: flex; gap: 8px;
+      font-size: 12px; color: rgba(255,255,255,0.72); line-height: 1.5;
+      align-items: flex-start;
+    }
+    .hiw-answer-bullet::before { content: '→'; color: #818cf8; flex-shrink: 0; font-weight: 700; }
+    .hiw-answer-bullet.anim { animation: fadeInUp 0.5s ease both; }
+    .hiw-answer-bullet:nth-child(2) { animation-delay: 0.5s; }
+    .hiw-answer-bullet:nth-child(3) { animation-delay: 1.0s; }
+    .hiw-answer-bullet:nth-child(4) { animation-delay: 1.5s; }
     @keyframes fadeInUp { from { opacity:0; transform: translateY(6px); } to { opacity:1; transform: none; } }
 
-    /* Play button overlay */
-    .hiw-video-overlay {
-      position: absolute; inset: 0; z-index: 10;
-      display: flex; flex-direction: column;
-      align-items: center; justify-content: center;
-      background: rgba(6,13,35,0.50);
-      backdrop-filter: blur(2px);
-      cursor: pointer;
-      transition: background 0.25s;
-    }
-    .hiw-video-overlay:hover { background: rgba(6,13,35,0.35); }
-    .hiw-play-btn {
-      width: 88px; height: 88px;
-      background: linear-gradient(135deg, #6366f1, #a78bfa);
-      border-radius: 50%;
-      display: flex; align-items: center; justify-content: center;
-      margin-bottom: 18px;
-      box-shadow: 0 0 48px rgba(99,102,241,0.55), 0 0 96px rgba(167,139,250,0.28);
-      transition: transform 0.2s, box-shadow 0.2s;
-    }
-    .hiw-video-overlay:hover .hiw-play-btn {
-      transform: scale(1.10);
-      box-shadow: 0 0 64px rgba(99,102,241,0.70), 0 0 120px rgba(167,139,250,0.40);
-    }
-    .hiw-play-icon {
-      width: 0; height: 0;
-      border-style: solid; border-width: 13px 0 13px 24px;
-      border-color: transparent transparent transparent #fff;
-      margin-left: 5px;
-    }
-    .hiw-video-label { font-size: 16px; font-weight: 700; color: #fff; margin-bottom: 6px; }
-    .hiw-video-sub { font-size: 13px; color: rgba(255,255,255,0.50); }
-
-    /* YouTube iframe (hidden until play) */
-    .hiw-video-frame iframe {
-      position: absolute; inset: 0; width: 100%; height: 100%;
-      border: none; display: none;
-    }
-    .hiw-video-frame.playing iframe { display: block; }
-    .hiw-video-frame.playing .hiw-video-overlay,
-    .hiw-video-frame.playing .hiw-video-bar,
-    .hiw-video-frame.playing .hiw-video-bg { display: none; }
-
-    /* ── Step cards ── */
-    .hiw-steps { display: grid; grid-template-columns: repeat(3,1fr); gap: 24px; }
+    /* ── Step cards — 5 columns ── */
+    .hiw-steps { display: grid; grid-template-columns: repeat(5, 1fr); gap: 18px; }
     .hiw-step {
       background: rgba(255,255,255,0.05);
       border: 1px solid rgba(255,255,255,0.11);
-      border-radius: 20px; padding: 30px 26px;
+      border-radius: 20px; padding: 26px 20px;
       position: relative; overflow: hidden;
       transition: border-color 0.22s, transform 0.22s, box-shadow 0.22s;
     }
@@ -652,26 +678,30 @@
       transform: translateY(-4px);
       box-shadow: 0 16px 48px rgba(0,0,0,0.30), 0 0 32px rgba(99,102,241,0.10);
     }
-    /* Top gradient accent bar */
     .hiw-step::before {
       content: '';
       position: absolute; top: 0; left: 0; right: 0; height: 2px;
       background: linear-gradient(90deg, #6366f1, #a78bfa);
     }
-    .hiw-step-icon { font-size: 30px; margin-bottom: 14px; display: block; }
+    .hiw-step-icon { font-size: 26px; margin-bottom: 12px; display: block; }
     .hiw-step-num {
       font-size: 10px; font-weight: 800; letter-spacing: 1.5px; text-transform: uppercase;
       background: linear-gradient(135deg, #818cf8, #a78bfa);
       -webkit-background-clip: text; -webkit-text-fill-color: transparent;
       background-clip: text;
-      margin-bottom: 10px;
+      margin-bottom: 8px;
     }
-    .hiw-step h3 { font-size: 18px; font-weight: 800; margin-bottom: 10px; }
-    .hiw-step p { font-size: 14px; color: rgba(255,255,255,0.56); line-height: 1.68; }
+    .hiw-step h3 { font-size: 15px; font-weight: 800; margin-bottom: 8px; line-height: 1.3; }
+    .hiw-step p { font-size: 13px; color: rgba(255,255,255,0.56); line-height: 1.65; }
 
+    @media (max-width: 1024px) {
+      .hiw-steps { grid-template-columns: repeat(3, 1fr); }
+      .hiw-panels-row { grid-template-columns: 1fr; }
+    }
     @media (max-width: 768px) {
       .hiw-section { padding: 64px 24px; }
       .hiw-steps { grid-template-columns: 1fr; }
+      .hiw-app-body { padding: 20px; }
     }
   </style>
 </head>
@@ -693,38 +723,35 @@
   </div>
 </nav>
 
-<!-- ═══ HERO — Dataflix-style: blobs show through, oval photo ═══ -->
+<!-- ═══ HERO ═══ -->
 <section class="hero">
   <div class="hero-inner">
-    <!-- Left column: copy + pills + CTA -->
     <div class="hero-content">
-      <div class="hero-eyebrow">✦ AI-Powered Interview Practice</div>
-      <h1>Practice smarter.<br>Land your <span class="accent">dream job.</span></h1>
-      <p class="hero-sub">Upload your resume, paste a job description, and speak any interview question aloud — get real-time, tailored AI coaching word by word.</p>
+      <div class="hero-eyebrow">✦ AI Co-Pilot for Live Interviews</div>
+      <h1>Never get caught off guard in an <span class="accent">interview again.</span></h1>
+      <p class="hero-sub">Interview Coach listens to your live call, transcribes the interviewer in real time with Whisper AI, and streams a fully personalized answer — before you need to speak.</p>
 
-      <!-- Dataflix-style pill category tags -->
       <div class="hero-pill-row">
-        <a href="/register.html" class="hero-pill">Behavioral</a>
-        <a href="/register.html" class="hero-pill">Technical</a>
-        <a href="/register.html" class="hero-pill">Leadership</a>
-        <a href="/register.html" class="hero-pill">Product</a>
+        <a href="/interview/" class="hero-pill">Live Transcription</a>
+        <a href="/interview/" class="hero-pill">Whisper AI</a>
+        <a href="/interview/" class="hero-pill">3 Answer Modes</a>
+        <a href="/interview/" class="hero-pill">Resume-Aware</a>
       </div>
 
       <div class="hero-cta-row">
-        <a href="/register.html" class="btn-hero-primary">Get Started Free →</a>
-        <a href="/about.html" class="btn-hero-outline">See How It Works</a>
+        <a href="/register.html" class="btn-hero-primary">Start Free →</a>
+        <a href="/interview/" class="btn-hero-outline">See It Live</a>
       </div>
 
-      <!-- Social proof stats below CTAs -->
       <div class="hero-stats-row">
         <div class="hero-stat">
-          <div class="hero-stat-num">12K<span>+</span></div>
-          <div class="hero-stat-label">Interviews practiced</div>
+          <div class="hero-stat-num">Real<span>-time</span></div>
+          <div class="hero-stat-label">Live transcription</div>
         </div>
         <div class="hero-stats-divider"></div>
         <div class="hero-stat">
-          <div class="hero-stat-num">94<span>%</span></div>
-          <div class="hero-stat-label">Feel more confident</div>
+          <div class="hero-stat-num">&lt;<span>1s</span></div>
+          <div class="hero-stat-label">To first answer word</div>
         </div>
         <div class="hero-stats-divider"></div>
         <div class="hero-stat">
@@ -736,162 +763,241 @@
   </div>
 </section>
 
-<!-- ═══ CATEGORY CARDS ═══ -->
-<div class="categories" id="features">
-  <div class="categories-header">
-    <h2>Prepare for any interview</h2>
-    <a href="/register.html">Browse all →</a>
-  </div>
-  <div class="cat-scroll">
-    <div class="cat-card cat-card-1">
-      <div class="cat-bg"></div>
-      <div class="cat-icon">🗣️</div>
-      <div class="cat-label">Behavioral Questions<div class="cat-count">Tell me about a time…</div></div>
-    </div>
-    <div class="cat-card cat-card-2">
-      <div class="cat-bg"></div>
-      <div class="cat-icon">💻</div>
-      <div class="cat-label">Technical Interviews<div class="cat-count">System design · Coding</div></div>
-    </div>
-    <div class="cat-card cat-card-3">
-      <div class="cat-bg"></div>
-      <div class="cat-icon">👥</div>
-      <div class="cat-label">Leadership Roles<div class="cat-count">Management · Strategy</div></div>
-    </div>
-    <div class="cat-card cat-card-4">
-      <div class="cat-bg"></div>
-      <div class="cat-icon">📊</div>
-      <div class="cat-label">Product Management<div class="cat-count">Roadmap · Prioritization</div></div>
-    </div>
-    <div class="cat-card cat-card-5">
-      <div class="cat-bg"></div>
-      <div class="cat-icon">🤝</div>
-      <div class="cat-label">Sales & Business Dev<div class="cat-count">Discovery · Closing</div></div>
-    </div>
-    <div class="cat-card cat-card-6">
-      <div class="cat-bg"></div>
-      <div class="cat-icon">📈</div>
-      <div class="cat-label">Finance & Consulting<div class="cat-count">Case studies · Modeling</div></div>
-    </div>
-  </div>
-</div>
-
 <!-- ═══ HOW IT WORKS ═══ -->
 <section class="hiw-section" id="how-it-works">
   <div class="hiw-inner">
 
     <div class="hiw-header">
       <div class="hiw-eyebrow">✦ How It Works</div>
-      <h2>From zero to confident<br>in <span class="gradient-text">3 simple steps</span></h2>
-      <p>Watch how Interview Coach turns your resume and a job description into real-time, tailored answers — in seconds.</p>
+      <h2>From setup to live answer<br>in <span class="gradient-text">5 simple steps</span></h2>
+      <p>Run Interview Coach during any Zoom, Teams, or Google Meet call. It listens, transcribes, detects questions, and streams your answer — automatically.</p>
     </div>
 
-    <!-- ── Video player ── -->
-    <div class="hiw-video-wrap">
-      <div class="hiw-video-frame" id="hiw-frame">
+    <!-- ── Animated App Mockup ── -->
+    <div class="hiw-mockup-wrap">
+      <div class="hiw-app-frame">
 
-        <!-- macOS-style window chrome -->
-        <div class="hiw-video-bar">
+        <!-- macOS chrome -->
+        <div class="hiw-app-bar">
           <div class="hiw-dot" style="background:#ff5f57"></div>
           <div class="hiw-dot" style="background:#febc2e"></div>
           <div class="hiw-dot" style="background:#28c840"></div>
-          <span style="font-size:12px;color:rgba(255,255,255,0.30);margin-left:10px">Interview Coach — Live Session</span>
+          <div class="hiw-app-url">interviewcoach.app — Live Session</div>
         </div>
 
-        <!-- Animated app UI mockup visible behind the overlay -->
-        <div class="hiw-video-bg">
-          <div class="hiw-mock">
-            <div class="hiw-mock-left">
-              <div class="hiw-mock-label">✓ Resume Parsed</div>
-              <div class="hiw-mock-line" style="width:90%"></div>
-              <div class="hiw-mock-line" style="width:72%"></div>
-              <div class="hiw-mock-line" style="width:82%"></div>
-              <div class="hiw-mock-line" style="width:60%"></div>
-              <div style="display:flex;gap:6px;margin-top:12px;flex-wrap:wrap">
-                <span style="background:rgba(99,102,241,0.15);border:1px solid rgba(99,102,241,0.30);border-radius:999px;padding:3px 10px;font-size:10px;color:#a5b4fc">Python</span>
-                <span style="background:rgba(99,102,241,0.15);border:1px solid rgba(99,102,241,0.30);border-radius:999px;padding:3px 10px;font-size:10px;color:#a5b4fc">AWS</span>
-                <span style="background:rgba(167,139,250,0.15);border:1px solid rgba(167,139,250,0.30);border-radius:999px;padding:3px 10px;font-size:10px;color:#c4b5fd">Team Lead</span>
+        <!-- App body -->
+        <div class="hiw-app-body">
+
+          <!-- Status bar -->
+          <div class="hiw-status-bar">
+            <div class="hiw-status-left">
+              <div class="hiw-rec-badge">
+                <div class="hiw-rec-dot"></div>
+                Live — Zoom Call
+              </div>
+              <div class="hiw-whisper-badge">
+                ⚡ Whisper AI · ~300ms
               </div>
             </div>
-            <div class="hiw-mock-right">
-              <div class="hiw-mock-label purple"><div class="hiw-mock-dot"></div> Streaming answer</div>
-              <div class="hiw-mock-bullet anim">Led team of 5 engineers through critical migration</div>
-              <div class="hiw-mock-bullet anim">Reduced deployment time by 60% in 3 months</div>
-              <div class="hiw-mock-bullet anim">Zero production incidents post-launch</div>
-              <div class="hiw-mock-bullet anim">Exactly the experience this role requires</div>
+            <div class="hiw-status-right">Profile: Senior PM @ Acme Corp</div>
+          </div>
+
+          <!-- Dual transcript panels -->
+          <div class="hiw-panels-row">
+            <div class="hiw-panel interviewer">
+              <div class="hiw-panel-header">
+                <div class="hiw-panel-dot blue"></div>
+                <div class="hiw-panel-title blue">🎤 Interviewer</div>
+              </div>
+              <div class="hiw-panel-line hl-blue" style="width:88%"></div>
+              <div class="hiw-panel-line" style="width:72%"></div>
+              <div class="hiw-panel-line hl-blue" style="width:80%"></div>
+              <div class="hiw-panel-line" style="width:60%"></div>
+              <div class="hiw-panel-quote">"Tell me about a time you led a product launch under tight constraints…"</div>
+              <div class="hiw-typing">
+                <div class="hiw-tdot blue"></div>
+                <div class="hiw-tdot blue"></div>
+                <div class="hiw-tdot blue"></div>
+              </div>
+            </div>
+            <div class="hiw-panel you">
+              <div class="hiw-panel-header">
+                <div class="hiw-panel-dot green"></div>
+                <div class="hiw-panel-title green">💬 You</div>
+              </div>
+              <div class="hiw-panel-line hl-green" style="width:70%"></div>
+              <div class="hiw-panel-line" style="width:55%"></div>
+              <div class="hiw-panel-line hl-green" style="width:78%"></div>
+              <div class="hiw-panel-line" style="width:45%"></div>
+              <div class="hiw-panel-quote">"Sure — at my last role we had a 6-week runway to ship…"</div>
+              <div class="hiw-typing">
+                <div class="hiw-tdot green"></div>
+                <div class="hiw-tdot green"></div>
+                <div class="hiw-tdot green"></div>
+              </div>
             </div>
           </div>
-        </div>
 
-        <!-- Play button overlay -->
-        <div class="hiw-video-overlay" id="hiw-overlay" onclick="hiwPlay()">
-          <div class="hiw-play-btn"><div class="hiw-play-icon"></div></div>
-          <div class="hiw-video-label">Watch the 90-second demo</div>
-          <div class="hiw-video-sub">See voice recognition + AI answers in action</div>
-        </div>
+          <!-- AI Answer panel -->
+          <div class="hiw-answer-panel">
+            <div class="hiw-answer-header">
+              <div class="hiw-answer-title">
+                <div class="hiw-answer-pulse"></div>
+                🧠 AI Answer — Streaming
+              </div>
+              <div class="hiw-mode-tabs">
+                <div class="hiw-mode-tab active">Talking Points</div>
+                <div class="hiw-mode-tab">Full Answer</div>
+                <div class="hiw-mode-tab">Cue Cards</div>
+              </div>
+            </div>
+            <div class="hiw-answer-bullets">
+              <div class="hiw-answer-bullet anim">Led cross-functional team of 8 to ship v2.0 in 6 weeks — on time, under budget</div>
+              <div class="hiw-answer-bullet anim">Prioritized ruthlessly: cut 40% of scope, preserved the 3 core user flows</div>
+              <div class="hiw-answer-bullet anim">Result: 22% DAU increase in first 30 days, zero critical post-launch bugs</div>
+              <div class="hiw-answer-bullet anim">Post-launch retro adopted as company-wide launch playbook</div>
+            </div>
+          </div>
 
-        <!-- YouTube iframe (injected on play) -->
-        <iframe id="hiw-iframe" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen></iframe>
+        </div>
       </div>
     </div>
 
-    <!-- ── Step cards ── -->
+    <!-- ── 5 Step Cards ── -->
     <div class="hiw-steps">
       <div class="hiw-step">
-        <span class="hiw-step-icon">📄</span>
+        <span class="hiw-step-icon">📋</span>
         <div class="hiw-step-num">Step 01</div>
-        <h3>Upload your resume</h3>
-        <p>Drop your PDF or Word doc and paste a job description. Interview Coach reads both so every answer is built around your real experience and the specific role.</p>
+        <h3>Build Your Profile</h3>
+        <p>Upload your PDF or Word resume and paste the job description. Interview Coach learns your exact experience and the role's requirements.</p>
       </div>
       <div class="hiw-step">
         <span class="hiw-step-icon">🎙️</span>
         <div class="hiw-step-num">Step 02</div>
-        <h3>Ask any question</h3>
-        <p>Speak naturally or type. The AI detects behavioral, technical, and situational questions and instantly starts crafting your personalised answer.</p>
+        <h3>Choose Your Audio Source</h3>
+        <p>System Audio via BlackHole (Mac) or browser tab share captures the interviewer's voice directly. Or use your own microphone.</p>
+      </div>
+      <div class="hiw-step">
+        <span class="hiw-step-icon">🖥️</span>
+        <div class="hiw-step-num">Step 03</div>
+        <h3>Go Live</h3>
+        <p>Hit Start Listening. Whisper AI transcribes the interviewer; Web Speech API tracks your replies — both panels update together, live.</p>
+      </div>
+      <div class="hiw-step">
+        <span class="hiw-step-icon">🧠</span>
+        <div class="hiw-step-num">Step 04</div>
+        <h3>Question Auto-Detected</h3>
+        <p>Claude Haiku reads the live transcript and instantly knows when a real interview question was asked. No manual copy-paste needed.</p>
       </div>
       <div class="hiw-step">
         <span class="hiw-step-icon">⚡</span>
-        <div class="hiw-step-num">Step 03</div>
-        <h3>Get your tailored answer</h3>
-        <p>Four sharp STAR-method bullets stream in real time — grounded in your resume, matched to the role. Read, rehearse, and walk in confident.</p>
+        <div class="hiw-step-num">Step 05</div>
+        <h3>Answer Streams In</h3>
+        <p>Pick Full Answer, Talking Points, or Cue Cards. Claude Sonnet streams your personalized answer word-by-word in under a second.</p>
       </div>
     </div>
 
   </div>
 </section>
 
-<!-- ═══ FEATURE 1: Voice ═══ -->
-<section class="feature-section">
+<!-- ═══ FEATURE A: Dual Live Transcript ═══ -->
+<section class="feature-section" id="features">
   <div class="feature-inner">
     <div>
-      <div class="feature-eyebrow">Voice Recognition</div>
-      <h2>Just speak — no buttons, no scripts</h2>
-      <p>Interview Coach listens continuously through your browser's microphone. Ask any question naturally, exactly the way you would in a real interview room. The moment you pause, the AI responds.</p>
-      <a href="/register.html" class="feature-link">Start practicing free →</a>
+      <div class="feature-eyebrow">Live Transcription</div>
+      <h2>See both sides of the conversation — live</h2>
+      <p>Whisper AI transcribes the interviewer in ~300ms chunks. Web Speech API tracks your own voice simultaneously. Two panels update in real time so you always know exactly what was said.</p>
+      <a href="/interview/" class="feature-link">See it live →</a>
     </div>
-    <div class="voice-illustration">
-      <div class="rec-pill"><div class="rec-dot"></div> Listening…</div>
-      <div class="mic-sonar">
-        <div class="sonar-ring"></div><div class="sonar-ring"></div><div class="sonar-ring"></div>
-        <div class="mic-btn">🎙️</div>
+    <div class="dual-transcript-illustration">
+      <!-- Interviewer panel -->
+      <div class="transcript-panel interviewer">
+        <div class="transcript-panel-header">
+          <div class="transcript-live-dot blue"></div>
+          <div class="transcript-panel-label blue">🎤 Interviewer — Whisper AI</div>
+        </div>
+        <div class="transcript-line highlight" style="width:92%"></div>
+        <div class="transcript-line" style="width:75%"></div>
+        <div class="transcript-line highlight" style="width:85%"></div>
+        <div class="transcript-line" style="width:62%"></div>
+        <div class="transcript-text-preview">"Walk me through how you handled a cross-functional conflict on a deadline-critical project…"</div>
+        <div class="transcript-typing">
+          <div class="typing-dot blue"></div>
+          <div class="typing-dot blue"></div>
+          <div class="typing-dot blue"></div>
+        </div>
       </div>
-      <div class="voice-bars">
-        <div class="vbar"></div><div class="vbar"></div><div class="vbar"></div>
-        <div class="vbar"></div><div class="vbar"></div><div class="vbar"></div>
-        <div class="vbar"></div><div class="vbar"></div><div class="vbar"></div>
+      <!-- You panel -->
+      <div class="transcript-panel you">
+        <div class="transcript-panel-header">
+          <div class="transcript-live-dot green"></div>
+          <div class="transcript-panel-label green">💬 You — Web Speech API</div>
+        </div>
+        <div class="transcript-line highlight-green" style="width:68%"></div>
+        <div class="transcript-line" style="width:80%"></div>
+        <div class="transcript-line highlight-green" style="width:55%"></div>
+        <div class="transcript-text-preview">"Great question — at Acme we had a 3-week sprint where design and engineering were blocked on…"</div>
+        <div class="transcript-typing">
+          <div class="typing-dot green"></div>
+          <div class="typing-dot green"></div>
+          <div class="typing-dot green"></div>
+        </div>
       </div>
-      <div class="voice-q-bubble">"Walk me through a time you had to work cross-functionally under a tight deadline…"</div>
     </div>
   </div>
 </section>
 
-<!-- ═══ FEATURE 2: Resume ═══ -->
+<!-- ═══ FEATURE B: 3 Answer Modes ═══ -->
 <section class="feature-section">
   <div class="feature-inner reverse">
     <div>
+      <div class="feature-eyebrow">Three Answer Modes</div>
+      <h2>Full answer. Talking points. Cue cards. You choose.</h2>
+      <p>Full Answer gives you a confident 3-sentence spoken response. Talking Points are 4 punchy bullets with real numbers from your resume. Cue Cards are 6-word scannable lines for glancing mid-call without losing eye contact.</p>
+      <a href="/interview/" class="feature-link">Try all three modes →</a>
+    </div>
+    <div class="answer-modes-illustration">
+      <div class="mode-tab-bar">
+        <button class="mode-tab active" onclick="switchMode(this,'full')">Full Answer</button>
+        <button class="mode-tab" onclick="switchMode(this,'points')">Talking Points</button>
+        <button class="mode-tab" onclick="switchMode(this,'cards')">Cue Cards</button>
+      </div>
+      <div class="mode-content-area">
+        <div class="mode-q-label">Question detected</div>
+        <div class="mode-q-text">"Describe a time you significantly improved a process."</div>
+        <div class="mode-answer-label"><div class="mode-a-pulse"></div> Claude Sonnet — Streaming</div>
+        <!-- Full Answer content -->
+        <div id="mode-full">
+          <div class="mode-full-text">
+            At my previous role as a Senior Engineer, I identified a 3-day manual QA cycle that was blocking weekly releases. I designed an automated test suite covering 94% of critical paths, which cut our release cadence from weekly to daily and reduced bug escapes by 80%. The initiative was so effective that the VP of Engineering asked me to roll it out across two additional product teams.
+          </div>
+        </div>
+        <!-- Talking Points content -->
+        <div id="mode-points" style="display:none">
+          <div class="mode-bullet">Identified 3-day manual QA cycle blocking weekly releases</div>
+          <div class="mode-bullet">Automated test suite: 94% critical path coverage</div>
+          <div class="mode-bullet">Release cadence: weekly → daily; bug escapes down 80%</div>
+          <div class="mode-bullet">Rolled out to 2 more teams after VP Eng review</div>
+        </div>
+        <!-- Cue Cards content -->
+        <div id="mode-cards" style="display:none">
+          <div class="mode-cue">QA bottleneck — 3 days manual</div>
+          <div class="mode-cue">Automated 94% of critical paths</div>
+          <div class="mode-cue">Daily releases, 80% fewer bugs</div>
+          <div class="mode-cue">Scaled across two more teams</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ FEATURE C: Resume Intelligence ═══ -->
+<section class="feature-section">
+  <div class="feature-inner">
+    <div>
       <div class="feature-eyebrow">Resume Intelligence</div>
-      <h2>Answers built around your real experience</h2>
-      <p>Upload your resume as a PDF and every answer is grounded in your actual skills, projects, and accomplishments — not generic templates. The AI knows who you are before you say a word.</p>
+      <h2>Every answer built from YOUR experience</h2>
+      <p>Upload your PDF or Word doc. Interview Coach parses it and feeds your exact roles, projects, metrics, and skills to Claude Sonnet. The AI knows who you are before the question is even asked.</p>
       <a href="/register.html" class="feature-link">Upload your resume →</a>
     </div>
     <div class="resume-illustration">
@@ -928,65 +1034,29 @@
   </div>
 </section>
 
-<!-- ═══ FEATURE 3: AI Answers ═══ -->
-<section class="feature-section">
-  <div class="feature-inner">
-    <div>
-      <div class="feature-eyebrow">Real-Time AI Coaching</div>
-      <h2>Confident answers, streamed word by word</h2>
-      <p>Watch your tailored answer appear in real time using the STAR method — condensed into punchy bullet points you can scan in seconds and say out loud with confidence.</p>
-      <a href="/register.html" class="feature-link">Try a question now →</a>
-    </div>
-    <div class="answer-illustration">
-      <div class="answer-terminal-bar">
-        <div class="terminal-dot" style="background:#ff5f57"></div>
-        <div class="terminal-dot" style="background:#febc2e"></div>
-        <div class="terminal-dot" style="background:#28c840"></div>
-        <span style="font-size:12px;color:rgba(255,255,255,0.3);margin-left:8px">Interview Coach · AI Session</span>
-      </div>
-      <div class="answer-terminal-body">
-        <div class="answer-q-row">
-          <div class="q-icon">🧑</div>
-          <div class="q-bubble">"Describe a time you significantly improved a process."</div>
-        </div>
-        <div class="answer-a-row">
-          <div class="a-icon">🤖</div>
-          <div class="a-bubble">
-            <div class="a-label"><div class="a-pulse"></div> Streaming answer</div>
-            <div class="a-bullet">Identified 3-day manual QA cycle blocking weekly releases</div>
-            <div class="a-bullet">Designed automated test suite covering 94% of critical paths</div>
-            <div class="a-bullet">Release cadence: weekly → daily; bug escapes dropped 80%</div>
-            <div class="a-bullet">Rolled out to 2 more teams after VP Eng review</div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
-
 <!-- ═══ STATS ═══ -->
 <section class="stats-section">
   <div class="stats-inner">
     <div class="stat-item">
-      <div class="stat-num">60<span>+</span></div>
-      <div class="stat-label">Interview question types covered</div>
+      <div class="stat-num">&lt;<span>1s</span></div>
+      <div class="stat-label">First AI word in under a second</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-num" style="color:#a5b4fc; font-size:36px; padding-top:10px">3 <span style="color:#818cf8;font-size:28px">Modes</span></div>
+      <div class="stat-label">Full Answer · Talking Points · Cue Cards</div>
     </div>
     <div class="stat-item">
       <div class="stat-num" style="color:#a5b4fc">Free</div>
-      <div class="stat-label">No credit card, no trial period</div>
-    </div>
-    <div class="stat-item">
-      <div class="stat-num">&lt;<span>1s</span></div>
-      <div class="stat-label">Time to first AI answer word</div>
+      <div class="stat-label">No credit card needed</div>
     </div>
   </div>
 </section>
 
 <!-- ═══ CTA ═══ -->
 <section class="cta-section">
-  <h2>Ready to practice smarter?</h2>
-  <p>Create your free account and start your first session in under 60 seconds.</p>
-  <a href="/register.html" class="btn-hero-primary" style="margin:0 auto">Get Started — It's Free</a>
+  <h2>Walk into your next interview with an AI co-pilot</h2>
+  <p>Join thousands of candidates using Interview Coach to answer confidently — live, personalized, in real time.</p>
+  <a href="/register.html" class="btn-hero-primary" style="margin:0 auto">Start Free — No Card Needed →</a>
 </section>
 
 <!-- ═══ FOOTER ═══ -->
@@ -994,7 +1064,7 @@
   <div class="footer-grid">
     <div class="footer-brand">
       <a href="/" class="nav-logo"><div class="icon">🎙️</div>Interview Coach</a>
-      <p>AI-powered interview practice that adapts to your resume and the role you're targeting. Built for candidates who want to show up confident.</p>
+      <p>AI-powered interview co-pilot that listens to your live call, transcribes both sides in real time, and streams personalized answers grounded in your resume.</p>
     </div>
     <div class="footer-col">
       <h4>Product</h4>
@@ -1029,28 +1099,16 @@
     Auth.renderNav();
   });
 
-  /**
-   * How It Works video player.
-   *
-   * To embed your own video:
-   *   1. Upload to YouTube and grab the video ID (the part after ?v= in the URL).
-   *   2. Replace null below with your video ID string, e.g. 'dQw4w9WgXcQ'
-   */
-  const HIW_YOUTUBE_ID = null; // ← paste your YouTube video ID here
-
-  function hiwPlay() {
-    const frame   = document.getElementById('hiw-frame');
-    const overlay = document.getElementById('hiw-overlay');
-    const iframe  = document.getElementById('hiw-iframe');
-
-    if (HIW_YOUTUBE_ID) {
-      // Load the YouTube video and hide everything else
-      iframe.src = `https://www.youtube.com/embed/${HIW_YOUTUBE_ID}?autoplay=1&rel=0&modestbranding=1`;
-      frame.classList.add('playing');
-    } else {
-      // No video yet — dismiss the overlay so the animated mockup is fully visible
-      overlay.style.display = 'none';
-    }
+  function switchMode(btn, mode) {
+    // Update tab active state
+    btn.closest('.mode-tab-bar').querySelectorAll('.mode-tab').forEach(t => t.classList.remove('active'));
+    btn.classList.add('active');
+    // Show the right content panel
+    ['mode-full','mode-points','mode-cards'].forEach(id => {
+      document.getElementById(id).style.display = 'none';
+    });
+    const map = { full: 'mode-full', points: 'mode-points', cards: 'mode-cards' };
+    document.getElementById(map[mode]).style.display = '';
   }
 </script>
 </body>

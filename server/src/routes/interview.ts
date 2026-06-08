@@ -43,14 +43,36 @@ const audioUpload = multer({
   },
 });
 
-const SYSTEM_PROMPT = `You are an expert interview coach. Write a natural, spoken interview answer in 3 sentences — confident first-person, no bullet points, no STAR labels.
+const SYSTEM_PROMPT = `You are helping a candidate answer a live interview question out loud. Write the EXACT words they should say — a realistic, spoken, first-person answer in their own voice.
 
-Sentence 1: Ground it in a specific experience from the resume (role, project, or situation).
-Sentence 2: What you did and one concrete result or number.
-Sentence 3: Connect that experience directly to this role or company — make it feel inevitable.
+You will receive a RESUME, a JOB DESCRIPTION, optional SUPPORTING DOCUMENTS, and an INTERVIEW QUESTION. Use the resume and supporting documents for concrete, domain-specific detail; use the job description to keep the answer aligned with what this role cares about — echo their priorities and terminology where it's genuine, so the fit feels natural.
 
-Sound like someone speaking in a real interview: direct, warm, no corporate jargon. Pull real specifics from the resume and job description.
-Output ONLY the 3-sentence answer — no intro, no labels, no extra text.`;
+STRUCTURE the answer in three movements:
+
+1. OPEN by restating the question, on its own single line, to confirm understanding and buy a beat to think. Lead with this — it should sound like a real person warming up. Use phrasings like:
+   - "You're asking <restated question>."
+   - "So you want me to <restated task>."
+   - "You'd like to know <restated topic>."
+   Restate in your own words — don't parrot the question verbatim. One sentence on its own line.
+
+2. BODY — 2 to 3 short, flowing paragraphs of natural spoken English. This is the heart of the answer:
+   - First person throughout ("I", "we", "my").
+   - Conversational and warm, the way someone actually talks — use contractions ("I'd", "it's", "we're"), em-dashes for asides, and connectors like "for example", "from there", "instead of".
+   - Pull real, concrete detail: name actual tools, systems, processes, roles, projects, steps, or — when the source gives them — numbers and metrics, drawn from the resume/documents and the domain of the question. Be specific, not generic.
+   - Walk through it the way you'd explain it to a colleague — narrate the flow, the "when" and the "why," not just a definition. If the question is behavioral, walk through the actual situation, what you did, and what resulted, but as natural spoken narrative.
+   - NO bullet points. NO numbered lists. NO "STAR" / "Situation / Task / Action / Result" labels or any headers. It must read as continuous spoken paragraphs.
+
+3. CLOSE with one crisp summary line that lands the point, beginning with "In short," (or "Bottom line," / "So in short,"). One sentence that captures the value or takeaway.
+
+TONE: Sound human and spoken, not written. Confident but not boastful, warm but precise. Avoid corporate filler and buzzword stacking — every sentence should carry real substance. Match the candidate's seniority and domain to the question.
+
+GROUNDING: Anchor claims in the source material. Never invent specifics the source doesn't support — no fabricated API names, method names, internal product details, version numbers, or exact figures. When you don't have a precise detail, stay at a confident, clear CONCEPTUAL level — the way an experienced professional explains something to a peer — rather than inventing specifics to sound impressive. It's better to be accurate and measured than to over-reach.
+
+CADENCE: Keep it calm, clean, and evenly paced — like the measured examples a strong candidate gives. Confident, not eager; substantive, not flashy. Don't pile on jargon or technical trivia; explain the what, the when, and the why in plain professional language.
+
+LENGTH: Roughly 180–260 words total, across 3–4 short paragraphs.
+
+Output ONLY the answer — the restate line, the body paragraphs, and the closing line. No preamble, no labels, no headers, no quotation marks around the whole thing, no meta-commentary.`;
 
 const ONE_LINER_PROMPT = `You are an expert interview coach. Give exactly 4 punchy talking points — one sentence each — that the candidate can weave naturally into their answer.
 
@@ -134,11 +156,16 @@ router.post('/answer-stream', async (req: Request, res: Response) => {
     const chosenPrompt = mode === 'hints' ? HINTS_PROMPT
                        : mode === 'one-liner' ? ONE_LINER_PROMPT
                        : SYSTEM_PROMPT;
-    // Shorter answers = faster streaming; natural 3-sentence answer ≈ 80-120 tokens
-    const maxTokens = mode === 'hints' ? 120 : mode === 'one-liner' ? 150 : 180;
+    // Full answer is the spoken response the candidate reads aloud — give it room for a
+    // realistic 180–260 word, restate→body→summary answer. The two quick-glance aids stay short.
+    const maxTokens = mode === 'hints' ? 120 : mode === 'one-liner' ? 150 : 500;
+    // Full answer uses Sonnet for the most natural prose (realism is the priority there).
+    // The quick-glance aids (talking points / cue cards) use Haiku — much faster TTFT,
+    // and their formulaic output doesn't need Sonnet's depth.
+    const model = mode === 'answer' ? 'claude-sonnet-4-6' : 'claude-haiku-4-5';
 
     const stream = client.messages.stream({
-      model: 'claude-sonnet-4-6',
+      model,
       max_tokens: maxTokens,
       // Cache the system prompt — saves ~80% on input token costs after the first call
       system: [{ type: 'text', text: chosenPrompt, cache_control: { type: 'ephemeral' } }],
@@ -272,8 +299,22 @@ router.post('/transcribe', audioUpload.single('audio'), async (req: Request, res
 
     const model = groqKey ? 'whisper-large-v3-turbo' : 'whisper-1';
 
+    // Context priming: tell Whisper this is a job interview so it favours interview
+    // vocabulary, punctuates questions, and stops hallucinating "Thank you for watching"
+    // / "Please subscribe" on near-silent chunks. temperature:0 makes it deterministic
+    // and far less likely to invent words at chunk boundaries.
+    const contextPrompt =
+      'The following is audio from a live job interview. The interviewer is asking ' +
+      'a professional question — transcribe it accurately with correct punctuation.';
+
     const file   = await toFile(req.file.buffer, filename, { type: mimeType });
-    const result = await openai.audio.transcriptions.create({ file, model, language: 'en' });
+    const result = await openai.audio.transcriptions.create({
+      file,
+      model,
+      language: 'en',
+      prompt: contextPrompt,
+      temperature: 0,
+    });
 
     res.json({ transcript: result.text.trim() });
   } catch (err) {
