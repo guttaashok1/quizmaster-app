@@ -1,4 +1,4 @@
-// Build: 2026-06-01 — forces Vercel cache invalidation so updated public/ files are bundled
+// Build: 2026-06-01i — forces Vercel cache invalidation so updated public/ files are bundled
 import { config } from 'dotenv';
 import { resolve } from 'path';
 config({ path: resolve(__dirname, '../.env') });

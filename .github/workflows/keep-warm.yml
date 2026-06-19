@@ -1,0 +1,36 @@
+name: keep-render-warm
+
+# The mobile quiz API runs on Render's free tier, which sleeps a service after
+# ~15 minutes of no traffic. The first request after it sleeps gets a 503 (or a
+# 30–60s cold-start delay). This workflow pings the health endpoint every ~10
+# minutes so the service stays awake and mobile users never hit a cold start.
+#
+# Notes:
+#  - GitHub may delay scheduled runs during high load; ~10 min is a safe target.
+#  - Scheduled workflows are auto-disabled after 60 days of repo inactivity.
+#  - Free Render instances also have a monthly active-hours cap; keeping the
+#    service warm uses those hours faster. If usage grows, switch to a paid
+#    always-on Render instance instead of relying on this pinger.
+
+on:
+  schedule:
+    - cron: "*/10 * * * *"   # every 10 minutes
+  workflow_dispatch:          # allow manual runs from the Actions tab
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Render API health
+        run: |
+          echo "Pinging Render mobile API…"
+          curl -fsS --max-time 90 https://quizmaster-api-2os8.onrender.com/api/health \
+            && echo "  ✓ Render API awake" \
+            || echo "  ⚠ Render API did not respond OK (may be cold-starting)"
+
+      - name: Ping Interview Coach API health
+        run: |
+          echo "Pinging Interview Coach (Vercel) API…"
+          curl -fsS --max-time 30 https://interview-coach-seven-lovat.vercel.app/api/health \
+            && echo "  ✓ Interview Coach API healthy" \
+            || echo "  ⚠ Interview Coach API did not respond OK"

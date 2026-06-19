@@ -217,6 +217,7 @@
     .sdot.done      { background: var(--green); animation: none; }
     @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.25} }
     .stext { font-size: 13px; color: var(--muted); flex: 1; }
+    .stext.err { color: #f59e0b; font-weight: 500; }
     .wave { display: none; align-items: center; gap: 2px; height: 14px; }
     .wave.on { display: inline-flex; }
     .wave span { display: block; width: 3px; border-radius: 2px; background: var(--red); animation: wv 0.8s ease-in-out infinite; }
@@ -365,8 +366,10 @@
       color: var(--accent); font-size: 15px; font-weight: 800;
       flex-shrink: 0; margin-top: 2px; user-select: none;
     }
-    .bullet-text { font-size: 15px; line-height: 1.65; color: var(--text); }
-    .answer-plain { font-size: 14px; color: var(--muted); padding: 10px 0; }
+    .bullet-text { font-size: var(--answer-font-size, 20px); line-height: 1.65; color: var(--text); }
+    /* Full conversational answer — primary text, paragraph rhythm */
+    .answer-plain { font-size: var(--answer-font-size, 20px); color: var(--text); padding: 7px 0; line-height: 1.7; }
+    .answer-plain:first-child { padding-top: 4px; }
     .cursor {
       display: inline-block; width: 2px; height: 1em;
       background: var(--accent); margin-left: 2px;
@@ -412,7 +415,7 @@
     .tx-dot.on { background: var(--green); box-shadow: 0 0 5px rgba(16,185,129,0.45); animation: blink 1s infinite; }
     .tx-dot.you { background: var(--accent); box-shadow: 0 0 5px rgba(99,102,241,0.45); animation: blink 1s infinite; }
     /* Compact transcript inside panels */
-    .tx-panel .transcript { min-height: 60px; margin-bottom: 0; font-size: 14px; }
+    .tx-panel .transcript { min-height: 60px; max-height: 160px; overflow-y: auto; margin-bottom: 0; font-size: 14px; }
 
     @media (max-width: 768px) {
       .nav { padding: 0 14px; }
@@ -485,6 +488,30 @@
             <span class="select-caret">▾</span>
           </div>
           <div id="setup-bh-guide" style="display:none;background:var(--accent-dim);border:1px solid rgba(99,102,241,0.2);border-radius:9px;padding:9px 13px;font-size:12px;color:#a5b4fc;line-height:1.6"></div>
+        </div>
+      </div>
+
+      <!-- Answer style — which format to generate (persisted to localStorage) -->
+      <div style="margin-top:20px">
+        <div class="setup-label">Answer Style</div>
+        <div class="mode-toggle" id="answer-style-toggle" style="margin-bottom:6px">
+          <button class="mode-btn on" id="astyle-full"      onclick="setAnswerStyle('full')">📝 Full Answer</button>
+          <button class="mode-btn"    id="astyle-one-liner" onclick="setAnswerStyle('one-liner')">💬 One-Liner</button>
+          <button class="mode-btn"    id="astyle-hints"     onclick="setAnswerStyle('hints')">⚡ Cue Cards</button>
+        </div>
+        <div style="font-size:11px;color:var(--muted);opacity:0.7;line-height:1.5">
+          Only this format is generated on each question — faster &amp; lighter. You can still tap another tab in the session to load it on demand.
+        </div>
+      </div>
+
+      <!-- Answer text size — persisted to localStorage -->
+      <div style="margin-top:18px;margin-bottom:20px">
+        <div class="setup-label">Answer Text Size</div>
+        <div class="mode-toggle" id="font-size-toggle">
+          <button class="mode-btn" id="font-btn-s"  onclick="setAnswerFontSize('s')">S</button>
+          <button class="mode-btn" id="font-btn-m"  onclick="setAnswerFontSize('m')">M</button>
+          <button class="mode-btn on" id="font-btn-l"  onclick="setAnswerFontSize('l')">L</button>
+          <button class="mode-btn" id="font-btn-xl" onclick="setAnswerFontSize('xl')">XL</button>
         </div>
       </div>
 
@@ -681,9 +708,13 @@
   // "You" transcript — Web Speech API on the user's own microphone (parallel to Whisper)
   let userSpeechRec = null;
   let userSpeechAcc = '';
+  let userSilenceTimer = null;   // clears the "You" panel after a pause in speaking
+  const USER_SILENCE_MS = 2500;  // wipe accumulated text this long after the last word
   // Auto-answer fires this many ms after the FIRST silent chunk following speech.
   // A silent chunk = 4 s of audio with RMS below threshold, confirming interviewer stopped.
   const SYS_SILENCE = 3000;
+  let sysClearTimer = null;      // wipes leftover (un-answered) question text after a longer pause
+  const SYS_CLEAR_MS = 6000;     // clear stale fragments this long after the interviewer stops
 
   // Tab-audio capture (getDisplayMedia → MediaRecorder → Whisper transcription)
   // The microphone is never used in this mode — only the interview tab's audio is captured.
@@ -699,6 +730,9 @@
   let streamCtrls = {}, answers = { full: '', 'one-liner': '', hints: '' }, utterance = null;
   let answersReady = { full: false, 'one-liner': false, hints: false };
   let activeTab = 'full';
+  let answerStyle = 'full';          // setup-selected format generated per question
+  const MODE_MAP = { full: 'answer', 'one-liner': 'one-liner', hints: 'hints' };
+  let _lastQuestion = '', _lastDocsText = '';  // remembered so other tabs can lazy-load
 
   // ── Profile List — API-first with localStorage fallback ───────────────────────
   async function loadProfileList() {
@@ -906,6 +940,8 @@
     ['full', 'one-liner', 'hints'].forEach(t => {
       document.getElementById('atab-' + t).classList.toggle('active', t === tab);
     });
+    // Lazy-generate this format if it wasn't the setup-selected one and hasn't run yet
+    if (!streamCtrls[tab] && _lastQuestion) startTabStream(tab);
     const box = document.getElementById('answer-box');
     box.className = 'answer-box' + (answersReady[tab] ? '' : ' stream');
     renderAnswerBullets(answers[tab] || '');
@@ -1017,6 +1053,31 @@
   //   A) getUserMedia(deviceId)  — BlackHole or any audio-input device (Mac)
   //   B) getDisplayMedia         — share a browser tab (Windows or Mac browser Zoom)
   // The microphone is NEVER used in either path.
+
+  // ── Setup screen: answer font size ───────────────────────────────────────────
+  const _FONT_PX = { s: '14px', m: '17px', l: '20px', xl: '24px' };
+  function setAnswerFontSize(size) {
+    const px = _FONT_PX[size] || _FONT_PX.l;
+    document.documentElement.style.setProperty('--answer-font-size', px);
+    localStorage.setItem('ic_answer_font_size', size);
+    ['s', 'm', 'l', 'xl'].forEach(k => {
+      const btn = document.getElementById('font-btn-' + k);
+      if (btn) btn.classList.toggle('on', k === size);
+    });
+  }
+
+  // ── Setup screen: answer style ───────────────────────────────────────────────
+  // Which format we generate per question (full / one-liner / hints). Generating
+  // only the chosen one (instead of all 3) cuts API calls 3× and is faster.
+  function setAnswerStyle(style) {
+    if (!['full', 'one-liner', 'hints'].includes(style)) style = 'full';
+    answerStyle = style;
+    localStorage.setItem('ic_answer_style', style);
+    ['full', 'one-liner', 'hints'].forEach(s => {
+      const btn = document.getElementById('astyle-' + s);
+      if (btn) btn.classList.toggle('on', s === style);
+    });
+  }
 
   // ── Setup screen: mode toggle + device picker ─────────────────────────────────
 
@@ -1194,58 +1255,80 @@
       if (chk.status === 503) {
         const d = await chk.json().catch(() => ({}));
         setSysStatus('⚠️ ' + (d.message ||
-          'Add GROQ_API_KEY (free at groq.com) to Vercel env vars, then redeploy.'));
+          'Add GROQ_API_KEY (free at groq.com) to Vercel env vars, then redeploy.'), true);
         return;
       }
     } catch (_) { /* server unreachable — proceed, error will surface on first chunk */ }
 
-    // ── 1. Get audio stream — device (BlackHole) OR tab (getDisplayMedia) ─────
-    // setup-device-select (setup screen) is the authoritative source; fall back to session element
-    const selEl  = document.getElementById('setup-device-select') || document.getElementById('sys-device-select');
-    const selVal = selEl ? selEl.value : 'tab';
-    const selLbl = selEl ? (selEl.options[selEl.selectedIndex]?.text || 'audio device') : 'tab';
-
+    // ── 1. Get audio stream — mic / BlackHole device / tab (getDisplayMedia) ──
     let stream;
-    if (selVal !== 'tab') {
-      // ── Path A: getUserMedia — BlackHole or other device ──────────────────
-      setSysStatus('🎚️ Connecting to ' + selLbl + '…');
+    let selVal = 'tab', selLbl = 'microphone';
+
+    if (setupMode === 'mic') {
+      // ── Path M: default microphone (no screen picker needed) ──────────────
+      setSysStatus('🎙️ Connecting to microphone…');
       try {
         stream = await navigator.mediaDevices.getUserMedia({
-          audio: {
-            deviceId: { exact: selVal },
-            echoCancellation: false,
-            noiseSuppression: false,
-            autoGainControl: false,
-          },
+          audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
         });
       } catch (err) {
-        setSysStatus('⚠️ Could not access device — ' + err.message);
+        setSysStatus('⚠️ Microphone access denied — ' + err.message, true);
         return;
       }
+      selVal = 'mic';
     } else {
-      // ── Path B: getDisplayMedia — share a browser tab ─────────────────────
-      setSysStatus('🖥️ Select your interview tab in the sharing dialog…');
-      try {
-        stream = await navigator.mediaDevices.getDisplayMedia({
-          audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false },
-          video: true,  // Chrome requires video:true to show "Share tab audio" checkbox
-        });
-      } catch (_) {
-        setSysStatus('Cancelled — click Start Listening to try again');
-        return;
-      }
-      // Drop video immediately — we only need audio
-      stream.getVideoTracks().forEach(t => t.stop());
-      if (!stream.getAudioTracks().length) {
-        setSysStatus('⚠️ No audio captured. In Chrome\'s dialog check "Share tab audio" then retry.');
-        stream.getTracks().forEach(t => t.stop());
-        return;
+      // System audio mode: BlackHole device OR tab sharing
+      // setup-device-select (setup screen) is authoritative; fall back to hidden session element
+      const selEl = document.getElementById('setup-device-select') || document.getElementById('sys-device-select');
+      selVal = selEl ? selEl.value : 'tab';
+      selLbl = selEl ? (selEl.options[selEl.selectedIndex]?.text || 'audio device') : 'tab';
+
+      if (selVal !== 'tab') {
+        // ── Path A: getUserMedia — BlackHole or other device ────────────────
+        setSysStatus('🎚️ Connecting to ' + selLbl + '…');
+        try {
+          stream = await navigator.mediaDevices.getUserMedia({
+            audio: {
+              deviceId: { exact: selVal },
+              echoCancellation: false,
+              noiseSuppression: false,
+              autoGainControl: false,
+            },
+          });
+        } catch (err) {
+          setSysStatus('⚠️ Could not access device — ' + err.message, true);
+          return;
+        }
+      } else {
+        // ── Path B: getDisplayMedia — share a browser tab ──────────────────
+        setSysStatus('🖥️ Select your interview tab in the sharing dialog…');
+        try {
+          stream = await navigator.mediaDevices.getDisplayMedia({
+            audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false },
+            video: true,  // Chrome requires video:true to show "Share tab audio" checkbox
+          });
+        } catch (_) {
+          setSysStatus('Cancelled — click Start Listening to try again');
+          return;
+        }
+        // Drop video immediately — we only need audio
+        stream.getVideoTracks().forEach(t => t.stop());
+        if (!stream.getAudioTracks().length) {
+          stream.getTracks().forEach(t => t.stop());
+          const isMac = /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent);
+          if (isMac) {
+            setSysStatus('⚠️ No audio captured. On Mac: open Teams in a browser tab (teams.microsoft.com), then click Start Listening and share that tab with "Share tab audio" checked. Or set up BlackHole for system audio.', true);
+          } else {
+            setSysStatus('⚠️ No audio captured. In Chrome\'s dialog choose "Entire screen" (not a Window), then check "Share system audio" at the bottom before clicking Share.', true);
+          }
+          return;
+        }
       }
     }
 
     displayStream = stream;
     stream.getAudioTracks()[0].onended = () => {
-      if (sysCapturing) { stopSys(true); setSysStatus('⚠️ Audio source disconnected — click Start Listening to reconnect'); }
+      if (sysCapturing) { stopSys(true); setSysStatus('⚠️ Audio source disconnected — click Start Listening to reconnect', true); }
     };
 
     // ── 2. Start recording & transcription loop ───────────────────────────────
@@ -1258,7 +1341,9 @@
     document.getElementById('sys-start').style.display = 'none';
     document.getElementById('sys-stop').style.display  = '';
 
-    if (selVal !== 'tab') {
+    if (selVal === 'mic') {
+      setSysStatus('🎙️ Recording via microphone — speak clearly near your mic…');
+    } else if (selVal !== 'tab') {
       setSysStatus('🎙️ Recording via ' + selLbl + ' — Zoom/Teams audio will appear here…');
     } else {
       const isMac2 = /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent);
@@ -1337,9 +1422,11 @@
               sysAcc += text + ' ';
               setSysTx(sysAcc, '');
               updateSysBtn();
-              // Interviewer is STILL speaking — cancel any pending auto-answer timer
+              // Interviewer is STILL speaking — cancel any pending auto-answer / clear timers
               clearTimeout(sysTimer);
               sysTimer = null;
+              clearTimeout(sysClearTimer);
+              sysClearTimer = null;
               setSysStatus('🎙️ Listening — capturing question…');
             }
           }
@@ -1356,6 +1443,17 @@
         } else if (wordsSoFar === 0) {
           setSysStatus('🎙️ Waiting for interviewer to speak…');
         } else {
+          // 1–4 leftover words that won't trigger an auto-answer — wipe them after a
+          // longer pause so stale fragments don't pile up in the question box.
+          if (!sysClearTimer) {
+            sysClearTimer = setTimeout(() => {
+              sysClearTimer = null;
+              const inp = document.getElementById('sys-q');
+              sysAcc = ''; sysInterim = ''; setSysTx('', '');
+              if (inp && !inp.dataset.edited) { inp.value = ''; updateSysBtn(); }
+              setSysStatus('🎙️ Waiting for interviewer to speak…');
+            }, SYS_CLEAR_MS);
+          }
           setSysStatus('🎙️ Listening — capturing question…');
         }
       }
@@ -1375,6 +1473,7 @@
   function stopSys(silent = false) {
     sysCapturing = false;
     clearTimeout(sysTimer);
+    clearTimeout(sysClearTimer); sysClearTimer = null;
 
     // Stop active MediaRecorder (onstop won't recurse because sysCapturing is false)
     if (sysMediaRec && sysMediaRec.state !== 'inactive') {
@@ -1442,6 +1541,13 @@
         }
       }
       setUserTx(userSpeechAcc, interim);
+      // Reset the silence timer on every new word; once the user pauses for
+      // USER_SILENCE_MS the panel wipes so it never grows / expands the page.
+      clearTimeout(userSilenceTimer);
+      userSilenceTimer = setTimeout(() => {
+        userSpeechAcc = '';
+        setUserTx('', '');
+      }, USER_SILENCE_MS);
     };
     // Auto-restart on end (browser sometimes cuts recognition after a pause)
     userSpeechRec.onend = () => {
@@ -1451,6 +1557,7 @@
   }
 
   function stopUserSpeech() {
+    clearTimeout(userSilenceTimer);
     if (userSpeechRec) {
       try { userSpeechRec.stop(); } catch(_) {}
       userSpeechRec = null;
@@ -1459,7 +1566,11 @@
     setUserTx('', '');
   }
 
-  function setSysStatus(text) { document.getElementById('sys-status').textContent = text; }
+  function setSysStatus(text, isErr = false) {
+    const el = document.getElementById('sys-status');
+    el.textContent = text;
+    el.classList.toggle('err', isErr);
+  }
 
   function setVadDot(speaking) {
     document.getElementById('vad-dot').className = 'vad-dot' + (speaking ? ' speaking' : '');
@@ -1488,27 +1599,15 @@
   async function sysAutoAnswer() {
     const text = sysAcc.trim();
     if (!text || text.split(/\s+/).length < 5) return;
-    setSysStatus('🔍 Analyzing question…');
+    clearTimeout(sysClearTimer); sysClearTimer = null;
 
-    let detected = { isQuestion: true, question: text };
-    try {
-      const r = await fetch('/api/interview/detect-question', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ transcript: text }),
-      });
-      if (r.ok) detected = await r.json();
-    } catch(_) {}
-
+    // SPEED: fire the answer IMMEDIATELY on the raw transcript — no blocking
+    // detect-question round-trip. The 5-word threshold above is our guard, the
+    // answer prompt restates the question itself, and the box stays editable.
     const inp = document.getElementById('sys-q');
-    if (detected.isQuestion && detected.question) {
-      if (inp && !inp.dataset.edited) { inp.value = detected.question; updateSysBtn(); }
-      sysAcc = ''; sysInterim = ''; setSysTx('', '');
-      await triggerAnswerText(detected.question);
-    } else {
-      if (inp && !inp.dataset.edited) { inp.value = text; updateSysBtn(); inp.focus(); inp.select(); }
-      sysAcc = ''; sysInterim = ''; setSysTx('', '');
-      setSysStatus('⚠️ Not sure that was a question — edit below and click Get Answer');
-    }
+    if (inp && !inp.dataset.edited) { inp.value = text; updateSysBtn(); }
+    sysAcc = ''; sysInterim = ''; setSysTx('', '');
+    await triggerAnswerText(text);
   }
 
   function updateSysBtn() {
@@ -1518,7 +1617,8 @@
   function sysSubmit() {
     const inp = document.getElementById('sys-q');
     const text = inp.value.trim(); if (!text) return;
-    clearTimeout(sysTimer); sysAcc = ''; sysInterim = ''; setSysTx('', '');
+    clearTimeout(sysTimer); clearTimeout(sysClearTimer); sysClearTimer = null;
+    sysAcc = ''; sysInterim = ''; setSysTx('', '');
     inp.value = ''; delete inp.dataset.edited; updateSysBtn();
     triggerAnswerText(text);
   }
@@ -1526,7 +1626,8 @@
   function sysClear() {
     const inp = document.getElementById('sys-q');
     inp.value = ''; delete inp.dataset.edited; updateSysBtn();
-    clearTimeout(sysTimer); sysAcc = ''; sysInterim = ''; setSysTx('', '');
+    clearTimeout(sysTimer); clearTimeout(sysClearTimer); sysClearTimer = null;
+    sysAcc = ''; sysInterim = ''; setSysTx('', '');
   }
 
   // ── Answer rendering ──────────────────────────────────────────────────────────
@@ -1607,40 +1708,44 @@
     answers = { full: '', 'one-liner': '', hints: '' };
     answersReady = { full: false, 'one-liner': false, hints: false };
 
-    // Show card & tabs, switch to full tab
+    // Show card & tabs
     const card = document.getElementById('answer-card');
     const tabs = document.getElementById('answer-tabs');
     document.getElementById('answer-placeholder').classList.add('hide');
     tabs.style.display = '';
     card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 
-    // Mark all tabs as loading
+    // The setup-selected style is the active tab. Clear loading/ready state on all
+    // tabs; only the selected one will actually generate now (others lazy-load on click).
+    activeTab = answerStyle;
     ['full', 'one-liner', 'hints'].forEach(t => {
       const el = document.getElementById('atab-' + t);
-      el.classList.remove('ready');
-      el.classList.add('loading');
+      el.classList.remove('ready', 'loading');
+      el.classList.toggle('active', t === activeTab);
     });
-
-    // Reset visible tab
-    activeTab = 'full';
-    ['full', 'one-liner', 'hints'].forEach(t =>
-      document.getElementById('atab-' + t).classList.toggle('active', t === 'full')
-    );
     document.getElementById('answer-text').innerHTML = '';
     document.getElementById('answer-box').className = 'answer-box stream';
     setAnswerStreaming(true);
 
-    const docsText = getSupportingDocsText();
-    const modeMap = { full: 'answer', 'one-liner': 'one-liner', hints: 'hints' };
+    // Remember inputs so other format tabs can lazy-load on demand
+    _lastQuestion = question;
+    _lastDocsText = getSupportingDocsText();
 
-    // Fire all 3 streams in parallel
-    ['full', 'one-liner', 'hints'].forEach(tab => {
-      streamCtrls[tab] = new AbortController();
-      streamOneTab(tab, modeMap[tab], question, docsText, streamCtrls[tab]);
-    });
+    // Generate ONLY the selected style — 1 call instead of 3
+    startTabStream(activeTab);
 
     if (voiceMode === 'system' && sysCapturing)
       setSysStatus('👂 Listening — speak or let your interviewer speak…');
+  }
+
+  // Start (or restart) the stream for one format tab. No-op if already requested
+  // for the current question, so re-clicking a tab won't double-fire.
+  function startTabStream(tab) {
+    if (streamCtrls[tab] || !_lastQuestion) return;
+    const el = document.getElementById('atab-' + tab);
+    if (el) { el.classList.remove('ready'); el.classList.add('loading'); }
+    streamCtrls[tab] = new AbortController();
+    streamOneTab(tab, MODE_MAP[tab], _lastQuestion, _lastDocsText, streamCtrls[tab]);
   }
 
   async function streamOneTab(tab, mode, question, docsText, ctrl) {
@@ -1796,6 +1901,13 @@
     // auto-select it so the device picker is ready without extra clicks
     const savedMode = localStorage.getItem('ic_capture_mode');
     if (savedMode && savedMode !== 'mic') setSetupMode(savedMode);
+    // Always enumerate devices so BlackHole is auto-detected & selected in the
+    // dropdown, even if the user stays in Mic mode (guard prevents double-run).
+    initSetupDevices();
+    // Restore answer font size (defaults to L = 20px if never set)
+    setAnswerFontSize(localStorage.getItem('ic_answer_font_size') || 'l');
+    // Restore answer style (defaults to Full Answer)
+    setAnswerStyle(localStorage.getItem('ic_answer_style') || 'full');
   });
 
   // Show upgrade success banner
